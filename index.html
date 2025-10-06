@@ -998,61 +998,12 @@
         });
         document.getElementById('btn-cancelar-horas').addEventListener('click', () => fecharModal('modal-horas'));
         
-        // ✅ USANDO A VERSÃO DE BACKUP ENQUANTO A CLOUD FUNCTION NÃO FUNCIONA
-        document.getElementById('btn-gerar-simulado-ia').addEventListener('click', () => handleGerarSimuladoIABackup(config));
+        // ✅ USANDO A CLOUD FUNCTION ORIGINAL
+        document.getElementById('btn-gerar-simulado-ia').addEventListener('click', () => handleGerarSimuladoIA(config));
     }
 
     // =========================
-    // FUNÇÃO DE BACKUP PARA GERAR SIMULADO IA (ENQUANTO A CLOUD FUNCTION NÃO FUNCIONA)
-    // =========================
-    async function handleGerarSimuladoIABackup(config) {
-        const disciplina = document.getElementById('ia-disciplina').value.trim();
-        const assuntos = document.getElementById('ia-assuntos').value.trim();
-        const quantidade = document.getElementById('ia-quantidade').value;
-
-        if (!disciplina || !assuntos || !quantidade) {
-            showNotification("Por favor, preencha todos os campos para gerar o simulado.", "error");
-            return;
-        }
-
-        showNotification("Gerando simulado de exemplo (modo de teste)...", "info");
-
-        // Simular uma resposta da IA para teste
-        const questoesExemplo = [
-            {
-                enunciado: "Qual é o princípio constitucional que garante a igualdade de todos perante a lei?",
-                alternativas: {
-                    "A": "Princípio da isonomia",
-                    "B": "Princípio da legalidade", 
-                    "C": "Princípio da moralidade",
-                    "D": "Princípio da publicidade",
-                    "E": "Princípio da eficiência"
-                },
-                resposta_correta: "A",
-                explicacao: "O princípio da isonomia, previsto no artigo 5º da Constituição Federal, estabelece que todos são iguais perante a lei, sem distinção de qualquer natureza."
-            },
-            {
-                enunciado: "Qual órgão é responsável pelo controle externo da administração pública federal?",
-                alternativas: {
-                    "A": "Tribunal de Contas da União",
-                    "B": "Controladoria-Geral da União", 
-                    "C": "Ministério Público Federal",
-                    "D": "Senado Federal",
-                    "E": "Câmara dos Deputados"
-                },
-                resposta_correta: "A",
-                explicacao: "O Tribunal de Contas da União (TCU) é o órgão responsável pelo controle externo da administração pública federal, conforme previsão constitucional."
-            }
-        ];
-
-        const nomeSimulado = `Simulado IA: ${disciplina} - ${assuntos}`;
-        showNotification(`Simulado de exemplo gerado! ${questoesExemplo.length} questões criadas.`, "success");
-        
-        iniciarSimulado(config, null, nomeSimulado, questoesExemplo, 'simulado');
-    }
-
-    // =========================
-    // FUNÇÃO ORIGINAL PARA GERAR SIMULADO COM IA (PARA USAR QUANDO A CLOUD FUNCTION ESTIVER FUNCIONANDO)
+    // FUNÇÃO PARA GERAR SIMULADO COM IA (CLOUD FUNCTION)
     // =========================
     async function handleGerarSimuladoIA(config) {
         // ✅ VERIFICAÇÃO DE AUTENTICAÇÃO
@@ -1076,7 +1027,7 @@
         loadingDiv.classList.remove('hidden');
         generateBtn.disabled = true;
 
-        // ✅ CORREÇÃO: Template string completamente corrigida e validada
+        // ✅ PROMPT CORRETO PARA A CLOUD FUNCTION
         const prompt = `Gere um simulado de concurso público com ${quantidade} questões de múltipla escolha sobre ${disciplina}, focando nos seguintes assuntos: ${assuntos}.
 
 FORMATO DE RESPOSTA EXATO (apenas JSON, sem markdown):
@@ -1106,20 +1057,29 @@ REGRAS IMPORTANTES:
 - Baseado em legislação e doutrina atualizada`;
 
         try {
-            // ✅ CHAMADA SEGURA PARA CLOUD FUNCTION COM PARÂMETRO CORRETO
+            // ✅ CHAMADA PARA CLOUD FUNCTION
             const functions = getFunctions(app);
+            
+            // Verifica se a função está disponível
+            console.log("Inicializando Cloud Function...");
             const generateSimulado = httpsCallable(functions, 'generateSimulado');
             
-            console.log("Enviando requisição para Cloud Function...");
+            console.log("Enviando requisição para Cloud Function com prompt:", prompt.substring(0, 100) + "...");
+            
             const result = await generateSimulado({ 
-                prompt: prompt  // ✅ CORRIGIDO: garantindo que o parâmetro 'prompt' está sendo enviado
+                prompt: prompt  // ✅ GARANTINDO QUE O PARÂMETRO 'prompt' ESTÁ SENDO ENVIADO
             });
             
-            console.log("Resposta recebida:", result);
+            console.log("Resposta recebida da Cloud Function:", result);
+            
+            if (!result.data) {
+                throw new Error("A Cloud Function não retornou dados");
+            }
+
             const data = result.data;
 
             // ✅ VALIDAÇÃO DA RESPOSTA
-            if (!data || !data.candidates || !data.candidates[0] || !data.candidates[0].content) {
+            if (!data.candidates || !data.candidates[0] || !data.candidates[0].content) {
                 throw new Error("Resposta da IA em formato inválido");
             }
 
@@ -1150,12 +1110,15 @@ REGRAS IMPORTANTES:
         } catch (error) {
             console.error("Erro detalhado ao gerar simulado com IA:", error);
             
-            if (error.message.includes("JSON")) {
+            // Tratamento específico para erro 400 (parâmetro prompt faltando)
+            if (error.message.includes("400") || error.message.includes("prompt") || error.code === 'invalid-argument') {
+                showNotification("Erro: Parâmetro 'prompt' não reconhecido pela Cloud Function. Verifique a configuração do servidor.", "error");
+            } else if (error.message.includes("JSON")) {
                 showNotification("Erro ao processar a resposta da IA. Tente novamente com um prompt mais específico.", "error");
-            } else if (error.message.includes("400") || error.message.includes("prompt")) {
-                showNotification("Erro de configuração do servidor. Por favor, tente novamente mais tarde.", "error");
             } else if (error.message.includes("network") || error.message.includes("internet")) {
                 showNotification("Erro de conexão. Verifique sua internet e tente novamente.", "error");
+            } else if (error.code === 'unavailable') {
+                showNotification("Serviço temporariamente indisponível. Tente novamente em alguns instantes.", "error");
             } else {
                 showNotification(`Houve um erro ao gerar o simulado: ${error.message}`, "error");
             }
