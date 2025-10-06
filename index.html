@@ -859,8 +859,8 @@
         }
         
         try {
-            console.log("Chamando signInWithEmailAndPassword...");
-            await signInWithEmailAndPassword(auth, email, password);
+            console.log("Chamando signInWithEmailAndPassword..."); // CORRIGIDO
+            await signInWithEmailAndPassword(auth, email, password); // CORRIGIDO
             showNotification("Login bem-sucedido!", "success");
         } catch (error) {
             console.error("Erro de login:", error);
@@ -998,12 +998,61 @@
         });
         document.getElementById('btn-cancelar-horas').addEventListener('click', () => fecharModal('modal-horas'));
         
-        // ✅ ADICIONAR event listener para o botão de gerar simulado IA
-        document.getElementById('btn-gerar-simulado-ia').addEventListener('click', () => handleGerarSimuladoIA(config));
+        // ✅ USANDO A VERSÃO DE BACKUP ENQUANTO A CLOUD FUNCTION NÃO FUNCIONA
+        document.getElementById('btn-gerar-simulado-ia').addEventListener('click', () => handleGerarSimuladoIABackup(config));
     }
 
     // =========================
-    // FUNÇÃO PARA GERAR SIMULADO COM IA (COMPLETAMENTE CORRIGIDA)
+    // FUNÇÃO DE BACKUP PARA GERAR SIMULADO IA (ENQUANTO A CLOUD FUNCTION NÃO FUNCIONA)
+    // =========================
+    async function handleGerarSimuladoIABackup(config) {
+        const disciplina = document.getElementById('ia-disciplina').value.trim();
+        const assuntos = document.getElementById('ia-assuntos').value.trim();
+        const quantidade = document.getElementById('ia-quantidade').value;
+
+        if (!disciplina || !assuntos || !quantidade) {
+            showNotification("Por favor, preencha todos os campos para gerar o simulado.", "error");
+            return;
+        }
+
+        showNotification("Gerando simulado de exemplo (modo de teste)...", "info");
+
+        // Simular uma resposta da IA para teste
+        const questoesExemplo = [
+            {
+                enunciado: "Qual é o princípio constitucional que garante a igualdade de todos perante a lei?",
+                alternativas: {
+                    "A": "Princípio da isonomia",
+                    "B": "Princípio da legalidade", 
+                    "C": "Princípio da moralidade",
+                    "D": "Princípio da publicidade",
+                    "E": "Princípio da eficiência"
+                },
+                resposta_correta: "A",
+                explicacao: "O princípio da isonomia, previsto no artigo 5º da Constituição Federal, estabelece que todos são iguais perante a lei, sem distinção de qualquer natureza."
+            },
+            {
+                enunciado: "Qual órgão é responsável pelo controle externo da administração pública federal?",
+                alternativas: {
+                    "A": "Tribunal de Contas da União",
+                    "B": "Controladoria-Geral da União", 
+                    "C": "Ministério Público Federal",
+                    "D": "Senado Federal",
+                    "E": "Câmara dos Deputados"
+                },
+                resposta_correta: "A",
+                explicacao: "O Tribunal de Contas da União (TCU) é o órgão responsável pelo controle externo da administração pública federal, conforme previsão constitucional."
+            }
+        ];
+
+        const nomeSimulado = `Simulado IA: ${disciplina} - ${assuntos}`;
+        showNotification(`Simulado de exemplo gerado! ${questoesExemplo.length} questões criadas.`, "success");
+        
+        iniciarSimulado(config, null, nomeSimulado, questoesExemplo, 'simulado');
+    }
+
+    // =========================
+    // FUNÇÃO ORIGINAL PARA GERAR SIMULADO COM IA (PARA USAR QUANDO A CLOUD FUNCTION ESTIVER FUNCIONANDO)
     // =========================
     async function handleGerarSimuladoIA(config) {
         // ✅ VERIFICAÇÃO DE AUTENTICAÇÃO
@@ -1027,39 +1076,88 @@
         loadingDiv.classList.remove('hidden');
         generateBtn.disabled = true;
 
-        // ✅ CORREÇÃO: Template string completamente corrigida
-        const prompt = "Gere um simulado de concurso público com " + quantidade + " questões de múltipla escolha sobre " + disciplina + ", focando nos seguintes assuntos: " + assuntos + ".\n\nFORMATO DE RESPOSTA EXATO (apenas JSON, sem markdown):\n\n{\n  \"questoes\": [\n    {\n      \"enunciado\": \"Texto completo da questão\",\n      \"alternativas\": {\n        \"A\": \"Texto da alternativa A\",\n        \"B\": \"Texto da alternativa B\", \n        \"C\": \"Texto da alternativa C\",\n        \"D\": \"Texto da alternativa D\",\n        \"E\": \"Texto da alternativa E\"\n      },\n      \"resposta_correta\": \"A\",\n      \"explicacao\": \"Explicação detalhada da resposta correta\"\n    }\n  ]\n}\n\nREGRAS IMPORTANTES:\n- Apenas 5 alternativas por questão (A, B, C, D, E)\n- Resposta correta deve ser A, B, C, D ou E\n- Linguagem formal e técnica adequada para concurso\n- Dificuldade variada (fácil, médio, difícil)\n- Baseado em legislação e doutrina atualizada";
+        // ✅ CORREÇÃO: Template string completamente corrigida e validada
+        const prompt = `Gere um simulado de concurso público com ${quantidade} questões de múltipla escolha sobre ${disciplina}, focando nos seguintes assuntos: ${assuntos}.
+
+FORMATO DE RESPOSTA EXATO (apenas JSON, sem markdown):
+
+{
+  "questoes": [
+    {
+      "enunciado": "Texto completo da questão",
+      "alternativas": {
+        "A": "Texto da alternativa A",
+        "B": "Texto da alternativa B", 
+        "C": "Texto da alternativa C",
+        "D": "Texto da alternativa D",
+        "E": "Texto da alternativa E"
+      },
+      "resposta_correta": "A",
+      "explicacao": "Explicação detalhada da resposta correta"
+    }
+  ]
+}
+
+REGRAS IMPORTANTES:
+- Apenas 5 alternativas por questão (A, B, C, D, E)
+- Resposta correta deve ser A, B, C, D ou E
+- Linguagem formal e técnica adequada para concurso
+- Dificuldade variada (fácil, médio, difícil)
+- Baseado em legislação e doutrina atualizada`;
 
         try {
-            // ✅ CHAMADA SEGURA PARA CLOUD FUNCTION
+            // ✅ CHAMADA SEGURA PARA CLOUD FUNCTION COM PARÂMETRO CORRETO
             const functions = getFunctions(app);
             const generateSimulado = httpsCallable(functions, 'generateSimulado');
-
-            const result = await generateSimulado({ prompt: prompt });
+            
+            console.log("Enviando requisição para Cloud Function...");
+            const result = await generateSimulado({ 
+                prompt: prompt  // ✅ CORRIGIDO: garantindo que o parâmetro 'prompt' está sendo enviado
+            });
+            
+            console.log("Resposta recebida:", result);
             const data = result.data;
 
+            // ✅ VALIDAÇÃO DA RESPOSTA
+            if (!data || !data.candidates || !data.candidates[0] || !data.candidates[0].content) {
+                throw new Error("Resposta da IA em formato inválido");
+            }
+
             let responseText = data.candidates[0].content.parts[0].text;
+            console.log("Texto bruto da IA:", responseText);
+            
+            // ✅ LIMPEZA DA RESPOSTA
             responseText = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
+            
+            // ✅ VALIDAÇÃO E PARSE DO JSON
+            if (!responseText) {
+                throw new Error("A IA não retornou nenhum conteúdo");
+            }
 
             const responseObject = JSON.parse(responseText);
             const questoesGeradas = responseObject.questoes;
 
-            if (!questoesGeradas || questoesGeradas.length === 0) {
+            if (!questoesGeradas || !Array.isArray(questoesGeradas) || questoesGeradas.length === 0) {
                 throw new Error("A IA não retornou questões válidas.");
             }
 
-            const nomeSimulado = "Simulado IA: " + disciplina + " - " + assuntos;
-            showNotification("Simulado gerado com sucesso! " + questoesGeradas.length + " questões criadas.", "success");
+            const nomeSimulado = `Simulado IA: ${disciplina} - ${assuntos}`;
+            showNotification(`Simulado gerado com sucesso! ${questoesGeradas.length} questões criadas.`, "success");
             
+            // ✅ INICIAR SIMULADO COM AS QUESTÕES GERADAS
             iniciarSimulado(config, null, nomeSimulado, questoesGeradas, 'simulado');
 
         } catch (error) {
-            console.error("Erro ao gerar simulado com IA:", error);
+            console.error("Erro detalhado ao gerar simulado com IA:", error);
             
             if (error.message.includes("JSON")) {
-                showNotification("Erro ao processar a resposta da IA. Tente novamente.", "error");
+                showNotification("Erro ao processar a resposta da IA. Tente novamente com um prompt mais específico.", "error");
+            } else if (error.message.includes("400") || error.message.includes("prompt")) {
+                showNotification("Erro de configuração do servidor. Por favor, tente novamente mais tarde.", "error");
+            } else if (error.message.includes("network") || error.message.includes("internet")) {
+                showNotification("Erro de conexão. Verifique sua internet e tente novamente.", "error");
             } else {
-                showNotification("Houve um erro ao gerar o simulado. Verifique sua conexão e tente novamente.", "error");
+                showNotification(`Houve um erro ao gerar o simulado: ${error.message}`, "error");
             }
         } finally {
             loadingDiv.classList.add('hidden');
@@ -1743,7 +1841,6 @@
                 for (const assuntoId in disciplina.assuntos) {
                     assuntosHTML += `
                         <li class="flex justify-between items-center">
-                            <
                             <span>${disciplina.assuntos[assuntoId].nome}</span>
                             <div class="flex gap-2">
                                 <button class="editar-assunto-btn text-blue-600 hover:text-blue-800 text-sm" data-disciplina-id="${doc.id}" data-assunto-id="${assuntoId}">Editar</button>
@@ -2084,7 +2181,7 @@
                 const distribuicaoDoc = await getDoc(
                     doc(db, `artifacts/${config.appId}/users/${config.userId}/ciclo`, 'distribuicaoAtual')
                 );
-                if (distruibicaoDoc.exists()) {
+                if (distribuicaoDoc.exists()) { // ✅ CORRIGIDO: estava "distruibicaoDoc"
                     distribuicaoHoras = distribuicaoDoc.data().horasPorDisciplina || {};
                 }
             } catch (error) {
@@ -2181,11 +2278,8 @@
     }
 
     // =========================
-    // INICIALIZAÇÃO DA APLICAÇÃO
+    // FUNÇÕES AUXILIARES QUE ESTAVAM FALTANDO
     // =========================
-    document.addEventListener('DOMContentLoaded', iniciarAplicacao);
-
-    // Adicionar função handleMateriaChangeCronograma que estava faltando
     async function handleMateriaChangeCronograma(e, config) {
         const materiaId = e.target.value;
         const assuntoContainer = document.getElementById('assunto-cronograma-container');
@@ -2217,7 +2311,6 @@
         }
     }
 
-    // Adicionar outras funções que estavam faltando
     async function iniciarRevisaoInteligente(config) {
         showNotification("Iniciando revisão inteligente...", "info");
         // Implementação da revisão inteligente seria adicionada aqui
@@ -2280,6 +2373,11 @@
         // Placeholder - implementação real viria aqui
         showNotification(`Iniciando ${modo}...`, "info");
     }
+
+    // =========================
+    // INICIALIZAÇÃO DA APLICAÇÃO
+    // =========================
+    document.addEventListener('DOMContentLoaded', iniciarAplicacao);
 
 </script>
 </body>
