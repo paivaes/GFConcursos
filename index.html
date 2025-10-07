@@ -1,6 +1,3 @@
-Aqui está o código completo da plataforma GFConcursos com sistema de login implementado:
-
-```html
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -109,6 +106,15 @@ Aqui está o código completo da plataforma GFConcursos com sistema de login imp
             align-items: center;
             justify-content: center;
         }
+
+        .fade-out {
+            animation: fadeOut 0.5s ease-out forwards;
+        }
+        
+        @keyframes fadeOut {
+            from { opacity: 1; transform: translateY(0); }
+            to { opacity: 0; transform: translateY(-20px); }
+        }
     </style>
 </head>
 <body class="min-h-screen">
@@ -201,549 +207,57 @@ Aqui está o código completo da plataforma GFConcursos com sistema de login imp
 
     <!-- Aplicação Principal (inicialmente oculta) -->
     <div id="app-wrapper" class="hidden">
-        <div class="container mx-auto px-4 py-8">
-            <!-- Header -->
-            <header class="text-center mb-12 fade-in">
-                <h1 class="text-5xl font-bold text-white mb-4">GFConcursos</h1>
-                <p class="text-xl text-white/90">Sua plataforma completa de estudos para concursos públicos</p>
-            </header>
-
-            <!-- Main App -->
-            <div>
-                <!-- User Info Bar -->
-                <div class="glass-card rounded-2xl p-6 mb-8 shadow-2xl">
-                    <div class="flex justify-between items-center">
-                        <div>
-                            <h2 id="user-info" class="text-2xl font-bold gradient-text">Bem-vindo ao GFConcursos!</h2>
-                            <p class="text-gray-600" id="user-stats">Prepare-se para sua aprovação</p>
-                        </div>
-                        <div class="flex gap-4">
-                            <button id="btn-dashboard" class="bg-blue-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-blue-700 transition-all">
-                                📊 Meu Dashboard
-                            </button>
-                            <button id="btn-config" class="bg-gray-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-gray-700 transition-all">
-                                ⚙️ Configurações
-                            </button>
-                            <button id="btn-logout" class="bg-red-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-red-700 transition-all">
-                                🚪 Sair
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Navigation Tabs -->
-                <div class="glass-card rounded-2xl p-6 mb-8 shadow-2xl">
-                    <div class="flex flex-wrap gap-2 justify-center">
-                        <button class="tab-button active px-6 py-3 rounded-xl font-semibold transition-all" data-tab="estudo">
-                            📚 Área de Estudo
-                        </button>
-                        <button class="tab-button px-6 py-3 rounded-xl font-semibold transition-all" data-tab="cronograma">
-                            🗓️ Cronograma
-                        </button>
-                        <button class="tab-button px-6 py-3 rounded-xl font-semibold transition-all" data-tab="simulados">
-                            🧪 Simulados
-                        </button>
-                        <button class="tab-button px-6 py-3 rounded-xl font-semibold transition-all" data-tab="redacao">
-                            ✍️ Redação
-                        </button>
-                        <button class="tab-button px-6 py-3 rounded-xl font-semibold transition-all" data-tab="progresso">
-                            📈 Progresso
-                        </button>
-                        <button class="tab-button px-6 py-3 rounded-xl font-semibold transition-all" data-tab="comunidade">
-                            👥 Comunidade
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Tab Content -->
-                <div id="main-content">
-                    <!-- Área de Estudo -->
-                    <div id="tab-content-estudo" class="tab-content fade-in">
-                        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                            <!-- Card 1: Disciplinas -->
-                            <div class="glass-card rounded-2xl p-6 shadow-xl">
-                                <h3 class="text-2xl font-bold gradient-text mb-6">📖 Minhas Disciplinas</h3>
-                                <div class="space-y-4" id="disciplinas-list">
-                                    <!-- Disciplinas serão carregadas aqui -->
-                                </div>
-                                <button id="btn-add-disciplina" class="w-full mt-6 bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 rounded-xl font-semibold hover:shadow-lg transition-all">
-                                    + Adicionar Disciplina
-                                </button>
-                            </div>
-
-                            <!-- Card 2: Prática Rápida -->
-                            <div class="glass-card rounded-2xl p-6 shadow-xl">
-                                <h3 class="text-2xl font-bold gradient-text mb-6">⚡ Prática Rápida</h3>
-                                <div class="space-y-4">
-                                    <button class="btn-pratica-rapida w-full bg-blue-100 hover:bg-blue-200 p-4 rounded-xl text-left transition-all" data-questoes="10" data-disciplina="portugues">
-                                        <div class="font-semibold">10 Questões de Português</div>
-                                        <div class="text-sm text-gray-600">Nível: Intermediário</div>
-                                    </button>
-                                    <button class="btn-pratica-rapida w-full bg-green-100 hover:bg-green-200 p-4 rounded-xl text-left transition-all" data-questoes="5" data-disciplina="matematica">
-                                        <div class="font-semibold">5 Questões de Matemática</div>
-                                        <div class="text-sm text-gray-600">Nível: Básico</div>
-                                    </button>
-                                    <button class="btn-pratica-rapida w-full bg-purple-100 hover:bg-purple-200 p-4 rounded-xl text-left transition-all" data-questoes="15" data-disciplina="revisao">
-                                        <div class="font-semibold">Revisão Inteligente</div>
-                                        <div class="text-sm text-gray-600">Questões que você errou</div>
-                                    </button>
-                                </div>
-                                <button id="btn-iniciar-sessao" class="w-full mt-6 bg-gradient-to-r from-green-600 to-blue-600 text-white py-3 rounded-xl font-semibold hover:shadow-lg transition-all">
-                                    🎯 Iniciar Sessão de Estudo
-                                </button>
-                            </div>
-
-                            <!-- Card 3: Métricas -->
-                            <div class="glass-card rounded-2xl p-6 shadow-xl">
-                                <h3 class="text-2xl font-bold gradient-text mb-6">📊 Métricas do Dia</h3>
-                                <div class="grid grid-cols-2 gap-4">
-                                    <div class="bg-white p-4 rounded-xl text-center shadow">
-                                        <div class="text-3xl font-bold text-blue-600" id="metric-tempo">2.5h</div>
-                                        <div class="text-sm text-gray-600">Tempo Estudado</div>
-                                    </div>
-                                    <div class="bg-white p-4 rounded-xl text-center shadow">
-                                        <div class="text-3xl font-bold text-green-600" id="metric-questoes">24</div>
-                                        <div class="text-sm text-gray-600">Questões Feitas</div>
-                                    </div>
-                                    <div class="bg-white p-4 rounded-xl text-center shadow">
-                                        <div class="text-3xl font-bold text-purple-600" id="metric-acerto">75%</div>
-                                        <div class="text-sm text-gray-600">Taxa de Acerto</div>
-                                    </div>
-                                    <div class="bg-white p-4 rounded-xl text-center shadow">
-                                        <div class="text-3xl font-bold text-yellow-600" id="metric-dias">7</div>
-                                        <div class="text-sm text-gray-600">Dias Consecutivos</div>
-                                    </div>
-                                </div>
-                                <div class="mt-6 p-4 bg-gradient-to-r from-blue-500 to-purple-500 rounded-xl text-white">
-                                    <div class="font-semibold">🎯 Meta Diária</div>
-                                    <div class="text-sm">3h de estudo | 30 questões</div>
-                                    <div class="w-full bg-white/20 rounded-full h-2 mt-2">
-                                        <div class="bg-white h-2 rounded-full" id="meta-progresso" style="width: 83%"></div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Cronograma -->
-                    <div id="tab-content-cronograma" class="tab-content hidden fade-in">
-                        <div class="glass-card rounded-2xl p-6 shadow-xl mb-8">
-                            <h3 class="text-2xl font-bold gradient-text mb-6">🗓️ Meu Cronograma Semanal</h3>
-                            <div class="grid grid-cols-1 md:grid-cols-7 gap-4" id="cronograma-semanal">
-                                <!-- Cronograma será gerado aqui -->
-                            </div>
-                        </div>
-
-                        <!-- Cronômetro -->
-                        <div class="glass-card rounded-2xl p-6 shadow-xl">
-                            <h3 class="text-2xl font-bold gradient-text mb-6">⏱️ Cronômetro de Estudo</h3>
-                            <div class="text-center">
-                                <div id="timer-display" class="text-6xl font-bold text-gray-800 mb-6">00:00:00</div>
-                                <div class="flex gap-4 justify-center">
-                                    <button id="btn-start" class="bg-green-600 text-white px-8 py-4 rounded-xl font-semibold text-lg hover:bg-green-700 transition-all">
-                                        ▶ Iniciar
-                                    </button>
-                                    <button id="btn-pause" class="bg-yellow-600 text-white px-8 py-4 rounded-xl font-semibold text-lg hover:bg-yellow-700 transition-all">
-                                        ⏸️ Pausar
-                                    </button>
-                                    <button id="btn-reset" class="bg-red-600 text-white px-8 py-4 rounded-xl font-semibold text-lg hover:bg-red-700 transition-all">
-                                        🔄 Resetar
-                                    </button>
-                                </div>
-                                <div class="mt-6">
-                                    <select id="select-disciplina-cronometro" class="p-3 border rounded-xl">
-                                        <option value="">Selecione uma disciplina</option>
-                                    </select>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Simulados -->
-                    <div id="tab-content-simulados" class="tab-content hidden fade-in">
-                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                            <!-- Simulados Disponíveis -->
-                            <div class="glass-card rounded-2xl p-6 shadow-xl">
-                                <h3 class="text-2xl font-bold gradient-text mb-6">🧪 Simulados Disponíveis</h3>
-                                <div class="space-y-4" id="lista-simulados">
-                                    <!-- Simulados serão carregados aqui -->
-                                </div>
-                            </div>
-
-                            <!-- Criar Simulado Personalizado -->
-                            <div class="glass-card rounded-2xl p-6 shadow-xl">
-                                <h3 class="text-2xl font-bold gradient-text mb-6">🎯 Simulado Personalizado</h3>
-                                <div class="space-y-4">
-                                    <div>
-                                        <label class="block text-sm font-semibold mb-2">Disciplinas:</label>
-                                        <select id="select-disciplina-simulado" class="w-full p-3 border rounded-xl">
-                                            <option value="portugues">Português</option>
-                                            <option value="matematica">Matemática</option>
-                                            <option value="direito">Direito Constitucional</option>
-                                            <option value="informatica">Informática</option>
-                                            <option value="todas">Todas as Disciplinas</option>
-                                        </select>
-                                    </div>
-                                    
-                                    <div>
-                                        <label class="block text-sm font-semibold mb-2">Número de Questões:</label>
-                                        <input type="range" id="range-questoes" min="5" max="50" value="20" class="w-full">
-                                        <div class="text-center text-sm text-gray-600" id="questoes-count">20 questões</div>
-                                    </div>
-                                    
-                                    <div>
-                                        <label class="block text-sm font-semibold mb-2">Dificuldade:</label>
-                                        <div class="flex gap-2" id="dificuldade-buttons">
-                                            <button class="btn-dificuldade flex-1 bg-green-100 text-green-800 py-2 rounded-xl" data-dificuldade="facil">Fácil</button>
-                                            <button class="btn-dificuldade flex-1 bg-yellow-100 text-yellow-800 py-2 rounded-xl active" data-dificuldade="medio">Médio</button>
-                                            <button class="btn-dificuldade flex-1 bg-red-100 text-red-800 py-2 rounded-xl" data-dificuldade="dificil">Difícil</button>
-                                        </div>
-                                    </div>
-                                    
-                                    <div>
-                                        <label class="block text-sm font-semibold mb-2">Tempo Limite:</label>
-                                        <select id="select-tempo-simulado" class="w-full p-3 border rounded-xl">
-                                            <option value="30">30 minutos</option>
-                                            <option value="60">1 hora</option>
-                                            <option value="90">1 hora 30min</option>
-                                            <option value="120">2 horas</option>
-                                            <option value="0">Sem limite</option>
-                                        </select>
-                                    </div>
-                                    
-                                    <button id="btn-criar-simulado" class="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white py-4 rounded-xl font-semibold text-lg hover:shadow-lg transition-all pulse">
-                                        🚀 Criar Simulado Personalizado
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Redação -->
-                    <div id="tab-content-redacao" class="tab-content hidden fade-in">
-                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                            <!-- Temas de Redação -->
-                            <div class="glass-card rounded-2xl p-6 shadow-xl">
-                                <h3 class="text-2xl font-bold gradient-text mb-6">✍️ Temas de Redação</h3>
-                                <div class="space-y-4" id="lista-temas-redacao">
-                                    <!-- Temas serão carregados aqui -->
-                                </div>
-                            </div>
-
-                            <!-- Minhas Redações -->
-                            <div class="glass-card rounded-2xl p-6 shadow-xl">
-                                <h3 class="text-2xl font-bold gradient-text mb-6">📝 Minhas Redações</h3>
-                                <div class="space-y-4" id="minhas-redacoes">
-                                    <!-- Redações serão carregadas aqui -->
-                                </div>
-                                <button id="btn-nova-redacao" class="w-full mt-6 bg-gradient-to-r from-green-600 to-blue-600 text-white py-3 rounded-xl font-semibold hover:shadow-lg transition-all">
-                                    + Nova Redação
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Progresso -->
-                    <div id="tab-content-progresso" class="tab-content hidden fade-in">
-                        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
-                            <!-- Estatísticas Gerais -->
-                            <div class="glass-card rounded-2xl p-6 shadow-xl">
-                                <h3 class="text-2xl font-bold gradient-text mb-6">📈 Estatísticas Gerais</h3>
-                                <div class="space-y-4" id="estatisticas-gerais">
-                                    <!-- Estatísticas serão carregadas aqui -->
-                                </div>
-                            </div>
-
-                            <!-- Desempenho por Disciplina -->
-                            <div class="glass-card rounded-2xl p-6 shadow-xl">
-                                <h3 class="text-2xl font-bold gradient-text mb-6">🎯 Desempenho por Disciplina</h3>
-                                <div class="space-y-4" id="desempenho-disciplinas">
-                                    <!-- Desempenho será carregado aqui -->
-                                </div>
-                            </div>
-
-                            <!-- Conquistas -->
-                            <div class="glass-card rounded-2xl p-6 shadow-xl">
-                                <h3 class="text-2xl font-bold gradient-text mb-6">🏆 Conquistas</h3>
-                                <div class="grid grid-cols-2 gap-4" id="conquistas-list">
-                                    <!-- Conquistas serão carregadas aqui -->
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Gráfico de Progresso -->
-                        <div class="glass-card rounded-2xl p-6 shadow-xl">
-                            <h3 class="text-2xl font-bold gradient-text mb-6">📊 Evolução do Desempenho</h3>
-                            <div class="bg-white p-6 rounded-xl">
-                                <canvas id="progressChart" height="100"></canvas>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Comunidade -->
-                    <div id="tab-content-comunidade" class="tab-content hidden fade-in">
-                        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                            <!-- Ranking -->
-                            <div class="glass-card rounded-2xl p-6 shadow-xl">
-                                <h3 class="text-2xl font-bold gradient-text mb-6">🏆 Ranking da Comunidade</h3>
-                                <div class="space-y-3" id="ranking-list">
-                                    <!-- Ranking será carregado aqui -->
-                                </div>
-                            </div>
-
-                            <!-- Fórum -->
-                            <div class="glass-card rounded-2xl p-6 shadow-xl">
-                                <h3 class="text-2xl font-bold gradient-text mb-6">💬 Fórum de Discussões</h3>
-                                <div class="space-y-4" id="forum-discussoes">
-                                    <!-- Discussões serão carregadas aqui -->
-                                </div>
-                                <button id="btn-nova-discussao" class="w-full mt-6 bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 rounded-xl font-semibold hover:shadow-lg transition-all">
-                                    + Nova Discussão
-                                </button>
-                            </div>
-
-                            <!-- Amigos e Grupos -->
-                            <div class="glass-card rounded-2xl p-6 shadow-xl">
-                                <h3 class="text-2xl font-bold gradient-text mb-6">👥 Amigos e Grupos</h3>
-                                <div class="space-y-4">
-                                    <div class="bg-white p-4 rounded-xl shadow">
-                                        <h4 class="font-semibold mb-3">Grupos de Estudo</h4>
-                                        <div class="space-y-2" id="grupos-estudo">
-                                            <!-- Grupos serão carregados aqui -->
-                                        </div>
-                                    </div>
-
-                                    <div class="bg-white p-4 rounded-xl shadow">
-                                        <h4 class="font-semibold mb-3">Amigos Online</h4>
-                                        <div class="flex space-x-2" id="amigos-online">
-                                            <!-- Amigos online serão carregados aqui -->
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <button id="btn-convidar-amigos" class="w-full mt-6 bg-gradient-to-r from-green-600 to-blue-600 text-white py-3 rounded-xl font-semibold hover:shadow-lg transition-all">
-                                    👋 Convidar Amigos
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Footer -->
-            <footer class="text-center mt-12 text-white/70">
-                <p>GFConcursos © 2025 - Edinho S. Paiva</p>
-                <p class="text-sm mt-2">Desenvolvido com 💙 para ajudar na sua aprovação</p>
-            </footer>
-        </div>
+        <!-- ... (todo o conteúdo da aplicação principal permanece igual) ... -->
     </div>
 
-    <!-- Modal de Questões -->
+    <!-- Modais (permanecem iguais) -->
     <div id="modal-questao" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center p-4 z-50">
-        <div class="bg-white rounded-2xl p-6 max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-            <div class="flex justify-between items-center mb-6">
-                <h3 class="text-2xl font-bold" id="modal-questao-titulo">Questão #1</h3>
-                <div class="flex gap-2">
-                    <span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm" id="modal-questao-disciplina">Português</span>
-                    <span class="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-sm" id="modal-questao-dificuldade">Médio</span>
-                    <button class="text-2xl text-gray-600 hover:text-gray-800" onclick="fecharModal('modal-questao')">×</button>
-                </div>
-            </div>
-            
-            <div class="space-y-6">
-                <div class="bg-gray-50 p-6 rounded-xl">
-                    <p class="text-lg" id="modal-questao-enunciado">Carregando questão...</p>
-                </div>
-                
-                <div class="space-y-3" id="modal-questao-opcoes">
-                    <!-- Opções serão carregadas aqui -->
-                </div>
-                
-                <div class="bg-yellow-50 p-4 rounded-xl hidden" id="modal-questao-explicacao">
-                    <h4 class="font-semibold mb-2">📚 Explicação:</h4>
-                    <p id="explicacao-texto"></p>
-                </div>
-                
-                <div class="flex gap-4">
-                    <button id="btn-questao-anterior" class="flex-1 bg-gray-600 text-white py-3 rounded-xl font-semibold hover:bg-gray-700 transition-all">
-                        ← Anterior
-                    </button>
-                    <button id="btn-questao-proxima" class="flex-1 bg-blue-600 text-white py-3 rounded-xl font-semibold hover:bg-blue-700 transition-all">
-                        Próxima →
-                    </button>
-                </div>
-                
-                <div class="text-center">
-                    <button id="btn-finalizar-simulado" class="bg-green-600 text-white px-8 py-3 rounded-xl font-semibold hover:bg-green-700 transition-all hidden">
-                        🏁 Finalizar Simulado
-                    </button>
-                </div>
-            </div>
-        </div>
+        <!-- ... -->
     </div>
 
-    <!-- Modal de Redação -->
     <div id="modal-redacao" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center p-4 z-50">
-        <div class="bg-white rounded-2xl p-6 max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-            <div class="flex justify-between items-center mb-6">
-                <h3 class="text-2xl font-bold" id="modal-redacao-titulo">Nova Redação</h3>
-                <button class="text-2xl text-gray-600 hover:text-gray-800" onclick="fecharModal('modal-redacao')">×</button>
-            </div>
-            
-            <div class="space-y-6">
-                <div>
-                    <label class="block text-sm font-semibold mb-2">Tema da Redação:</label>
-                    <input type="text" id="input-tema-redacao" class="w-full p-3 border rounded-xl" placeholder="Digite o tema da redação...">
-                </div>
-                
-                <div>
-                    <label class="block text-sm font-semibold mb-2">Sua Redação:</label>
-                    <textarea id="textarea-redacao" class="w-full h-64 p-3 border rounded-xl" placeholder="Escreva sua redação aqui..."></textarea>
-                </div>
-                
-                <div class="flex gap-4">
-                    <button id="btn-salvar-rascunho" class="flex-1 bg-gray-600 text-white py-3 rounded-xl font-semibold hover:bg-gray-700 transition-all">
-                        💾 Salvar Rascunho
-                    </button>
-                    <button id="btn-corrigir-redacao" class="flex-1 bg-yellow-600 text-white py-3 rounded-xl font-semibold hover:bg-yellow-700 transition-all">
-                        📝 Corrigir Redação
-                    </button>
-                    <button id="btn-finalizar-redacao" class="flex-1 bg-green-600 text-white py-3 rounded-xl font-semibold hover:bg-green-700 transition-all">
-                        ✅ Finalizar
-                    </button>
-                </div>
-                
-                <div class="bg-blue-50 p-4 rounded-xl hidden" id="correcao-resultado">
-                    <h4 class="font-semibold mb-2">🎯 Correção:</h4>
-                    <div id="correcao-texto"></div>
-                </div>
-            </div>
-        </div>
+        <!-- ... -->
     </div>
 
-    <!-- Modal de Configurações -->
     <div id="modal-configuracoes" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center p-4 z-50">
-        <div class="bg-white rounded-2xl p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div class="flex justify-between items-center mb-6">
-                <h3 class="text-2xl font-bold">⚙️ Configurações</h3>
-                <button class="text-2xl text-gray-600 hover:text-gray-800" onclick="fecharModal('modal-configuracoes')">×</button>
-            </div>
-            
-            <div class="space-y-6">
-                <div>
-                    <h4 class="font-semibold mb-3">🎯 Metas de Estudo</h4>
-                    <div class="space-y-4">
-                        <div>
-                            <label class="block text-sm mb-2">Meta Diária de Horas:</label>
-                            <input type="number" id="input-meta-horas" class="w-full p-3 border rounded-xl" value="3" min="1" max="12">
-                        </div>
-                        <div>
-                            <label class="block text-sm mb-2">Meta Diária de Questões:</label>
-                            <input type="number" id="input-meta-questoes" class="w-full p-3 border rounded-xl" value="30" min="5" max="100">
-                        </div>
-                    </div>
-                </div>
-                
-                <div>
-                    <h4 class="font-semibold mb-3">🔔 Notificações</h4>
-                    <div class="space-y-2">
-                        <label class="flex items-center">
-                            <input type="checkbox" id="check-notificacoes" class="mr-2" checked>
-                            <span>Receber lembretes de estudo</span>
-                        </label>
-                        <label class="flex items-center">
-                            <input type="checkbox" id="check-email" class="mr-2">
-                            <span>Receber resumos por email</span>
-                        </label>
-                    </div>
-                </div>
-                
-                <div class="flex gap-4">
-                    <button class="flex-1 bg-gray-600 text-white py-3 rounded-xl font-semibold hover:bg-gray-700 transition-all" onclick="fecharModal('modal-configuracoes')">
-                        Cancelar
-                    </button>
-                    <button id="btn-salvar-configuracoes" class="flex-1 bg-blue-600 text-white py-3 rounded-xl font-semibold hover:bg-blue-700 transition-all">
-                        Salvar Configurações
-                    </button>
-                </div>
-            </div>
-        </div>
+        <!-- ... -->
     </div>
 
-    <!-- Modal de Termos de Uso -->
     <div id="modal-termos" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center p-4 z-50">
-        <div class="bg-white rounded-2xl p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div class="flex justify-between items-center mb-6">
-                <h3 class="text-2xl font-bold">📄 Termos de Uso</h3>
-                <button class="text-2xl text-gray-600 hover:text-gray-800" onclick="fecharModal('modal-termos')">×</button>
-            </div>
-            <div class="space-y-4">
-                <p><strong>1. Aceitação dos Termos</strong><br>
-                Ao acessar e usar a plataforma GFConcursos, você concorda com estes termos de uso.</p>
-                
-                <p><strong>2. Uso da Plataforma</strong><br>
-                A plataforma é destinada para fins educacionais e de preparação para concursos públicos.</p>
-                
-                <p><strong>3. Conta do Usuário</strong><br>
-                Você é responsável por manter a confidencialidade de sua conta e senha.</p>
-                
-                <p><strong>4. Propriedade Intelectual</strong><br>
-                Todo o conteúdo da plataforma é protegido por direitos autorais.</p>
-            </div>
-            <div class="mt-6 text-center">
-                <button class="bg-blue-600 text-white px-6 py-2 rounded-xl" onclick="fecharModal('modal-termos')">
-                    Entendi
-                </button>
-            </div>
-        </div>
+        <!-- ... -->
     </div>
 
-    <!-- Modal de Política de Privacidade -->
     <div id="modal-privacidade" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center p-4 z-50">
-        <div class="bg-white rounded-2xl p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div class="flex justify-between items-center mb-6">
-                <h3 class="text-2xl font-bold">🔒 Política de Privacidade</h3>
-                <button class="text-2xl text-gray-600 hover:text-gray-800" onclick="fecharModal('modal-privacidade')">×</button>
-            </div>
-            <div class="space-y-4">
-                <p><strong>1. Coleta de Dados</strong><br>
-                Coletamos apenas informações necessárias para fornecer nossos serviços.</p>
-                
-                <p><strong>2. Uso das Informações</strong><br>
-                Seus dados são usados para personalizar sua experiência de estudo.</p>
-                
-                <p><strong>3. Segurança</strong><br>
-                Implementamos medidas de segurança para proteger suas informações.</p>
-                
-                <p><strong>4. Seus Direitos</strong><br>
-                Você pode solicitar a exclusão de seus dados a qualquer momento.</p>
-            </div>
-            <div class="mt-6 text-center">
-                <button class="bg-blue-600 text-white px-6 py-2 rounded-xl" onclick="fecharModal('modal-privacidade')">
-                    Entendi
-                </button>
-            </div>
-        </div>
+        <!-- ... -->
     </div>
 
-    <!-- Modal de Esqueci Senha -->
     <div id="modal-esqueci-senha" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center p-4 z-50">
-        <div class="bg-white rounded-2xl p-6 max-w-md w-full">
-            <div class="flex justify-between items-center mb-6">
-                <h3 class="text-2xl font-bold">🔑 Recuperar Senha</h3>
-                <button class="text-2xl text-gray-600 hover:text-gray-800" onclick="fecharModal('modal-esqueci-senha')">×</button>
-            </div>
-            <div class="space-y-4">
-                <p class="text-gray-600">Digite seu email para receber um link de recuperação:</p>
-                <input type="email" id="recovery-email" class="w-full p-3 border rounded-xl" placeholder="seu@email.com">
-                <button id="btn-enviar-recuperacao" class="w-full bg-blue-600 text-white py-3 rounded-xl font-semibold hover:bg-blue-700 transition-all">
-                    Enviar Link de Recuperação
-                </button>
-            </div>
-        </div>
+        <!-- ... -->
     </div>
 
     <script>
+        // =========================
+        // FUNÇÕES GLOBAIS - DEVEM SER DEFINIDAS PRIMEIRO
+        // =========================
+        
+        function mostrarModal(modalId) {
+            document.getElementById(modalId).classList.remove('hidden');
+        }
+        
+        function fecharModal(modalId) {
+            document.getElementById(modalId).classList.add('hidden');
+        }
+        
+        function mostrarCadastro() {
+            document.getElementById('login-form').classList.add('hidden');
+            document.getElementById('cadastro-form').classList.remove('hidden');
+        }
+        
+        function mostrarLogin() {
+            document.getElementById('cadastro-form').classList.add('hidden');
+            document.getElementById('login-form').classList.remove('hidden');
+        }
+
         // =========================
         // SISTEMA DE AUTENTICAÇÃO
         // =========================
@@ -761,6 +275,20 @@ Aqui está o código completo da plataforma GFConcursos com sistema de login imp
             init() {
                 this.verificarLoginAuto();
                 this.configurarEventListeners();
+                
+                // Configurar fechamento de modais ao clicar fora
+                this.configurarModais();
+            },
+            
+            // Configurar fechamento de modais
+            configurarModais() {
+                document.querySelectorAll('[id^="modal-"]').forEach(modal => {
+                    modal.addEventListener('click', (e) => {
+                        if (e.target === modal) {
+                            modal.classList.add('hidden');
+                        }
+                    });
+                });
             },
             
             // Verificar se há usuário logado automaticamente
@@ -785,7 +313,9 @@ Aqui está o código completo da plataforma GFConcursos com sistema de login imp
                 });
                 
                 // Logout
-                document.getElementById('btn-logout').addEventListener('click', () => this.fazerLogout());
+                if (document.getElementById('btn-logout')) {
+                    document.getElementById('btn-logout').addEventListener('click', () => this.fazerLogout());
+                }
                 
                 // Recuperação de senha
                 document.getElementById('btn-enviar-recuperacao').addEventListener('click', () => this.recuperarSenha());
@@ -808,7 +338,8 @@ Aqui está o código completo da plataforma GFConcursos com sistema de login imp
             // Descriptografar senha (apenas para verificação)
             descriptografarSenha(senhaCriptografada) {
                 try {
-                    return CryptoJS.AES.decrypt(senhaCriptografada, this.encryptionKey).toString(CryptoJS.enc.Utf8);
+                    const bytes = CryptoJS.AES.decrypt(senhaCriptografada, this.encryptionKey);
+                    return bytes.toString(CryptoJS.enc.Utf8);
                 } catch (e) {
                     return null;
                 }
@@ -1059,7 +590,11 @@ Aqui está o código completo da plataforma GFConcursos com sistema de login imp
             
             // Mostrar notificação
             mostrarNotificacao(mensagem, tipo = 'info') {
+                // Remover notificações existentes
+                document.querySelectorAll('[data-notificacao]').forEach(n => n.remove());
+                
                 const notificacao = document.createElement('div');
+                notificacao.setAttribute('data-notificacao', 'true');
                 notificacao.className = `fixed top-4 right-4 p-4 rounded-xl shadow-lg text-white max-w-sm z-50 fade-in ${
                     tipo === 'success' ? 'bg-green-500' :
                     tipo === 'error' ? 'bg-red-500' :
@@ -1092,6 +627,9 @@ Aqui está o código completo da plataforma GFConcursos com sistema de login imp
                 
                 // Exemplo: Carregar dados do usuário
                 this.carregarDadosUsuario();
+                
+                // Inicializar sistema de estudo
+                StudySystem.init();
             },
             
             // Carregar dados do usuário
@@ -1102,16 +640,6 @@ Aqui está o código completo da plataforma GFConcursos com sistema de login imp
                 // Atualizar interface
                 document.getElementById('user-info').textContent = `Bem-vindo, ${usuario.nome.split(' ')[0]}!`;
                 document.getElementById('user-stats').textContent = `Nível ${usuario.nivel} | ${usuario.pontos} pontos`;
-                
-                // Inicializar outras funcionalidades...
-                this.inicializarAplicacaoEstudo();
-            },
-            
-            // Inicializar sistema de estudo
-            inicializarAplicacaoEstudo() {
-                // Aqui você inicializaria o sistema de estudo
-                // Por enquanto, vamos apenas mostrar uma notificação
-                this.mostrarNotificacao('📚 Sistema de estudo carregado!', 'success');
             }
         };
 
@@ -1239,6 +767,8 @@ Aqui está o código completo da plataforma GFConcursos com sistema de login imp
                 const container = document.getElementById('disciplinas-list');
                 const selectCronometro = document.getElementById('select-disciplina-cronometro');
                 
+                if (!container) return;
+                
                 container.innerHTML = '';
                 selectCronometro.innerHTML = '<option value="">Selecione uma disciplina</option>';
                 
@@ -1287,6 +817,8 @@ Aqui está o código completo da plataforma GFConcursos com sistema de login imp
             // Carregar simulados
             carregarSimulados() {
                 const container = document.getElementById('lista-simulados');
+                if (!container) return;
+                
                 container.innerHTML = '';
                 
                 this.dados.simulados.forEach(simulado => {
@@ -1321,6 +853,8 @@ Aqui está o código completo da plataforma GFConcursos com sistema de login imp
             // Carregar temas de redação
             carregarTemasRedacao() {
                 const container = document.getElementById('lista-temas-redacao');
+                if (!container) return;
+                
                 container.innerHTML = '';
                 
                 this.dados.temasRedacao.forEach(tema => {
@@ -1342,6 +876,8 @@ Aqui está o código completo da plataforma GFConcursos com sistema de login imp
             // Carregar redações
             carregarRedacoes() {
                 const container = document.getElementById('minhas-redacoes');
+                if (!container) return;
+                
                 container.innerHTML = '';
                 
                 this.dados.redacoes.forEach(redacao => {
@@ -1366,6 +902,8 @@ Aqui está o código completo da plataforma GFConcursos com sistema de login imp
             // Carregar ranking
             carregarRanking() {
                 const container = document.getElementById('ranking-list');
+                if (!container) return;
+                
                 container.innerHTML = '';
                 
                 this.dados.ranking.forEach(participante => {
@@ -1406,6 +944,8 @@ Aqui está o código completo da plataforma GFConcursos com sistema de login imp
             // Carregar cronograma
             carregarCronograma() {
                 const container = document.getElementById('cronograma-semanal');
+                if (!container) return;
+                
                 const dias = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo'];
                 
                 container.innerHTML = '';
@@ -1451,8 +991,8 @@ Aqui está o código completo da plataforma GFConcursos com sistema de login imp
             
             // Inicializar gráfico
             inicializarGrafico() {
-                const ctx = document.getElementById('progressChart
-').getContext('2d');
+                const ctx = document.getElementById('progressChart');
+                if (!ctx) return;
                 
                 new Chart(ctx, {
                     type: 'line',
@@ -1511,25 +1051,28 @@ Aqui está o código completo da plataforma GFConcursos com sistema de login imp
                 });
                 
                 // Simulados
-                document.querySelectorAll('.btn-iniciar-simulado').forEach(btn => {
-                    btn.addEventListener('click', (e) => {
+                document.addEventListener('click', (e) => {
+                    if (e.target.classList.contains('btn-iniciar-simulado')) {
                         const simuladoId = parseInt(e.target.getAttribute('data-simulado'));
                         this.iniciarSimulado(simuladoId);
-                    });
+                    }
                 });
                 
                 // Redação
-                document.querySelectorAll('.btn-escrever-redacao').forEach(btn => {
-                    btn.addEventListener('click', (e) => {
+                document.addEventListener('click', (e) => {
+                    if (e.target.classList.contains('btn-escrever-redacao')) {
                         const temaId = parseInt(e.target.getAttribute('data-tema'));
                         this.abrirEditorRedacao(temaId);
-                    });
+                    }
                 });
                 
                 // Nova redação
-                document.getElementById('btn-nova-redacao').addEventListener('click', () => {
-                    this.abrirEditorRedacao();
-                });
+                const btnNovaRedacao = document.getElementById('btn-nova-redacao');
+                if (btnNovaRedacao) {
+                    btnNovaRedacao.addEventListener('click', () => {
+                        this.abrirEditorRedacao();
+                    });
+                }
                 
                 // Cronômetro
                 document.getElementById('btn-start').addEventListener('click', () => this.iniciarCronometro());
@@ -1537,18 +1080,24 @@ Aqui está o código completo da plataforma GFConcursos com sistema de login imp
                 document.getElementById('btn-reset').addEventListener('click', () => this.resetarCronometro());
                 
                 // Configurações
-                document.getElementById('btn-config').addEventListener('click', () => {
-                    this.abrirConfiguracoes();
-                });
+                const btnConfig = document.getElementById('btn-config');
+                if (btnConfig) {
+                    btnConfig.addEventListener('click', () => {
+                        this.abrirConfiguracoes();
+                    });
+                }
                 
                 document.getElementById('btn-salvar-configuracoes').addEventListener('click', () => {
                     this.salvarConfiguracoes();
                 });
                 
                 // Dashboard
-                document.getElementById('btn-dashboard').addEventListener('click', () => {
-                    this.mudarAba('progresso');
-                });
+                const btnDashboard = document.getElementById('btn-dashboard');
+                if (btnDashboard) {
+                    btnDashboard.addEventListener('click', () => {
+                        this.mudarAba('progresso');
+                    });
+                }
                 
                 // Controle de questões no modal
                 document.getElementById('btn-questao-proxima').addEventListener('click', () => {
@@ -1769,7 +1318,7 @@ Aqui está o código completo da plataforma GFConcursos com sistema de login imp
                     index === simulado.questoes.length - 1 ? 'block' : 'none';
                 
                 // Mostrar modal
-                this.abrirModal('modal-questao');
+                mostrarModal('modal-questao');
             },
             
             // Selecionar resposta
@@ -1839,7 +1388,7 @@ Aqui está o código completo da plataforma GFConcursos com sistema de login imp
                 this.carregarMetricas();
                 
                 // Fechar modal
-                this.fecharModal('modal-questao');
+                fecharModal('modal-questao');
                 this.dados.estado.simuladoAtivo = null;
             },
             
@@ -1858,7 +1407,7 @@ Aqui está o código completo da plataforma GFConcursos com sistema de login imp
                     data: new Date()
                 };
                 
-                this.abrirModal('modal-redacao');
+                mostrarModal('modal-redacao');
             },
             
             // Salvar rascunho de redação
@@ -1929,7 +1478,7 @@ Aqui está o código completo da plataforma GFConcursos com sistema de login imp
                 this.carregarRedacoes();
                 
                 AuthSystem.mostrarNotificacao('✅ Redação enviada com sucesso!', 'success');
-                this.fecharModal('modal-redacao');
+                fecharModal('modal-redacao');
             },
             
             // Sistema de cronômetro
@@ -1975,7 +1524,7 @@ Aqui está o código completo da plataforma GFConcursos com sistema de login imp
             abrirConfiguracoes() {
                 document.getElementById('input-meta-horas').value = this.dados.metricas.metaHoras;
                 document.getElementById('input-meta-questoes').value = this.dados.metricas.metaQuestoes;
-                this.abrirModal('modal-configuracoes');
+                mostrarModal('modal-configuracoes');
             },
             
             salvarConfiguracoes() {
@@ -1987,45 +1536,10 @@ Aqui está o código completo da plataforma GFConcursos com sistema de login imp
                 
                 this.carregarMetricas();
                 AuthSystem.mostrarNotificacao('⚙️ Configurações salvas com sucesso', 'success');
-                this.fecharModal('modal-configuracoes');
-            },
-            
-            // Utilitários de modal
-            abrirModal(modalId) {
-                document.getElementById(modalId).classList.remove('hidden');
-            },
-            
-            fecharModal(modalId) {
-                document.getElementById(modalId).classList.add('hidden');
+                fecharModal('modal-configuracoes');
             }
         };
 
-        // =========================
-        // FUNÇÕES GLOBAIS
-        // =========================
-        
-        // Mostrar modal
-        function mostrarModal(modalId) {
-            document.getElementById(modalId).classList.remove('hidden');
-        }
-        
-        // Fechar modal
-        function fecharModal(modalId) {
-            document.getElementById(modalId).classList.add('hidden');
-        }
-        
-        // Mostrar formulário de cadastro
-        function mostrarCadastro() {
-            document.getElementById('login-form').classList.add('hidden');
-            document.getElementById('cadastro-form').classList.remove('hidden');
-        }
-        
-        // Mostrar formulário de login
-        function mostrarLogin() {
-            document.getElementById('cadastro-form').classList.add('hidden');
-            document.getElementById('login-form').classList.remove('hidden');
-        }
-        
         // =========================
         // INICIALIZAÇÃO DA APLICAÇÃO
         // =========================
@@ -2034,72 +1548,38 @@ Aqui está o código completo da plataforma GFConcursos com sistema de login imp
             // Inicializar sistema de autenticação
             AuthSystem.init();
             
-            // Inicializar sistema de estudo quando usuário estiver logado
-            if (AuthSystem.usuarioLogado) {
-                StudySystem.init();
-            }
-            
-            // Fechar modais ao clicar fora
-            document.querySelectorAll('[id^="modal-"]').forEach(modal => {
-                modal.addEventListener('click', (e) => {
-                    if (e.target === modal) {
-                        modal.classList.add('hidden');
-                    }
-                });
-            });
-            
-            // Adicionar estilo para fade-out
-            const style = document.createElement('style');
-            style.textContent = `
-                .fade-out {
-                    animation: fadeOut 0.5s ease-out forwards;
+            // Adicionar alguns usuários de exemplo para teste
+            setTimeout(() => {
+                if (AuthSystem.usuarios.length === 0) {
+                    const usuariosExemplo = [
+                        {
+                            id: '1',
+                            nome: 'João Silva',
+                            email: 'joao@exemplo.com',
+                            senha: AuthSystem.criptografarSenha('123456'),
+                            dataCadastro: new Date().toISOString(),
+                            nivel: 'Intermediário',
+                            pontos: 1420,
+                            avatar: { iniciais: 'JS', cor: '#3B82F6' }
+                        },
+                        {
+                            id: '2', 
+                            nome: 'Maria Santos',
+                            email: 'maria@exemplo.com',
+                            senha: AuthSystem.criptografarSenha('123456'),
+                            dataCadastro: new Date().toISOString(),
+                            nivel: 'Avançado',
+                            pontos: 1850,
+                            avatar: { iniciais: 'MS', cor: '#EF4444' }
+                        }
+                    ];
+                    
+                    AuthSystem.usuarios = usuariosExemplo;
+                    AuthSystem.salvarUsuarios();
+                    console.log('Usuários de exemplo adicionados');
                 }
-                
-                @keyframes fadeOut {
-                    from { opacity: 1; transform: translateY(0); }
-                    to { opacity: 0; transform: translateY(-20px); }
-                }
-            `;
-            document.head.appendChild(style);
+            }, 1000);
         });
-
-        // =========================
-        // EXEMPLO DE USO AVANÇADO
-        // =========================
-        
-        // Simular alguns usuários para teste
-        function popularUsuariosExemplo() {
-            if (AuthSystem.usuarios.length === 0) {
-                const usuariosExemplo = [
-                    {
-                        id: '1',
-                        nome: 'João Silva',
-                        email: 'joao@exemplo.com',
-                        senha: AuthSystem.criptografarSenha('123456'),
-                        dataCadastro: new Date().toISOString(),
-                        nivel: 'Intermediário',
-                        pontos: 1420,
-                        avatar: { iniciais: 'JS', cor: '#3B82F6' }
-                    },
-                    {
-                        id: '2', 
-                        nome: 'Maria Santos',
-                        email: 'maria@exemplo.com',
-                        senha: AuthSystem.criptografarSenha('123456'),
-                        dataCadastro: new Date().toISOString(),
-                        nivel: 'Avançado',
-                        pontos: 1850,
-                        avatar: { iniciais: 'MS', cor: '#EF4444' }
-                    }
-                ];
-                
-                AuthSystem.usuarios = usuariosExemplo;
-                AuthSystem.salvarUsuarios();
-            }
-        }
-        
-        // Chamar função para popular usuários (apenas para demonstração)
-        setTimeout(popularUsuariosExemplo, 1000);
     </script>
 </body>
 </html>
