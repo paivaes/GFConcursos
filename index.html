@@ -313,19 +313,19 @@
                                 <h3 class="text-2xl font-bold gradient-text mb-6">📊 Métricas do Dia</h3>
                                 <div class="grid grid-cols-2 gap-4">
                                     <div class="bg-white p-4 rounded-xl text-center shadow">
-                                        <div class="text-3xl font-bold text-blue-600" id="metric-tempo">2.5h</div>
+                                        <div class="text-3xl font-bold text-blue-600" id="metric-tempo">0h</div>
                                         <div class="text-sm text-gray-600">Tempo Estudado</div>
                                     </div>
                                     <div class="bg-white p-4 rounded-xl text-center shadow">
-                                        <div class="text-3xl font-bold text-green-600" id="metric-questoes">24</div>
+                                        <div class="text-3xl font-bold text-green-600" id="metric-questoes">0</div>
                                         <div class="text-sm text-gray-600">Questões Feitas</div>
                                     </div>
                                     <div class="bg-white p-4 rounded-xl text-center shadow">
-                                        <div class="text-3xl font-bold text-purple-600" id="metric-acerto">75%</div>
+                                        <div class="text-3xl font-bold text-purple-600" id="metric-acerto">0%</div>
                                         <div class="text-sm text-gray-600">Taxa de Acerto</div>
                                     </div>
                                     <div class="bg-white p-4 rounded-xl text-center shadow">
-                                        <div class="text-3xl font-bold text-yellow-600" id="metric-dias">7</div>
+                                        <div class="text-3xl font-bold text-yellow-600" id="metric-dias">0</div>
                                         <div class="text-sm text-gray-600">Dias Consecutivos</div>
                                     </div>
                                 </div>
@@ -333,7 +333,7 @@
                                     <div class="font-semibold">🎯 Meta Diária</div>
                                     <div class="text-sm">3h de estudo | 30 questões</div>
                                     <div class="w-full bg-white/20 rounded-full h-2 mt-2">
-                                        <div class="bg-white h-2 rounded-full progress-bar" id="meta-progresso" style="width: 83%"></div>
+                                        <div class="bg-white h-2 rounded-full progress-bar" id="meta-progresso" style="width: 0%"></div>
                                     </div>
                                 </div>
                             </div>
@@ -429,11 +429,11 @@
                                 </div>
                                 <div class="grid grid-cols-2 gap-4 mt-6">
                                     <div class="bg-white p-4 rounded-xl text-center shadow">
-                                        <div class="text-2xl font-bold text-blue-600" id="total-horas">156h</div>
+                                        <div class="text-2xl font-bold text-blue-600" id="total-horas">0h</div>
                                         <div class="text-sm text-gray-600">Total de Horas</div>
                                     </div>
                                     <div class="bg-white p-4 rounded-xl text-center shadow">
-                                        <div class="text-2xl font-bold text-green-600" id="total-questoes">1,245</div>
+                                        <div class="text-2xl font-bold text-green-600" id="total-questoes">0</div>
                                         <div class="text-sm text-gray-600">Questões Resolvidas</div>
                                     </div>
                                 </div>
@@ -685,17 +685,111 @@
                 }
             },
             
-            criptografarSenha(senha) {
-                return CryptoJS.AES.encrypt(senha, this.encryptionKey).toString();
+            fazerLogin() {
+                const email = document.getElementById('login-email')?.value.trim();
+                const senha = document.getElementById('login-password')?.value;
+                const lembrar = document.getElementById('remember-me')?.checked;
+                
+                if (!email || !senha) {
+                    this.mostrarNotificacao('Por favor, preencha todos os campos', 'error');
+                    return;
+                }
+                
+                const usuario = this.usuarios.find(u => u.email === email);
+                
+                if (!usuario) {
+                    this.mostrarNotificacao('Email não cadastrado', 'error');
+                    return;
+                }
+                
+                const senhaDescriptografada = this.descriptografar(usuario.senha);
+                
+                if (senha === senhaDescriptografada) {
+                    this.usuarioLogado = usuario;
+                    
+                    if (lembrar) {
+                        localStorage.setItem('gfconcursos_usuario_logado', JSON.stringify(usuario));
+                    } else {
+                        sessionStorage.setItem('gfconcursos_usuario_logado', JSON.stringify(usuario));
+                    }
+                    
+                    this.entrarNaAplicacao(usuario);
+                    this.mostrarNotificacao(`Bem-vindo de volta, ${usuario.nome}!`, 'success');
+                } else {
+                    this.mostrarNotificacao('Senha incorreta', 'error');
+                }
             },
             
-            descriptografarSenha(senhaCriptografada) {
-                try {
-                    const bytes = CryptoJS.AES.decrypt(senhaCriptografada, this.encryptionKey);
-                    return bytes.toString(CryptoJS.enc.Utf8);
-                } catch (e) {
-                    return null;
+            fazerCadastro() {
+                const nome = document.getElementById('cadastro-nome')?.value.trim();
+                const email = document.getElementById('cadastro-email')?.value.trim();
+                const senha = document.getElementById('cadastro-password')?.value;
+                const confirmSenha = document.getElementById('cadastro-confirm-password')?.value;
+                const aceitarTermos = document.getElementById('aceitar-termos')?.checked;
+                
+                if (!nome || !email || !senha || !confirmSenha) {
+                    this.mostrarNotificacao('Por favor, preencha todos os campos', 'error');
+                    return;
                 }
+                
+                if (!aceitarTermos) {
+                    this.mostrarNotificacao('Você precisa aceitar os termos de uso', 'error');
+                    return;
+                }
+                
+                if (senha !== confirmSenha) {
+                    this.mostrarNotificacao('As senhas não coincidem', 'error');
+                    return;
+                }
+                
+                if (senha.length < 6) {
+                    this.mostrarNotificacao('A senha deve ter pelo menos 6 caracteres', 'error');
+                    return;
+                }
+                
+                if (this.usuarios.find(u => u.email === email)) {
+                    this.mostrarNotificacao('Este email já está cadastrado', 'error');
+                    return;
+                }
+                
+                const senhaCriptografada = this.criptografar(senha);
+                const novoUsuario = {
+                    id: Date.now().toString(),
+                    nome,
+                    email,
+                    senha: senhaCriptografada,
+                    dataCadastro: new Date().toISOString(),
+                    dados: this.criarDadosUsuarioPadrao()
+                };
+                
+                this.usuarios.push(novoUsuario);
+                localStorage.setItem('gfconcursos_usuarios', JSON.stringify(this.usuarios));
+                
+                this.mostrarNotificacao('Cadastro realizado com sucesso!', 'success');
+                setTimeout(() => {
+                    mostrarLogin();
+                    document.getElementById('login-email').value = email;
+                    document.getElementById('login-password').value = '';
+                }, 1500);
+            },
+            
+            recuperarSenha() {
+                const email = document.getElementById('recovery-email')?.value.trim();
+                
+                if (!email) {
+                    this.mostrarNotificacao('Por favor, digite seu email', 'error');
+                    return;
+                }
+                
+                const usuario = this.usuarios.find(u => u.email === email);
+                
+                if (!usuario) {
+                    this.mostrarNotificacao('Email não encontrado', 'error');
+                    return;
+                }
+                
+                this.mostrarNotificacao('Instruções de recuperação enviadas para seu email', 'success');
+                fecharModal('modal-esqueci-senha');
             },
             
             validarForcaSenha(senha) {
@@ -703,1018 +797,419 @@
                 if (!strengthDiv) return;
                 
                 let strength = 0;
-                let feedback = '';
+                let message = '';
+                let color = 'red';
                 
                 if (senha.length >= 6) strength++;
                 if (senha.match(/[a-z]/) && senha.match(/[A-Z]/)) strength++;
                 if (senha.match(/\d/)) strength++;
                 if (senha.match(/[^a-zA-Z\d]/)) strength++;
                 
-                switch(strength) {
+                switch (strength) {
                     case 0:
                     case 1:
-                        feedback = '<span class="text-red-500">Senha fraca</span>';
+                        message = 'Senha fraca';
+                        color = 'red';
                         break;
                     case 2:
-                        feedback = '<span class="text-yellow-500">Senha média</span>';
+                        message = 'Senha moderada';
+                        color = 'orange';
                         break;
                     case 3:
-                        feedback = '<span class="text-green-500">Senha forte</span>';
+                        message = 'Senha boa';
+                        color = 'blue';
                         break;
                     case 4:
-                        feedback = '<span class="text-green-600 font-semibold">Senha muito forte</span>';
+                        message = 'Senha forte';
+                        color = 'green';
                         break;
                 }
                 
-                strengthDiv.innerHTML = feedback;
+                strengthDiv.textContent = message;
+                strengthDiv.style.color = color;
             },
             
             validarConfirmacaoSenha() {
-                const senha = document.getElementById('cadastro-password').value;
-                const confirmacao = document.getElementById('cadastro-confirm-password').value;
+                const senha = document.getElementById('cadastro-password')?.value;
+                const confirmSenha = document.getElementById('cadastro-confirm-password')?.value;
                 const errorDiv = document.getElementById('password-match-error');
                 
-                if (errorDiv) {
-                    if (confirmacao && senha !== confirmacao) {
-                        errorDiv.classList.remove('hidden');
-                    } else {
-                        errorDiv.classList.add('hidden');
-                    }
+                if (!errorDiv) return;
+                
+                if (senha && confirmSenha && senha !== confirmSenha) {
+                    errorDiv.classList.remove('hidden');
+                } else {
+                    errorDiv.classList.add('hidden');
                 }
             },
             
-            fazerLogin() {
-                const email = document.getElementById('login-email').value;
-                const senha = document.getElementById('login-password').value;
-                const remember = document.getElementById('remember-me').checked;
-                
-                if (!email || !senha) {
-                    alert('Por favor, preencha todos os campos.');
-                    return;
+            criptografar(texto) {
+                try {
+                    return CryptoJS.AES.encrypt(texto, this.encryptionKey).toString();
+                } catch (e) {
+                    console.error('Erro na criptografia:', e);
+                    return texto;
                 }
-                
-                const usuario = this.usuarios.find(u => u.email === email);
-                
-                if (!usuario) {
-                    alert('Email não encontrado. Verifique ou cadastre-se.');
-                    return;
-                }
-                
-                const senhaDescriptografada = this.descriptografarSenha(usuario.senha);
-                
-                if (senhaDescriptografada !== senha) {
-                    alert('Senha incorreta. Tente novamente.');
-                    return;
-                }
-                
-                this.usuarioLogado = usuario;
-                
-                if (remember) {
-                    localStorage.setItem('gfconcursos_usuario_logado', JSON.stringify(usuario));
-                }
-                
-                this.entrarNaAplicacao(usuario);
             },
             
-            fazerCadastro() {
-                const nome = document.getElementById('cadastro-nome').value;
-                const email = document.getElementById('cadastro-email').value;
-                const senha = document.getElementById('cadastro-password').value;
-                const confirmacao = document.getElementById('cadastro-confirm-password').value;
-                const aceitarTermos = document.getElementById('aceitar-termos').checked;
-                
-                if (!nome || !email || !senha || !confirmacao) {
-                    alert('Por favor, preencha todos os campos.');
-                    return;
+            descriptografar(textoCriptografado) {
+                try {
+                    const bytes = CryptoJS.AES.decrypt(textoCriptografado, this.encryptionKey);
+                    return bytes.toString(CryptoJS.enc.Utf8);
+                } catch (e) {
+                    console.error('Erro na descriptografia:', e);
+                    return textoCriptografado;
                 }
-                
-                if (senha !== confirmacao) {
-                    alert('As senhas não coincidem.');
-                    return;
-                }
-                
-                if (senha.length < 6) {
-                    alert('A senha deve ter pelo menos 6 caracteres.');
-                    return;
-                }
-                
-                if (!aceitarTermos) {
-                    alert('Você deve aceitar os termos de uso e política de privacidade.');
-                    return;
-                }
-                
-                if (this.usuarios.find(u => u.email === email)) {
-                    alert('Este email já está cadastrado.');
-                    return;
-                }
-                
-                const novoUsuario = {
-                    id: Date.now().toString(),
-                    nome: nome,
-                    email: email,
-                    senha: this.criptografarSenha(senha),
-                    dataCadastro: new Date().toISOString(),
-                    preferencias: {
-                        tema: 'claro',
-                        notificacoes: true
-                    },
+            },
+            
+            criarDadosUsuarioPadrao() {
+                return {
+                    disciplinas: [
+                        { id: '1', nome: 'Português', cor: '#3B82F6', horasEstudadas: 0, questoesResolvidas: 0 },
+                        { id: '2', nome: 'Matemática', cor: '#10B981', horasEstudadas: 0, questoesResolvidas: 0 },
+                        { id: '3', nome: 'Direito Constitucional', cor: '#8B5CF6', horasEstudadas: 0, questoesResolvidas: 0 }
+                    ],
+                    cronograma: [],
+                    simulados: [],
+                    redacoes: [],
                     progresso: {
                         totalHoras: 0,
                         totalQuestoes: 0,
                         diasConsecutivos: 0,
                         ultimoAcesso: new Date().toISOString()
+                    },
+                    configuracoes: {
+                        tema: 'claro',
+                        notificacoes: true,
+                        metaDiaria: { horas: 3, questoes: 30 }
                     }
                 };
-                
-                this.usuarios.push(novoUsuario);
-                localStorage.setItem('gfconcursos_usuarios', JSON.stringify(this.usuarios));
-                
-                this.usuarioLogado = novoUsuario;
-                localStorage.setItem('gfconcursos_usuario_logado', JSON.stringify(novoUsuario));
-                
-                alert('Cadastro realizado com sucesso! Bem-vindo ao GFConcursos!');
-                this.entrarNaAplicacao(novoUsuario);
-            },
-            
-            recuperarSenha() {
-                const email = document.getElementById('recovery-email').value;
-                
-                if (!email) {
-                    alert('Por favor, digite seu email.');
-                    return;
-                }
-                
-                const usuario = this.usuarios.find(u => u.email === email);
-                
-                if (!usuario) {
-                    alert('Email não encontrado em nossa base de dados.');
-                    return;
-                }
-                
-                alert(`Instruções de recuperação de senha foram enviadas para: ${email}\n\n(Esta é uma demonstração - em um sistema real, um email seria enviado)`);
-                fecharModal('modal-esqueci-senha');
-            },
-            
-            fazerLogout() {
-                this.usuarioLogado = null;
-                localStorage.removeItem('gfconcursos_usuario_logado');
-                
-                document.getElementById('login-system').classList.remove('hidden');
-                document.getElementById('app-wrapper').classList.add('hidden');
-                
-                document.getElementById('login-email').value = '';
-                document.getElementById('login-password').value = '';
-                
-                alert('Você saiu da sua conta. Volte sempre!');
             },
             
             entrarNaAplicacao(usuario) {
-                console.log('Entrando na aplicação para:', usuario.nome);
+                const loginSystem = document.getElementById('login-system');
+                const appWrapper = document.getElementById('app-wrapper');
                 
-                document.getElementById('login-system').classList.add('fade-out');
+                if (loginSystem) loginSystem.classList.add('fade-out');
                 
                 setTimeout(() => {
-                    document.getElementById('login-system').classList.add('hidden');
-                    document.getElementById('app-wrapper').classList.remove('hidden');
+                    if (loginSystem) loginSystem.classList.add('hidden');
+                    if (appWrapper) appWrapper.classList.remove('hidden');
                     
-                    document.getElementById('user-info').textContent = `Olá, ${usuario.nome}!`;
-                    document.getElementById('user-stats').textContent = 
-                        `${usuario.progresso.totalHoras}h estudadas | ${usuario.progresso.totalQuestoes} questões`;
-                    
-                    AppSystem.init();
+                    // Inicializar aplicação principal
+                    if (window.GFConcursosApp) {
+                        window.GFConcursosApp.init(usuario);
+                    }
                 }, 500);
+            },
+            
+            sair() {
+                this.usuarioLogado = null;
+                localStorage.removeItem('gfconcursos_usuario_logado');
+                sessionStorage.removeItem('gfconcursos_usuario_logado');
+                
+                const loginSystem = document.getElementById('login-system');
+                const appWrapper = document.getElementById('app-wrapper');
+                
+                if (appWrapper) appWrapper.classList.add('hidden');
+                if (loginSystem) {
+                    loginSystem.classList.remove('hidden', 'fade-out');
+                    document.getElementById('login-email').value = '';
+                    document.getElementById('login-password').value = '';
+                }
+                
+                this.mostrarNotificacao('Logout realizado com sucesso', 'success');
+            },
+            
+            mostrarNotificacao(mensagem, tipo = 'info') {
+                // Implementação simples de notificação
+                console.log(`[${tipo.toUpperCase()}] ${mensagem}`);
+                
+                // Aqui você pode implementar um sistema de notificações mais sofisticado
+                const cores = {
+                    success: 'green',
+                    error: 'red',
+                    warning: 'yellow',
+                    info: 'blue'
+                };
+                
+                // Exemplo simples com alert (substituir por sistema de notificações bonito)
+                if (tipo === 'error') {
+                    alert(`❌ ${mensagem}`);
+                } else if (tipo === 'success') {
+                    alert(`✅ ${mensagem}`);
+                }
             }
         };
 
         // =========================
-        // SISTEMA PRINCIPAL DA APLICAÇÃO
+        // APLICAÇÃO PRINCIPAL
         // =========================
-        const AppSystem = {
-            currentTab: 'estudo',
-            disciplinas: [],
-            tarefas: [],
-            simulados: [],
-            redacoes: [],
+        const GFConcursosApp = {
+            usuario: null,
+            dados: null,
             
-            init() {
-                this.carregarDadosUsuario();
+            init(usuario) {
+                this.usuario = usuario;
+                this.dados = usuario.dados;
+                
                 this.configurarNavegacao();
-                this.configurarBotoes();
-                this.carregarConteudoInicial();
-                this.inicializarGraficos();
-                this.atualizarMetricas();
-            },
-            
-            carregarDadosUsuario() {
-                const usuario = AuthSystem.usuarioLogado;
-                if (!usuario) return;
+                this.configurarEventListeners();
+                this.carregarDadosUsuario();
+                this.atualizarInterface();
                 
-                this.disciplinas = usuario.disciplinas || [];
-                this.tarefas = usuario.tarefas || [];
-                this.simulados = usuario.simulados || [];
-                this.redacoes = usuario.redacoes || [];
-            },
-            
-            salvarDadosUsuario() {
-                const usuario = AuthSystem.usuarioLogado;
-                if (!usuario) return;
-                
-                usuario.disciplinas = this.disciplinas;
-                usuario.tarefas = this.tarefas;
-                usuario.simulados = this.simulados;
-                usuario.redacoes = this.redacoes;
-                
-                const usuarios = AuthSystem.usuarios;
-                const index = usuarios.findIndex(u => u.id === usuario.id);
-                if (index !== -1) {
-                    usuarios[index] = usuario;
-                    localStorage.setItem('gfconcursos_usuarios', JSON.stringify(usuarios));
-                    localStorage.setItem('gfconcursos_usuario_logado', JSON.stringify(usuario));
-                }
+                console.log('Aplicação inicializada para:', usuario.nome);
             },
             
             configurarNavegacao() {
                 const tabButtons = document.querySelectorAll('.tab-button');
+                const tabContents = document.querySelectorAll('.tab-content');
+                
                 tabButtons.forEach(button => {
                     button.addEventListener('click', () => {
-                        const tab = button.getAttribute('data-tab');
-                        this.mudarAba(tab);
+                        const tabId = button.getAttribute('data-tab');
+                        
+                        // Atualizar botões ativos
+                        tabButtons.forEach(btn => btn.classList.remove('active'));
+                        button.classList.add('active');
+                        
+                        // Atualizar conteúdo visível
+                        tabContents.forEach(content => content.classList.add('hidden'));
+                        document.getElementById(`tab-content-${tabId}`).classList.remove('hidden');
                     });
                 });
             },
             
-            mudarAba(tab) {
-                // Remover classe active de todas as abas
-                document.querySelectorAll('.tab-button').forEach(btn => {
-                    btn.classList.remove('active');
-                });
-                
-                // Adicionar classe active à aba atual
-                document.querySelector(`[data-tab="${tab}"]`).classList.add('active');
-                
-                // Esconder todos os conteúdos
-                document.querySelectorAll('.tab-content').forEach(content => {
-                    content.classList.add('hidden');
-                });
-                
-                // Mostrar conteúdo da aba atual
-                const tabContent = document.getElementById(`tab-content-${tab}`);
-                if (tabContent) {
-                    tabContent.classList.remove('hidden');
-                    tabContent.classList.add('fade-in');
-                    
-                    setTimeout(() => {
-                        tabContent.classList.remove('fade-in');
-                    }, 500);
-                }
-                
-                this.currentTab = tab;
-                
-                // Carregar conteúdo específico da aba
-                switch(tab) {
-                    case 'estudo':
-                        this.carregarDisciplinas();
-                        break;
-                    case 'cronograma':
-                        this.carregarCronograma();
-                        break;
-                    case 'simulados':
-                        this.carregarSimulados();
-                        break;
-                    case 'redacao':
-                        this.carregarRedacoes();
-                        break;
-                    case 'progresso':
-                        this.atualizarGraficos();
-                        break;
-                    case 'comunidade':
-                        this.carregarComunidade();
-                        break;
-                }
-            },
-            
-            configurarBotoes() {
-                // Botões do header
-                document.getElementById('btn-dashboard').addEventListener('click', () => {
-                    this.mostrarDashboard();
-                });
-                
-                document.getElementById('btn-config').addEventListener('click', () => {
-                    this.mostrarConfiguracoes();
-                });
-                
-                document.getElementById('btn-logout').addEventListener('click', () => {
-                    AuthSystem.fazerLogout();
-                });
+            configurarEventListeners() {
+                // Botões principais
+                document.getElementById('btn-logout')?.addEventListener('click', () => AuthSystem.sair());
+                document.getElementById('btn-dashboard')?.addEventListener('click', () => this.mostrarDashboard());
+                document.getElementById('btn-config')?.addEventListener('click', () => this.mostrarConfiguracoes());
                 
                 // Botões da área de estudo
-                document.getElementById('btn-add-disciplina').addEventListener('click', () => {
-                    mostrarModal('modal-nova-disciplina');
-                });
-                
-                document.getElementById('btn-confirmar-disciplina').addEventListener('click', () => {
-                    this.adicionarDisciplina();
-                });
-                
-                document.getElementById('btn-iniciar-sessao').addEventListener('click', () => {
-                    this.iniciarSessaoEstudo();
-                });
+                document.getElementById('btn-add-disciplina')?.addEventListener('click', () => this.abrirModalNovaDisciplina());
+                document.getElementById('btn-confirmar-disciplina')?.addEventListener('click', () => this.adicionarDisciplina());
+                document.getElementById('btn-iniciar-sessao')?.addEventListener('click', () => this.iniciarSessaoEstudo());
                 
                 // Botões de prática rápida
                 document.querySelectorAll('.btn-pratica-rapida').forEach(btn => {
-                    btn.addEventListener('click', () => {
-                        const questoes = btn.getAttribute('data-questoes');
-                        const disciplina = btn.getAttribute('data-disciplina');
+                    btn.addEventListener('click', (e) => {
+                        const questoes = e.currentTarget.getAttribute('data-questoes');
+                        const disciplina = e.currentTarget.getAttribute('data-disciplina');
                         this.iniciarPraticaRapida(questoes, disciplina);
                     });
                 });
-                
-                // Botões do cronograma
-                document.getElementById('btn-nova-tarefa').addEventListener('click', () => {
-                    this.adicionarTarefa();
-                });
-                
-                // Botões de simulados
-                document.getElementById('btn-novo-simulado').addEventListener('click', () => {
-                    this.criarSimulado();
-                });
-                
-                document.getElementById('btn-exportar-resultados').addEventListener('click', () => {
-                    this.exportarResultados();
-                });
-                
-                // Botões de redação
-                document.getElementById('btn-salvar-redacao').addEventListener('click', () => {
-                    this.salvarRedacao();
-                });
-                
-                document.getElementById('btn-corrigir-redacao').addEventListener('click', () => {
-                    this.solicitarCorrecaoRedacao();
-                });
-                
-                // Botões de progresso
-                document.getElementById('btn-definir-meta').addEventListener('click', () => {
-                    this.definirNovaMeta();
-                });
-                
-                // Botões da comunidade
-                document.getElementById('btn-atualizar-ranking').addEventListener('click', () => {
-                    this.atualizarRanking();
-                });
-                
-                document.getElementById('btn-nova-discussao').addEventListener('click', () => {
-                    this.novaDiscussao();
-                });
-                
-                document.getElementById('btn-criar-grupo').addEventListener('click', () => {
-                    this.criarGrupoEstudo();
-                });
             },
             
-            carregarConteudoInicial() {
+            carregarDadosUsuario() {
+                // Atualizar informações do usuário
+                const userInfo = document.getElementById('user-info');
+                if (userInfo) {
+                    userInfo.textContent = `Olá, ${this.usuario.nome}!`;
+                }
+                
+                // Carregar disciplinas
                 this.carregarDisciplinas();
+                
+                // Carregar métricas
+                this.atualizarMetricas();
+                
+                // Carregar cronograma
                 this.carregarCronograma();
-                this.carregarSimulados();
-                this.carregarRedacoes();
-                this.carregarComunidade();
             },
             
-            // =========================
-            // ÁREA DE ESTUDO
-            // =========================
             carregarDisciplinas() {
                 const container = document.getElementById('disciplinas-list');
                 if (!container) return;
                 
-                if (this.disciplinas.length === 0) {
-                    container.innerHTML = `
-                        <div class="text-center text-gray-500 py-8">
-                            <p>Nenhuma disciplina cadastrada ainda.</p>
-                            <p class="text-sm">Clique em "Adicionar Disciplina" para começar.</p>
-                        </div>
-                    `;
-                    return;
-                }
+                container.innerHTML = '';
                 
-                container.innerHTML = this.disciplinas.map(disciplina => `
-                    <div class="priority-item bg-white p-4 rounded-xl shadow border-l-4" style="border-left-color: ${disciplina.cor}">
+                this.dados.disciplinas.forEach(disciplina => {
+                    const div = document.createElement('div');
+                    div.className = 'bg-white p-4 rounded-xl shadow-sm border border-gray-200';
+                    div.innerHTML = `
                         <div class="flex justify-between items-center">
-                            <div>
-                                <div class="font-semibold">${disciplina.nome}</div>
-                                <div class="text-sm text-gray-600">
-                                    ${disciplina.questoes || 0} questões | ${disciplina.horas || 0}h estudadas
-                                </div>
+                            <div class="flex items-center">
+                                <div class="w-4 h-4 rounded-full mr-3" style="background-color: ${disciplina.cor}"></div>
+                                <span class="font-semibold">${disciplina.nome}</span>
                             </div>
-                            <div class="flex gap-2">
-                                <button class="btn-estudar-disciplina p-2 text-blue-600 hover:bg-blue-100 rounded" data-id="${disciplina.id}">
-                                    📚
-                                </button>
-                                <button class="btn-editar-disciplina p-2 text-green-600 hover:bg-green-100 rounded" data-id="${disciplina.id}">
-                                    ✏️
-                                </button>
-                                <button class="btn-excluir-disciplina p-2 text-red-600 hover:bg-red-100 rounded" data-id="${disciplina.id}">
-                                    🗑️
-                                </button>
+                            <div class="text-sm text-gray-600">
+                                ${disciplina.horasEstudadas}h | ${disciplina.questoesResolvidas} questões
                             </div>
                         </div>
                         <div class="w-full bg-gray-200 rounded-full h-2 mt-2">
-                            <div class="bg-green-500 h-2 rounded-full" style="width: ${disciplina.progresso || 0}%"></div>
+                            <div class="h-2 rounded-full progress-bar" style="width: ${Math.min((disciplina.horasEstudadas / 50) * 100, 100)}%; background-color: ${disciplina.cor}"></div>
                         </div>
-                    </div>
-                `).join('');
-                
-                // Adicionar event listeners aos botões das disciplinas
-                container.querySelectorAll('.btn-estudar-disciplina').forEach(btn => {
-                    btn.addEventListener('click', (e) => {
-                        const id = e.target.closest('button').getAttribute('data-id');
-                        this.estudarDisciplina(id);
-                    });
-                });
-                
-                container.querySelectorAll('.btn-editar-disciplina').forEach(btn => {
-                    btn.addEventListener('click', (e) => {
-                        const id = e.target.closest('button').getAttribute('data-id');
-                        this.editarDisciplina(id);
-                    });
-                });
-                
-                container.querySelectorAll('.btn-excluir-disciplina').forEach(btn => {
-                    btn.addEventListener('click', (e) => {
-                        const id = e.target.closest('button').getAttribute('data-id');
-                        this.excluirDisciplina(id);
-                    });
+                    `;
+                    container.appendChild(div);
                 });
             },
             
+            carregarCronograma() {
+                const container = document.getElementById('cronograma-dias');
+                if (!container) return;
+                
+                const diasSemana = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
+                const hoje = new Date().getDay();
+                
+                container.innerHTML = '';
+                
+                diasSemana.forEach((dia, index) => {
+                    const div = document.createElement('div');
+                    const isHoje = index === (hoje === 0 ? 6 : hoje - 1); // Ajuste para DOM começando em 0
+                    
+                    div.className = `p-4 rounded-xl text-center cursor-pointer transition-all ${
+                        isHoje 
+                            ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-lg transform scale-105' 
+                            : 'bg-white text-gray-700 shadow'
+                    }`;
+                    div.innerHTML = `
+                        <div class="font-semibold">${dia}</div>
+                        <div class="text-sm mt-1">${this.obterTarefasDia(index).length} tarefas</div>
+                    `;
+                    
+                    div.addEventListener('click', () => this.mostrarTarefasDia(index));
+                    container.appendChild(div);
+                });
+            },
+            
+            obterTarefasDia(diaIndex) {
+                return this.dados.cronograma.filter(tarefa => tarefa.dia === diaIndex);
+            },
+            
+            mostrarTarefasDia(diaIndex) {
+                // Implementar exibição de tarefas do dia
+                console.log('Mostrar tarefas do dia:', diaIndex);
+            },
+            
+            atualizarMetricas() {
+                // Atualizar métricas do dia
+                const totalHoras = this.dados.disciplinas.reduce((sum, disc) => sum + disc.horasEstudadas, 0);
+                const totalQuestoes = this.dados.disciplinas.reduce((sum, disc) => sum + disc.questoesResolvidas, 0);
+                
+                // Atualizar elementos da interface
+                const metricTempo = document.getElementById('metric-tempo');
+                const metricQuestoes = document.getElementById('metric-questoes');
+                const metricAcerto = document.getElementById('metric-acerto');
+                const metricDias = document.getElementById('metric-dias');
+                const totalHorasElem = document.getElementById('total-horas');
+                const totalQuestoesElem = document.getElementById('total-questoes');
+                
+                if (metricTempo) metricTempo.textContent = `${totalHoras}h`;
+                if (metricQuestoes) metricQuestoes.textContent = totalQuestoes;
+                if (metricAcerto) metricAcerto.textContent = '75%'; // Exemplo
+                if (metricDias) metricDias.textContent = this.dados.progresso.diasConsecutivos || 0;
+                if (totalHorasElem) totalHorasElem.textContent = `${totalHoras}h`;
+                if (totalQuestoesElem) totalQuestoesElem.textContent = totalQuestoes;
+                
+                // Atualizar barra de progresso da meta
+                const metaProgresso = document.getElementById('meta-progresso');
+                if (metaProgresso) {
+                    const metaHoras = this.dados.configuracoes.metaDiaria.horas;
+                    const progresso = Math.min((totalHoras / metaHoras) * 100, 100);
+                    metaProgresso.style.width = `${progresso}%`;
+                }
+            },
+            
+            atualizarInterface() {
+                this.atualizarMetricas();
+                this.carregarDisciplinas();
+            },
+            
+            abrirModalNovaDisciplina() {
+                mostrarModal('modal-nova-disciplina');
+            },
+            
             adicionarDisciplina() {
-                const nome = document.getElementById('nova-disciplina-nome').value;
-                const cor = document.getElementById('nova-disciplina-cor').value;
+                const nome = document.getElementById('nova-disciplina-nome')?.value.trim();
+                const cor = document.getElementById('nova-disciplina-cor')?.value;
                 
                 if (!nome) {
-                    alert('Por favor, digite o nome da disciplina.');
+                    AuthSystem.mostrarNotificacao('Por favor, digite um nome para a disciplina', 'error');
                     return;
                 }
                 
                 const novaDisciplina = {
                     id: Date.now().toString(),
-                    nome: nome,
-                    cor: cor,
-                    progresso: 0,
-                    horas: 0,
-                    questoes: 0,
-                    dataCriacao: new Date().toISOString()
+                    nome,
+                    cor,
+                    horasEstudadas: 0,
+                    questoesResolvidas: 0
                 };
                 
-                this.disciplinas.push(novaDisciplina);
+                this.dados.disciplinas.push(novaDisciplina);
                 this.salvarDadosUsuario();
                 this.carregarDisciplinas();
-                
                 fecharModal('modal-nova-disciplina');
-                document.getElementById('nova-disciplina-nome').value = '';
                 
-                alert(`Disciplina "${nome}" adicionada com sucesso!`);
-            },
-            
-            estudarDisciplina(id) {
-                const disciplina = this.disciplinas.find(d => d.id === id);
-                if (disciplina) {
-                    alert(`Iniciando sessão de estudo para: ${disciplina.nome}\n\n(Esta funcionalidade seria implementada com um sistema completo de questões e materiais)`);
-                }
-            },
-            
-            editarDisciplina(id) {
-                const disciplina = this.disciplinas.find(d => d.id === id);
-                if (disciplina) {
-                    alert(`Editando disciplina: ${disciplina.nome}\n\n(Modal de edição seria aberto aqui)`);
-                }
-            },
-            
-            excluirDisciplina(id) {
-                const disciplina = this.disciplinas.find(d => d.id === id);
-                if (disciplina && confirm(`Tem certeza que deseja excluir a disciplina "${disciplina.nome}"?`)) {
-                    this.disciplinas = this.disciplinas.filter(d => d.id !== id);
-                    this.salvarDadosUsuario();
-                    this.carregarDisciplinas();
-                    alert('Disciplina excluída com sucesso!');
-                }
+                AuthSystem.mostrarNotificacao(`Disciplina "${nome}" adicionada com sucesso!`, 'success');
             },
             
             iniciarSessaoEstudo() {
-                alert('🎯 Iniciando Sessão de Estudo Personalizada!\n\nO sistema analisaria seu desempenho e criaria uma sessão focada nos tópicos que você mais precisa praticar.');
+                // Implementar sessão de estudo com timer
+                AuthSystem.mostrarNotificacao('Sessão de estudo iniciada!', 'success');
             },
             
             iniciarPraticaRapida(questoes, disciplina) {
-                alert(`⚡ Iniciando Prática Rápida!\n\n${questoes} questões de ${disciplina}\n\nO sistema carregaria questões reais do banco de dados.`);
+                // Implementar prática rápida
+                AuthSystem.mostrarNotificacao(`Iniciando ${questoes} questões de ${disciplina}`, 'info');
             },
             
-            // =========================
-            // CRONOGRAMA
-            // =========================
-            carregarCronograma() {
-                this.carregarDiasSemana();
-                this.carregarTarefas();
-            },
-            
-            carregarDiasSemana() {
-                const container = document.getElementById('cronograma-dias');
-                if (!container) return;
-                
-                const dias = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
-                const hoje = new Date().getDay();
-                const diaAjustado = hoje === 0 ? 6 : hoje - 1; // Ajuste para Seg=0, Dom=6
-                
-                container.innerHTML = dias.map((dia, index) => `
-                    <div class="text-center p-3 rounded-xl cursor-pointer transition-all ${
-                        index === diaAjustado 
-                            ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg' 
-                            : 'bg-white hover:bg-gray-50 shadow'
-                    }">
-                        <div class="font-semibold">${dia}</div>
-                        <div class="text-sm opacity-75">${index + 1}</div>
-                    </div>
-                `).join('');
-            },
-            
-            carregarTarefas() {
-                const container = document.getElementById('cronograma-tarefas');
-                if (!container) return;
-                
-                if (this.tarefas.length === 0) {
-                    container.innerHTML = `
-                        <div class="text-center text-gray-500 py-8">
-                            <p>Nenhuma tarefa agendada ainda.</p>
-                            <p class="text-sm">Clique em "Adicionar Tarefa" para planejar seus estudos.</p>
-                        </div>
-                    `;
-                    return;
-                }
-                
-                container.innerHTML = this.tarefas.map(tarefa => `
-                    <div class="priority-item bg-white p-4 rounded-xl shadow border-l-4 flex justify-between items-center" style="border-left-color: ${tarefa.cor || '#3B82F6'}">
-                        <div class="flex-1">
-                            <div class="font-semibold">${tarefa.titulo}</div>
-                            <div class="text-sm text-gray-600">
-                                ${tarefa.disciplina} • ${tarefa.horario} • ${tarefa.duracao}
-                            </div>
-                            <div class="text-xs text-gray-500 mt-1">${tarefa.descricao}</div>
-                        </div>
-                        <div class="flex gap-2">
-                            <button class="btn-concluir-tarefa p-2 text-green-600 hover:bg-green-100 rounded" data-id="${tarefa.id}">
-                                ✓
-                            </button>
-                            <button class="btn-editar-tarefa p-2 text-blue-600 hover:bg-blue-100 rounded" data-id="${tarefa.id}">
-                                ✏️
-                            </button>
-                        </div>
-                    </div>
-                `).join('');
-                
-                // Adicionar event listeners às tarefas
-                container.querySelectorAll('.btn-concluir-tarefa').forEach(btn => {
-                    btn.addEventListener('click', (e) => {
-                        const id = e.target.closest('button').getAttribute('data-id');
-                        this.concluirTarefa(id);
-                    });
-                });
-                
-                container.querySelectorAll('.btn-editar-tarefa').forEach(btn => {
-                    btn.addEventListener('click', (e) => {
-                        const id = e.target.closest('button').getAttribute('data-id');
-                        this.editarTarefa(id);
-                    });
-                });
-            },
-            
-            adicionarTarefa() {
-                const titulo = prompt('Título da tarefa:');
-                if (!titulo) return;
-                
-                const disciplina = prompt('Disciplina:');
-                const horario = prompt('Horário (ex: 14:00):');
-                const duracao = prompt('Duração (ex: 2h):');
-                const descricao = prompt('Descrição (opcional):');
-                
-                const novaTarefa = {
-                    id: Date.now().toString(),
-                    titulo: titulo,
-                    disciplina: disciplina || 'Geral',
-                    horario: horario || 'A definir',
-                    duracao: duracao || '1h',
-                    descricao: descricao || '',
-                    cor: '#3B82F6',
-                    concluida: false,
-                    dataCriacao: new Date().toISOString()
-                };
-                
-                this.tarefas.push(novaTarefa);
-                this.salvarDadosUsuario();
-                this.carregarTarefas();
-                
-                alert('Tarefa adicionada ao cronograma!');
-            },
-            
-            concluirTarefa(id) {
-                const tarefa = this.tarefas.find(t => t.id === id);
-                if (tarefa) {
-                    if (confirm(`Marcar "${tarefa.titulo}" como concluída?`)) {
-                        this.tarefas = this.tarefas.filter(t => t.id !== id);
-                        this.salvarDadosUsuario();
-                        this.carregarTarefas();
-                        
-                        // Atualizar métricas
-                        this.atualizarMetricas();
-                        alert('Tarefa concluída! Parabéns! 🎉');
-                    }
-                }
-            },
-            
-            editarTarefa(id) {
-                const tarefa = this.tarefas.find(t => t.id === id);
-                if (tarefa) {
-                    alert(`Editando tarefa: ${tarefa.titulo}\n\n(Modal de edição seria aberto aqui)`);
-                }
-            },
-            
-            // =========================
-            // SIMULADOS
-            // =========================
-            carregarSimulados() {
-                this.carregarListaSimulados();
-                this.carregarResultadosSimulados();
-            },
-            
-            carregarListaSimulados() {
-                const container = document.getElementById('lista-simulados');
-                if (!container) return;
-                
-                const simuladosExemplo = [
-                    { id: 1, nome: 'Simulado ENEM 2024', questoes: 90, duracao: '5h', dificuldade: 'Alta' },
-                    { id: 2, nome: 'Simulado Português Básico', questoes: 20, duracao: '1h', dificuldade: 'Baixa' },
-                    { id: 3, nome: 'Simulado Raciocínio Lógico', questoes: 15, duracao: '45min', dificuldade: 'Média' }
-                ];
-                
-                container.innerHTML = simuladosExemplo.map(simulado => `
-                    <div class="priority-item bg-white p-4 rounded-xl shadow">
-                        <div class="font-semibold">${simulado.nome}</div>
-                        <div class="text-sm text-gray-600">
-                            ${simulado.questoes} questões • ${simulado.duracao} • Dificuldade: ${simulado.dificuldade}
-                        </div>
-                        <button class="btn-iniciar-simulado w-full mt-3 bg-blue-600 text-white py-2 rounded-xl font-semibold hover:bg-blue-700 transition-all" data-id="${simulado.id}">
-                            🚀 Iniciar Simulado
-                        </button>
-                    </div>
-                `).join('');
-                
-                // Adicionar event listeners aos simulados
-                container.querySelectorAll('.btn-iniciar-simulado').forEach(btn => {
-                    btn.addEventListener('click', (e) => {
-                        const id = e.target.closest('button').getAttribute('data-id');
-                        this.iniciarSimulado(id);
-                    });
-                });
-            },
-            
-            carregarResultadosSimulados() {
-                const container = document.getElementById('resultados-simulados');
-                if (!container) return;
-                
-                const resultadosExemplo = [
-                    { nome: 'Simulado ENEM', data: '15/01/2025', acertos: 65, total: 90, percentual: '72%' },
-                    { nome: 'Português Básico', data: '10/01/2025', acertos: 18, total: 20, percentual: '90%' },
-                    { nome: 'Raciocínio Lógico', data: '05/01/2025', acertos: 12, total: 15, percentual: '80%' }
-                ];
-                
-                container.innerHTML = resultadosExemplo.map(resultado => `
-                    <div class="bg-white p-4 rounded-xl shadow">
-                        <div class="flex justify-between items-center">
-                            <div>
-                                <div class="font-semibold">${resultado.nome}</div>
-                                <div class="text-sm text-gray-600">${resultado.data}</div>
-                            </div>
-                            <div class="text-right">
-                                <div class="font-bold text-green-600">${resultado.percentual}</div>
-                                <div class="text-sm text-gray-600">${resultado.acertos}/${resultado.total}</div>
-                            </div>
-                        </div>
-                        <div class="w-full bg-gray-200 rounded-full h-2 mt-2">
-                            <div class="bg-green-500 h-2 rounded-full" style="width: ${resultado.percentual}"></div>
-                        </div>
-                    </div>
-                `).join('');
-            },
-            
-            iniciarSimulado(id) {
-                alert(`🚀 Iniciando Simulado ID: ${id}\n\nO sistema carregaria as questões e iniciaria o timer.`);
-            },
-            
-            criarSimulado() {
-                alert('🎯 Criando Simulado Personalizado!\n\nVocê poderia escolher:\n• Disciplinas específicas\n• Número de questões\n• Nível de dificuldade\n• Tempo limite');
-            },
-            
-            exportarResultados() {
-                alert('📥 Exportando Resultados!\n\nSeus resultados seriam exportados em PDF para análise detalhada.');
-            },
-            
-            // =========================
-            // REDAÇÃO
-            // =========================
-            carregarRedacoes() {
-                const container = document.getElementById('lista-redacoes');
-                if (!container) return;
-                
-                if (this.redacoes.length === 0) {
-                    container.innerHTML = `
-                        <div class="text-center text-gray-500 py-8">
-                            <p>Nenhuma redação salva ainda.</p>
-                            <p class="text-sm">Escreva sua primeira redação ao lado.</p>
-                        </div>
-                    `;
-                    return;
-                }
-                
-                container.innerHTML = this.redacoes.map(redacao => `
-                    <div class="priority-item bg-white p-4 rounded-xl shadow">
-                        <div class="font-semibold">${redacao.tema}</div>
-                        <div class="text-sm text-gray-600">
-                            ${redacao.tipo} • ${new Date(redacao.data).toLocaleDateString()}
-                        </div>
-                        <div class="text-xs text-gray-500 mt-2 line-clamp-2">${redacao.texto.substring(0, 100)}...</div>
-                        <div class="flex gap-2 mt-3">
-                            <button class="btn-ver-redacao flex-1 bg-blue-600 text-white py-1 rounded text-sm hover:bg-blue-700" data-id="${redacao.id}">
-                                Ver
-                            </button>
-                            <button class="btn-excluir-redacao flex-1 bg-red-600 text-white py-1 rounded text-sm hover:bg-red-700" data-id="${redacao.id}">
-                                Excluir
-                            </button>
-                        </div>
-                    </div>
-                `).join('');
-                
-                // Adicionar event listeners às redações
-                container.querySelectorAll('.btn-ver-redacao').forEach(btn => {
-                    btn.addEventListener('click', (e) => {
-                        const id = e.target.closest('button').getAttribute('data-id');
-                        this.verRedacao(id);
-                    });
-                });
-                
-                container.querySelectorAll('.btn-excluir-redacao').forEach(btn => {
-                    btn.addEventListener('click', (e) => {
-                        const id = e.target.closest('button').getAttribute('data-id');
-                        this.excluirRedacao(id);
-                    });
-                });
-            },
-            
-            salvarRedacao() {
-                const tema = document.getElementById('redacao-tema').value;
-                const tipo = document.getElementById('redacao-tipo').value;
-                const texto = document.getElementById('redacao-texto').value;
-                
-                if (!tema || !texto) {
-                    alert('Por favor, preencha o tema e o texto da redação.');
-                    return;
-                }
-                
-                const novaRedacao = {
-                    id: Date.now().toString(),
-                    tema: tema,
-                    tipo: tipo,
-                    texto: texto,
-                    data: new Date().toISOString(),
-                    correcao: null
-                };
-                
-                this.redacoes.push(novaRedacao);
-                this.salvarDadosUsuario();
-                this.carregarRedacoes();
-                
-                // Limpar formulário
-                document.getElementById('redacao-tema').value = '';
-                document.getElementById('redacao-texto').value = '';
-                
-                alert('Redação salva com sucesso!');
-            },
-            
-            verRedacao(id) {
-                const redacao = this.redacoes.find(r => r.id === id);
-                if (redacao) {
-                    alert(`📝 Redação: ${redacao.tema}\n\nTipo: ${redacao.tipo}\nData: ${new Date(redacao.data).toLocaleDateString()}\n\n${redacao.texto}`);
-                }
-            },
-            
-            excluirRedacao(id) {
-                const redacao = this.redacoes.find(r => r.id === id);
-                if (redacao && confirm(`Tem certeza que deseja excluir a redação "${redacao.tema}"?`)) {
-                    this.redacoes = this.redacoes.filter(r => r.id !== id);
-                    this.salvarDadosUsuario();
-                    this.carregarRedacoes();
-                    alert('Redação excluída!');
-                }
-            },
-            
-            solicitarCorrecaoRedacao() {
-                if (this.redacoes.length === 0) {
-                    alert('Você precisa ter pelo menos uma redação salva para solicitar correção.');
-                    return;
-                }
-                
-                alert('🔍 Solicitando Correção de Redação!\n\nSua redação seria enviada para nossa equipe de corretores especializados.');
-            },
-            
-            // =========================
-            // PROGRESSO
-            // =========================
-            inicializarGraficos() {
-                const ctx = document.getElementById('progresso-chart');
-                if (!ctx) return;
-                
-                // Dados de exemplo para o gráfico
-                const data = {
-                    labels: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun'],
-                    datasets: [
-                        {
-                            label: 'Horas Estudadas',
-                            data: [20, 25, 22, 28, 30, 35],
-                            borderColor: '#3B82F6',
-                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                            fill: true,
-                            tension: 0.4
-                        },
-                        {
-                            label: 'Questões Resolvidas',
-                            data: [150, 180, 200, 220, 250, 245],
-                            borderColor: '#10B981',
-                            backgroundColor: 'rgba(16, 185, 129, 0.1)',
-                            fill: true,
-                            tension: 0.4
-                        }
-                    ]
-                };
-                
-                new Chart(ctx, {
-                    type: 'line',
-                    data: data,
-                    options: {
-                        responsive: true,
-                        plugins: {
-                            legend: {
-                                position: 'top',
-                            },
-                            title: {
-                                display: true,
-                                text: 'Evolução do Seu Progresso'
-                            }
-                        }
-                    }
-                });
-            },
-            
-            atualizarGraficos() {
-                // Em uma implementação real, atualizaria os dados do gráfico
-                console.log('Atualizando gráficos de progresso...');
-            },
-            
-            atualizarMetricas() {
-                // Atualizar métricas do usuário
-                const usuario = AuthSystem.usuarioLogado;
-                if (usuario && usuario.progresso) {
-                    document.getElementById('metric-tempo').textContent = `${usuario.progresso.totalHoras}h`;
-                    document.getElementById('metric-questoes').textContent = usuario.progresso.totalQuestoes;
-                    document.getElementById('metric-acerto').textContent = '75%';
-                    document.getElementById('metric-dias').textContent = usuario.progresso.diasConsecutivos;
-                    
-                    document.getElementById('total-horas').textContent = `${usuario.progresso.totalHoras}h`;
-                    document.getElementById('total-questoes').textContent = usuario.progresso.totalQuestoes.toLocaleString();
-                }
-            },
-            
-            definirNovaMeta() {
-                const meta = prompt('Qual sua nova meta de estudo? (ex: "Estudar 3h por dia")');
-                if (meta) {
-                    alert(`🎯 Nova meta definida: "${meta}"\n\nO sistema acompanharia seu progresso em relação a esta meta.`);
-                }
-            },
-            
-            // =========================
-            // COMUNIDADE
-            // =========================
-            carregarComunidade() {
-                this.carregarRanking();
-                this.carregarForum();
-                this.carregarGruposEstudo();
-            },
-            
-            carregarRanking() {
-                const container = document.getElementById('ranking-comunidade');
-                if (!container) return;
-                
-                const rankingExemplo = [
-                    { posicao: 1, nome: 'Ana Silva', pontos: 1250 },
-                    { posicao: 2, nome: 'Carlos Santos', pontos: 1180 },
-                    { posicao: 3, nome: 'Marina Oliveira', pontos: 1120 },
-                    { posicao: 4, nome: 'Você', pontos: 980, destaque: true },
-                    { posicao: 5, nome: 'Pedro Costa', pontos: 920 }
-                ];
-                
-                container.innerHTML = rankingExemplo.map(participante => `
-                    <div class="flex justify-between items-center p-3 rounded-xl ${
-                        participante.destaque 
-                            ? 'bg-gradient-to-r from-yellow-400 to-yellow-600 text-white shadow-lg' 
-                            : 'bg-white hover:bg-gray-50 shadow'
-                    }">
-                        <div class="flex items-center gap-3">
-                            <div class="font-bold">${participante.posicao}º</div>
-                            <div>${participante.nome}</div>
-                        </div>
-                        <div class="font-semibold">${participante.pontos} pts</div>
-                    </div>
-                `).join('');
-            },
-            
-            carregarForum() {
-                const container = document.getElementById('forum-discussao');
-                if (!container) return;
-                
-                const discussoesExemplo = [
-                    { titulo: 'Dicas para matemática básica', respostas: 24, autor: 'Carlos' },
-                    { titulo: 'Como estudar português para concursos', respostas: 18, autor: 'Ana' },
-                    { titulo: 'Cronograma de estudos eficiente', respostas: 32, autor: 'Pedro' }
-                ];
-                
-                container.innerHTML = discussoesExemplo.map(discussao => `
-                    <div class="bg-white p-4 rounded-xl shadow hover:shadow-md transition-all cursor-pointer">
-                        <div class="font-semibold">${discussao.titulo}</div>
-                        <div class="text-sm text-gray-600 mt-1">
-                            por ${discussao.autor} • ${discussao.respostas} respostas
-                        </div>
-                    </div>
-                `).join('');
-            },
-            
-            carregarGruposEstudo() {
-                const container = document.getElementById('grupos-estudo');
-                if (!container) return;
-                
-                const gruposExemplo = [
-                    { nome: 'Grupo ENEM 2025', membros: 45, foco: 'Preparação para ENEM' },
-                    { nome: 'Matemática Avançada', membros: 28, foco: 'Cálculo e Estatística' },
-                    { nome: 'Português para Concursos', membros: 63, foco: 'Gramática e Interpretação' }
-                ];
-                
-                container.innerHTML = gruposExemplo.map(grupo => `
-                    <div class="bg-white p-4 rounded-xl shadow hover:shadow-md transition-all cursor-pointer">
-                        <div class="font-semibold">${grupo.nome}</div>
-                        <div class="text-sm text-gray-600">
-                            ${grupo.membros} membros • ${grupo.foco}
-                        </div>
-                        <button class="w-full mt-3 bg-blue-600 text-white py-2 rounded-xl text-sm font-semibold hover:bg-blue-700 transition-all">
-                            Participar
-                        </button>
-                    </div>
-                `).join('');
-            },
-            
-            atualizarRanking() {
-                alert('🔄 Atualizando Ranking...\n\nSua posição seria recalculada com base nas atividades recentes.');
-            },
-            
-            novaDiscussao() {
-                const titulo = prompt('Título da nova discussão:');
-                if (titulo) {
-                    alert(`💬 Nova discussão criada: "${titulo}"\n\nAgora outros estudantes podem participar e ajudar!`);
-                }
-            },
-            
-            criarGrupoEstudo() {
-                alert('👥 Criando Novo Grupo de Estudo!\n\nVocê poderia:\n• Definir o nome do grupo\n• Escolher as disciplinas\n• Definir o público-alvo\n• Estabelecer regras');
-            },
-            
-            // =========================
-            // FUNÇÕES ADICIONAIS
-            // =========================
             mostrarDashboard() {
-                this.mudarAba('progresso');
-                alert('📊 Abrindo Dashboard Completo...\n\nVisualizações detalhadas do seu progresso e desempenho.');
+                // Navegar para a aba de progresso
+                document.querySelector('[data-tab="progresso"]').click();
             },
             
             mostrarConfiguracoes() {
-                alert('⚙️ Abrindo Configurações...\n\nPersonalize sua experiência na plataforma.');
+                AuthSystem.mostrarNotificacao('Abrindo configurações...', 'info');
+            },
+            
+            salvarDadosUsuario() {
+                // Atualizar dados do usuário no array de usuários
+                const usuarioIndex = AuthSystem.usuarios.findIndex(u => u.id === this.usuario.id);
+                if (usuarioIndex !== -1) {
+                    AuthSystem.usuarios[usuarioIndex].dados = this.dados;
+                    localStorage.setItem('gfconcursos_usuarios', JSON.stringify(AuthSystem.usuarios));
+                    
+                    // Atualizar usuário logado
+                    if (AuthSystem.usuarioLogado) {
+                        AuthSystem.usuarioLogado.dados = this.dados;
+                        localStorage.setItem('gfconcursos_usuario_logado', JSON.stringify(AuthSystem.usuarioLogado));
+                    }
+                }
             }
         };
 
         // =========================
-        // INICIALIZAÇÃO DO SISTEMA
+        // INICIALIZAÇÃO
         // =========================
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('GFConcursos - Sistema inicializando...');
+            // Inicializar sistema de autenticação
             AuthSystem.init();
+            
+            // Tornar aplicação globalmente acessível
+            window.AuthSystem = AuthSystem;
+            window.GFConcursosApp = GFConcursosApp;
+            
+            console.log('GFConcursos inicializado com sucesso!');
         });
 
-        // Prevenir ações padrão de formulários
-        document.addEventListener('submit', function(e) {
-            e.preventDefault();
-        });
+        // =========================
+        // FUNÇÕES DE UTILIDADE
+        // =========================
+        function formatarTempo(minutos) {
+            const horas = Math.floor(minutos / 60);
+            const mins = minutos % 60;
+            return `${horas}h ${mins}m`;
+        }
+        
+        function formatarData(data) {
+            return new Date(data).toLocaleDateString('pt-BR');
+        }
+        
+        function gerarId() {
+            return Date.now().toString() + Math.random().toString(36).substr(2, 9);
+        }
     </script>
 </body>
 </html>
