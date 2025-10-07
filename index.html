@@ -1,3 +1,6 @@
+Aqui está o código completo da plataforma GFConcursos com sistema de login implementado:
+
+```html
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -18,6 +21,9 @@
     
     <!-- PDF Generation -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    
+    <!-- CryptoJS para segurança -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
     
     <style>
         body {
@@ -96,340 +102,440 @@
             25% { transform: translateX(-5px); }
             75% { transform: translateX(5px); }
         }
+        
+        .login-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
     </style>
 </head>
 <body class="min-h-screen">
-    <div class="container mx-auto px-4 py-8">
-        <!-- Header -->
-        <header class="text-center mb-12 fade-in">
-            <h1 class="text-5xl font-bold text-white mb-4">GFConcursos</h1>
-            <p class="text-xl text-white/90">Sua plataforma completa de estudos para concursos públicos</p>
-        </header>
+    <!-- Sistema de Login -->
+    <div id="login-system" class="login-container">
+        <div class="glass-card rounded-2xl p-8 shadow-2xl w-full max-w-md mx-4">
+            <div class="text-center mb-8">
+                <h1 class="text-4xl font-bold gradient-text mb-4">GFConcursos</h1>
+                <p class="text-gray-600">Entre na sua conta ou cadastre-se</p>
+            </div>
 
-        <!-- Main App -->
-        <div id="app-wrapper">
-            <!-- User Info Bar -->
-            <div class="glass-card rounded-2xl p-6 mb-8 shadow-2xl">
-                <div class="flex justify-between items-center">
+            <!-- Formulário de Login -->
+            <div id="login-form">
+                <div class="space-y-4">
                     <div>
-                        <h2 id="user-info" class="text-2xl font-bold gradient-text">Bem-vindo ao GFConcursos!</h2>
-                        <p class="text-gray-600" id="user-stats">Prepare-se para sua aprovação</p>
+                        <label class="block text-sm font-semibold mb-2">Email:</label>
+                        <input type="email" id="login-email" class="w-full p-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="seu@email.com" required>
                     </div>
-                    <div class="flex gap-4">
-                        <button id="btn-dashboard" class="bg-blue-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-blue-700 transition-all">
-                            📊 Meu Dashboard
+                    
+                    <div>
+                        <label class="block text-sm font-semibold mb-2">Senha:</label>
+                        <input type="password" id="login-password" class="w-full p-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Sua senha" required>
+                    </div>
+                    
+                    <div class="flex items-center justify-between">
+                        <label class="flex items-center">
+                            <input type="checkbox" id="remember-me" class="mr-2">
+                            <span class="text-sm">Lembrar de mim</span>
+                        </label>
+                        <button class="text-sm text-blue-600 hover:text-blue-800" onclick="mostrarModal('modal-esqueci-senha')">
+                            Esqueci a senha
                         </button>
-                        <button id="btn-config" class="bg-gray-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-gray-700 transition-all">
-                            ⚙️ Configurações
+                    </div>
+                    
+                    <button id="btn-login" class="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 rounded-xl font-semibold hover:shadow-lg transition-all">
+                        🚀 Entrar
+                    </button>
+                    
+                    <div class="text-center">
+                        <button class="text-blue-600 hover:text-blue-800" onclick="mostrarCadastro()">
+                            Não tem conta? Cadastre-se
                         </button>
                     </div>
                 </div>
             </div>
 
-            <!-- Navigation Tabs -->
-            <div class="glass-card rounded-2xl p-6 mb-8 shadow-2xl">
-                <div class="flex flex-wrap gap-2 justify-center">
-                    <button class="tab-button active px-6 py-3 rounded-xl font-semibold transition-all" data-tab="estudo">
-                        📚 Área de Estudo
+            <!-- Formulário de Cadastro -->
+            <div id="cadastro-form" class="hidden">
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-semibold mb-2">Nome completo:</label>
+                        <input type="text" id="cadastro-nome" class="w-full p-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Seu nome completo" required>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-semibold mb-2">Email:</label>
+                        <input type="email" id="cadastro-email" class="w-full p-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="seu@email.com" required>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-semibold mb-2">Senha:</label>
+                        <input type="password" id="cadastro-password" class="w-full p-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Mínimo 6 caracteres" minlength="6" required>
+                        <div class="text-xs text-gray-500 mt-1" id="password-strength"></div>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-semibold mb-2">Confirmar senha:</label>
+                        <input type="password" id="cadastro-confirm-password" class="w-full p-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Digite novamente" required>
+                        <div class="text-xs text-red-500 mt-1 hidden" id="password-match-error">As senhas não coincidem</div>
+                    </div>
+                    
+                    <div class="flex items-center">
+                        <input type="checkbox" id="aceitar-termos" class="mr-2" required>
+                        <label class="text-sm">Aceito os <a href="#" class="text-blue-600 hover:text-blue-800" onclick="mostrarModal('modal-termos')">termos de uso</a> e <a href="#" class="text-blue-600 hover:text-blue-800" onclick="mostrarModal('modal-privacidade')">política de privacidade</a></label>
+                    </div>
+                    
+                    <button id="btn-cadastrar" class="w-full bg-gradient-to-r from-green-600 to-blue-600 text-white py-3 rounded-xl font-semibold hover:shadow-lg transition-all">
+                        📝 Criar Conta
                     </button>
-                    <button class="tab-button px-6 py-3 rounded-xl font-semibold transition-all" data-tab="cronograma">
-                        🗓️ Cronograma
-                    </button>
-                    <button class="tab-button px-6 py-3 rounded-xl font-semibold transition-all" data-tab="simulados">
-                        🧪 Simulados
-                    </button>
-                    <button class="tab-button px-6 py-3 rounded-xl font-semibold transition-all" data-tab="redacao">
-                        ✍️ Redação
-                    </button>
-                    <button class="tab-button px-6 py-3 rounded-xl font-semibold transition-all" data-tab="progresso">
-                        📈 Progresso
-                    </button>
-                    <button class="tab-button px-6 py-3 rounded-xl font-semibold transition-all" data-tab="comunidade">
-                        👥 Comunidade
-                    </button>
-                </div>
-            </div>
-
-            <!-- Tab Content -->
-            <div id="main-content">
-                <!-- Área de Estudo -->
-                <div id="tab-content-estudo" class="tab-content fade-in">
-                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                        <!-- Card 1: Disciplinas -->
-                        <div class="glass-card rounded-2xl p-6 shadow-xl">
-                            <h3 class="text-2xl font-bold gradient-text mb-6">📖 Minhas Disciplinas</h3>
-                            <div class="space-y-4" id="disciplinas-list">
-                                <!-- Disciplinas serão carregadas aqui -->
-                            </div>
-                            <button id="btn-add-disciplina" class="w-full mt-6 bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 rounded-xl font-semibold hover:shadow-lg transition-all">
-                                + Adicionar Disciplina
-                            </button>
-                        </div>
-
-                        <!-- Card 2: Prática Rápida -->
-                        <div class="glass-card rounded-2xl p-6 shadow-xl">
-                            <h3 class="text-2xl font-bold gradient-text mb-6">⚡ Prática Rápida</h3>
-                            <div class="space-y-4">
-                                <button class="btn-pratica-rapida w-full bg-blue-100 hover:bg-blue-200 p-4 rounded-xl text-left transition-all" data-questoes="10" data-disciplina="portugues">
-                                    <div class="font-semibold">10 Questões de Português</div>
-                                    <div class="text-sm text-gray-600">Nível: Intermediário</div>
-                                </button>
-                                <button class="btn-pratica-rapida w-full bg-green-100 hover:bg-green-200 p-4 rounded-xl text-left transition-all" data-questoes="5" data-disciplina="matematica">
-                                    <div class="font-semibold">5 Questões de Matemática</div>
-                                    <div class="text-sm text-gray-600">Nível: Básico</div>
-                                </button>
-                                <button class="btn-pratica-rapida w-full bg-purple-100 hover:bg-purple-200 p-4 rounded-xl text-left transition-all" data-questoes="15" data-disciplina="revisao">
-                                    <div class="font-semibold">Revisão Inteligente</div>
-                                    <div class="text-sm text-gray-600">Questões que você errou</div>
-                                </button>
-                            </div>
-                            <button id="btn-iniciar-sessao" class="w-full mt-6 bg-gradient-to-r from-green-600 to-blue-600 text-white py-3 rounded-xl font-semibold hover:shadow-lg transition-all">
-                                🎯 Iniciar Sessão de Estudo
-                            </button>
-                        </div>
-
-                        <!-- Card 3: Métricas -->
-                        <div class="glass-card rounded-2xl p-6 shadow-xl">
-                            <h3 class="text-2xl font-bold gradient-text mb-6">📊 Métricas do Dia</h3>
-                            <div class="grid grid-cols-2 gap-4">
-                                <div class="bg-white p-4 rounded-xl text-center shadow">
-                                    <div class="text-3xl font-bold text-blue-600" id="metric-tempo">2.5h</div>
-                                    <div class="text-sm text-gray-600">Tempo Estudado</div>
-                                </div>
-                                <div class="bg-white p-4 rounded-xl text-center shadow">
-                                    <div class="text-3xl font-bold text-green-600" id="metric-questoes">24</div>
-                                    <div class="text-sm text-gray-600">Questões Feitas</div>
-                                </div>
-                                <div class="bg-white p-4 rounded-xl text-center shadow">
-                                    <div class="text-3xl font-bold text-purple-600" id="metric-acerto">75%</div>
-                                    <div class="text-sm text-gray-600">Taxa de Acerto</div>
-                                </div>
-                                <div class="bg-white p-4 rounded-xl text-center shadow">
-                                    <div class="text-3xl font-bold text-yellow-600" id="metric-dias">7</div>
-                                    <div class="text-sm text-gray-600">Dias Consecutivos</div>
-                                </div>
-                            </div>
-                            <div class="mt-6 p-4 bg-gradient-to-r from-blue-500 to-purple-500 rounded-xl text-white">
-                                <div class="font-semibold">🎯 Meta Diária</div>
-                                <div class="text-sm">3h de estudo | 30 questões</div>
-                                <div class="w-full bg-white/20 rounded-full h-2 mt-2">
-                                    <div class="bg-white h-2 rounded-full" id="meta-progresso" style="width: 83%"></div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Cronograma -->
-                <div id="tab-content-cronograma" class="tab-content hidden fade-in">
-                    <div class="glass-card rounded-2xl p-6 shadow-xl mb-8">
-                        <h3 class="text-2xl font-bold gradient-text mb-6">🗓️ Meu Cronograma Semanal</h3>
-                        <div class="grid grid-cols-1 md:grid-cols-7 gap-4" id="cronograma-semanal">
-                            <!-- Cronograma será gerado aqui -->
-                        </div>
-                    </div>
-
-                    <!-- Cronômetro -->
-                    <div class="glass-card rounded-2xl p-6 shadow-xl">
-                        <h3 class="text-2xl font-bold gradient-text mb-6">⏱️ Cronômetro de Estudo</h3>
-                        <div class="text-center">
-                            <div id="timer-display" class="text-6xl font-bold text-gray-800 mb-6">00:00:00</div>
-                            <div class="flex gap-4 justify-center">
-                                <button id="btn-start" class="bg-green-600 text-white px-8 py-4 rounded-xl font-semibold text-lg hover:bg-green-700 transition-all">
-                                    ▶ Iniciar
-                                </button>
-                                <button id="btn-pause" class="bg-yellow-600 text-white px-8 py-4 rounded-xl font-semibold text-lg hover:bg-yellow-700 transition-all">
-                                    ⏸️ Pausar
-                                </button>
-                                <button id="btn-reset" class="bg-red-600 text-white px-8 py-4 rounded-xl font-semibold text-lg hover:bg-red-700 transition-all">
-                                    🔄 Resetar
-                                </button>
-                            </div>
-                            <div class="mt-6">
-                                <select id="select-disciplina-cronometro" class="p-3 border rounded-xl">
-                                    <option value="">Selecione uma disciplina</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Simulados -->
-                <div id="tab-content-simulados" class="tab-content hidden fade-in">
-                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                        <!-- Simulados Disponíveis -->
-                        <div class="glass-card rounded-2xl p-6 shadow-xl">
-                            <h3 class="text-2xl font-bold gradient-text mb-6">🧪 Simulados Disponíveis</h3>
-                            <div class="space-y-4" id="lista-simulados">
-                                <!-- Simulados serão carregados aqui -->
-                            </div>
-                        </div>
-
-                        <!-- Criar Simulado Personalizado -->
-                        <div class="glass-card rounded-2xl p-6 shadow-xl">
-                            <h3 class="text-2xl font-bold gradient-text mb-6">🎯 Simulado Personalizado</h3>
-                            <div class="space-y-4">
-                                <div>
-                                    <label class="block text-sm font-semibold mb-2">Disciplinas:</label>
-                                    <select id="select-disciplina-simulado" class="w-full p-3 border rounded-xl">
-                                        <option value="portugues">Português</option>
-                                        <option value="matematica">Matemática</option>
-                                        <option value="direito">Direito Constitucional</option>
-                                        <option value="informatica">Informática</option>
-                                        <option value="todas">Todas as Disciplinas</option>
-                                    </select>
-                                </div>
-                                
-                                <div>
-                                    <label class="block text-sm font-semibold mb-2">Número de Questões:</label>
-                                    <input type="range" id="range-questoes" min="5" max="50" value="20" class="w-full">
-                                    <div class="text-center text-sm text-gray-600" id="questoes-count">20 questões</div>
-                                </div>
-                                
-                                <div>
-                                    <label class="block text-sm font-semibold mb-2">Dificuldade:</label>
-                                    <div class="flex gap-2" id="dificuldade-buttons">
-                                        <button class="btn-dificuldade flex-1 bg-green-100 text-green-800 py-2 rounded-xl" data-dificuldade="facil">Fácil</button>
-                                        <button class="btn-dificuldade flex-1 bg-yellow-100 text-yellow-800 py-2 rounded-xl active" data-dificuldade="medio">Médio</button>
-                                        <button class="btn-dificuldade flex-1 bg-red-100 text-red-800 py-2 rounded-xl" data-dificuldade="dificil">Difícil</button>
-                                    </div>
-                                </div>
-                                
-                                <div>
-                                    <label class="block text-sm font-semibold mb-2">Tempo Limite:</label>
-                                    <select id="select-tempo-simulado" class="w-full p-3 border rounded-xl">
-                                        <option value="30">30 minutos</option>
-                                        <option value="60">1 hora</option>
-                                        <option value="90">1 hora 30min</option>
-                                        <option value="120">2 horas</option>
-                                        <option value="0">Sem limite</option>
-                                    </select>
-                                </div>
-                                
-                                <button id="btn-criar-simulado" class="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white py-4 rounded-xl font-semibold text-lg hover:shadow-lg transition-all pulse">
-                                    🚀 Criar Simulado Personalizado
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Redação -->
-                <div id="tab-content-redacao" class="tab-content hidden fade-in">
-                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                        <!-- Temas de Redação -->
-                        <div class="glass-card rounded-2xl p-6 shadow-xl">
-                            <h3 class="text-2xl font-bold gradient-text mb-6">✍️ Temas de Redação</h3>
-                            <div class="space-y-4" id="lista-temas-redacao">
-                                <!-- Temas serão carregados aqui -->
-                            </div>
-                        </div>
-
-                        <!-- Minhas Redações -->
-                        <div class="glass-card rounded-2xl p-6 shadow-xl">
-                            <h3 class="text-2xl font-bold gradient-text mb-6">📝 Minhas Redações</h3>
-                            <div class="space-y-4" id="minhas-redacoes">
-                                <!-- Redações serão carregadas aqui -->
-                            </div>
-                            <button id="btn-nova-redacao" class="w-full mt-6 bg-gradient-to-r from-green-600 to-blue-600 text-white py-3 rounded-xl font-semibold hover:shadow-lg transition-all">
-                                + Nova Redação
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Progresso -->
-                <div id="tab-content-progresso" class="tab-content hidden fade-in">
-                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
-                        <!-- Estatísticas Gerais -->
-                        <div class="glass-card rounded-2xl p-6 shadow-xl">
-                            <h3 class="text-2xl font-bold gradient-text mb-6">📈 Estatísticas Gerais</h3>
-                            <div class="space-y-4" id="estatisticas-gerais">
-                                <!-- Estatísticas serão carregadas aqui -->
-                            </div>
-                        </div>
-
-                        <!-- Desempenho por Disciplina -->
-                        <div class="glass-card rounded-2xl p-6 shadow-xl">
-                            <h3 class="text-2xl font-bold gradient-text mb-6">🎯 Desempenho por Disciplina</h3>
-                            <div class="space-y-4" id="desempenho-disciplinas">
-                                <!-- Desempenho será carregado aqui -->
-                            </div>
-                        </div>
-
-                        <!-- Conquistas -->
-                        <div class="glass-card rounded-2xl p-6 shadow-xl">
-                            <h3 class="text-2xl font-bold gradient-text mb-6">🏆 Conquistas</h3>
-                            <div class="grid grid-cols-2 gap-4" id="conquistas-list">
-                                <!-- Conquistas serão carregadas aqui -->
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Gráfico de Progresso -->
-                    <div class="glass-card rounded-2xl p-6 shadow-xl">
-                        <h3 class="text-2xl font-bold gradient-text mb-6">📊 Evolução do Desempenho</h3>
-                        <div class="bg-white p-6 rounded-xl">
-                            <canvas id="progressChart" height="100"></canvas>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Comunidade -->
-                <div id="tab-content-comunidade" class="tab-content hidden fade-in">
-                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                        <!-- Ranking -->
-                        <div class="glass-card rounded-2xl p-6 shadow-xl">
-                            <h3 class="text-2xl font-bold gradient-text mb-6">🏆 Ranking da Comunidade</h3>
-                            <div class="space-y-3" id="ranking-list">
-                                <!-- Ranking será carregado aqui -->
-                            </div>
-                        </div>
-
-                        <!-- Fórum -->
-                        <div class="glasscard rounded-2xl p-6 shadow-xl">
-                            <h3 class="text-2xl font-bold gradient-text mb-6">💬 Fórum de Discussões</h3>
-                            <div class="space-y-4" id="forum-discussoes">
-                                <!-- Discussões serão carregadas aqui -->
-                            </div>
-                            <button id="btn-nova-discussao" class="w-full mt-6 bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 rounded-xl font-semibold hover:shadow-lg transition-all">
-                                + Nova Discussão
-                            </button>
-                        </div>
-
-                        <!-- Amigos e Grupos -->
-                        <div class="glass-card rounded-2xl p-6 shadow-xl">
-                            <h3 class="text-2xl font-bold gradient-text mb-6">👥 Amigos e Grupos</h3>
-                            <div class="space-y-4">
-                                <div class="bg-white p-4 rounded-xl shadow">
-                                    <h4 class="font-semibold mb-3">Grupos de Estudo</h4>
-                                    <div class="space-y-2" id="grupos-estudo">
-                                        <!-- Grupos serão carregados aqui -->
-                                    </div>
-                                </div>
-
-                                <div class="bg-white p-4 rounded-xl shadow">
-                                    <h4 class="font-semibold mb-3">Amigos Online</h4>
-                                    <div class="flex space-x-2" id="amigos-online">
-                                        <!-- Amigos online serão carregados aqui -->
-                                    </div>
-                                </div>
-                            </div>
-
-                            <button id="btn-convidar-amigos" class="w-full mt-6 bg-gradient-to-r from-green-600 to-blue-600 text-white py-3 rounded-xl font-semibold hover:shadow-lg transition-all">
-                                👋 Convidar Amigos
-                            </button>
-                        </div>
+                    
+                    <div class="text-center">
+                        <button class="text-blue-600 hover:text-blue-800" onclick="mostrarLogin()">
+                            Já tem conta? Entre aqui
+                        </button>
                     </div>
                 </div>
             </div>
         </div>
+    </div>
 
-        <!-- Footer -->
-        <footer class="text-center mt-12 text-white/70">
-            <p>GFConcursos © 2025 - Edinho S. Paiva</p>
-            <p class="text-sm mt-2">EC 10:10 - "Se você deixar o machado perder o corte e não afia, terá de trabalhar muito mais. Agir com sabedoria assegura o sucesso."</p>
-        </footer>
+    <!-- Aplicação Principal (inicialmente oculta) -->
+    <div id="app-wrapper" class="hidden">
+        <div class="container mx-auto px-4 py-8">
+            <!-- Header -->
+            <header class="text-center mb-12 fade-in">
+                <h1 class="text-5xl font-bold text-white mb-4">GFConcursos</h1>
+                <p class="text-xl text-white/90">Sua plataforma completa de estudos para concursos públicos</p>
+            </header>
+
+            <!-- Main App -->
+            <div>
+                <!-- User Info Bar -->
+                <div class="glass-card rounded-2xl p-6 mb-8 shadow-2xl">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <h2 id="user-info" class="text-2xl font-bold gradient-text">Bem-vindo ao GFConcursos!</h2>
+                            <p class="text-gray-600" id="user-stats">Prepare-se para sua aprovação</p>
+                        </div>
+                        <div class="flex gap-4">
+                            <button id="btn-dashboard" class="bg-blue-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-blue-700 transition-all">
+                                📊 Meu Dashboard
+                            </button>
+                            <button id="btn-config" class="bg-gray-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-gray-700 transition-all">
+                                ⚙️ Configurações
+                            </button>
+                            <button id="btn-logout" class="bg-red-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-red-700 transition-all">
+                                🚪 Sair
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Navigation Tabs -->
+                <div class="glass-card rounded-2xl p-6 mb-8 shadow-2xl">
+                    <div class="flex flex-wrap gap-2 justify-center">
+                        <button class="tab-button active px-6 py-3 rounded-xl font-semibold transition-all" data-tab="estudo">
+                            📚 Área de Estudo
+                        </button>
+                        <button class="tab-button px-6 py-3 rounded-xl font-semibold transition-all" data-tab="cronograma">
+                            🗓️ Cronograma
+                        </button>
+                        <button class="tab-button px-6 py-3 rounded-xl font-semibold transition-all" data-tab="simulados">
+                            🧪 Simulados
+                        </button>
+                        <button class="tab-button px-6 py-3 rounded-xl font-semibold transition-all" data-tab="redacao">
+                            ✍️ Redação
+                        </button>
+                        <button class="tab-button px-6 py-3 rounded-xl font-semibold transition-all" data-tab="progresso">
+                            📈 Progresso
+                        </button>
+                        <button class="tab-button px-6 py-3 rounded-xl font-semibold transition-all" data-tab="comunidade">
+                            👥 Comunidade
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Tab Content -->
+                <div id="main-content">
+                    <!-- Área de Estudo -->
+                    <div id="tab-content-estudo" class="tab-content fade-in">
+                        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                            <!-- Card 1: Disciplinas -->
+                            <div class="glass-card rounded-2xl p-6 shadow-xl">
+                                <h3 class="text-2xl font-bold gradient-text mb-6">📖 Minhas Disciplinas</h3>
+                                <div class="space-y-4" id="disciplinas-list">
+                                    <!-- Disciplinas serão carregadas aqui -->
+                                </div>
+                                <button id="btn-add-disciplina" class="w-full mt-6 bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 rounded-xl font-semibold hover:shadow-lg transition-all">
+                                    + Adicionar Disciplina
+                                </button>
+                            </div>
+
+                            <!-- Card 2: Prática Rápida -->
+                            <div class="glass-card rounded-2xl p-6 shadow-xl">
+                                <h3 class="text-2xl font-bold gradient-text mb-6">⚡ Prática Rápida</h3>
+                                <div class="space-y-4">
+                                    <button class="btn-pratica-rapida w-full bg-blue-100 hover:bg-blue-200 p-4 rounded-xl text-left transition-all" data-questoes="10" data-disciplina="portugues">
+                                        <div class="font-semibold">10 Questões de Português</div>
+                                        <div class="text-sm text-gray-600">Nível: Intermediário</div>
+                                    </button>
+                                    <button class="btn-pratica-rapida w-full bg-green-100 hover:bg-green-200 p-4 rounded-xl text-left transition-all" data-questoes="5" data-disciplina="matematica">
+                                        <div class="font-semibold">5 Questões de Matemática</div>
+                                        <div class="text-sm text-gray-600">Nível: Básico</div>
+                                    </button>
+                                    <button class="btn-pratica-rapida w-full bg-purple-100 hover:bg-purple-200 p-4 rounded-xl text-left transition-all" data-questoes="15" data-disciplina="revisao">
+                                        <div class="font-semibold">Revisão Inteligente</div>
+                                        <div class="text-sm text-gray-600">Questões que você errou</div>
+                                    </button>
+                                </div>
+                                <button id="btn-iniciar-sessao" class="w-full mt-6 bg-gradient-to-r from-green-600 to-blue-600 text-white py-3 rounded-xl font-semibold hover:shadow-lg transition-all">
+                                    🎯 Iniciar Sessão de Estudo
+                                </button>
+                            </div>
+
+                            <!-- Card 3: Métricas -->
+                            <div class="glass-card rounded-2xl p-6 shadow-xl">
+                                <h3 class="text-2xl font-bold gradient-text mb-6">📊 Métricas do Dia</h3>
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div class="bg-white p-4 rounded-xl text-center shadow">
+                                        <div class="text-3xl font-bold text-blue-600" id="metric-tempo">2.5h</div>
+                                        <div class="text-sm text-gray-600">Tempo Estudado</div>
+                                    </div>
+                                    <div class="bg-white p-4 rounded-xl text-center shadow">
+                                        <div class="text-3xl font-bold text-green-600" id="metric-questoes">24</div>
+                                        <div class="text-sm text-gray-600">Questões Feitas</div>
+                                    </div>
+                                    <div class="bg-white p-4 rounded-xl text-center shadow">
+                                        <div class="text-3xl font-bold text-purple-600" id="metric-acerto">75%</div>
+                                        <div class="text-sm text-gray-600">Taxa de Acerto</div>
+                                    </div>
+                                    <div class="bg-white p-4 rounded-xl text-center shadow">
+                                        <div class="text-3xl font-bold text-yellow-600" id="metric-dias">7</div>
+                                        <div class="text-sm text-gray-600">Dias Consecutivos</div>
+                                    </div>
+                                </div>
+                                <div class="mt-6 p-4 bg-gradient-to-r from-blue-500 to-purple-500 rounded-xl text-white">
+                                    <div class="font-semibold">🎯 Meta Diária</div>
+                                    <div class="text-sm">3h de estudo | 30 questões</div>
+                                    <div class="w-full bg-white/20 rounded-full h-2 mt-2">
+                                        <div class="bg-white h-2 rounded-full" id="meta-progresso" style="width: 83%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Cronograma -->
+                    <div id="tab-content-cronograma" class="tab-content hidden fade-in">
+                        <div class="glass-card rounded-2xl p-6 shadow-xl mb-8">
+                            <h3 class="text-2xl font-bold gradient-text mb-6">🗓️ Meu Cronograma Semanal</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-7 gap-4" id="cronograma-semanal">
+                                <!-- Cronograma será gerado aqui -->
+                            </div>
+                        </div>
+
+                        <!-- Cronômetro -->
+                        <div class="glass-card rounded-2xl p-6 shadow-xl">
+                            <h3 class="text-2xl font-bold gradient-text mb-6">⏱️ Cronômetro de Estudo</h3>
+                            <div class="text-center">
+                                <div id="timer-display" class="text-6xl font-bold text-gray-800 mb-6">00:00:00</div>
+                                <div class="flex gap-4 justify-center">
+                                    <button id="btn-start" class="bg-green-600 text-white px-8 py-4 rounded-xl font-semibold text-lg hover:bg-green-700 transition-all">
+                                        ▶ Iniciar
+                                    </button>
+                                    <button id="btn-pause" class="bg-yellow-600 text-white px-8 py-4 rounded-xl font-semibold text-lg hover:bg-yellow-700 transition-all">
+                                        ⏸️ Pausar
+                                    </button>
+                                    <button id="btn-reset" class="bg-red-600 text-white px-8 py-4 rounded-xl font-semibold text-lg hover:bg-red-700 transition-all">
+                                        🔄 Resetar
+                                    </button>
+                                </div>
+                                <div class="mt-6">
+                                    <select id="select-disciplina-cronometro" class="p-3 border rounded-xl">
+                                        <option value="">Selecione uma disciplina</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Simulados -->
+                    <div id="tab-content-simulados" class="tab-content hidden fade-in">
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                            <!-- Simulados Disponíveis -->
+                            <div class="glass-card rounded-2xl p-6 shadow-xl">
+                                <h3 class="text-2xl font-bold gradient-text mb-6">🧪 Simulados Disponíveis</h3>
+                                <div class="space-y-4" id="lista-simulados">
+                                    <!-- Simulados serão carregados aqui -->
+                                </div>
+                            </div>
+
+                            <!-- Criar Simulado Personalizado -->
+                            <div class="glass-card rounded-2xl p-6 shadow-xl">
+                                <h3 class="text-2xl font-bold gradient-text mb-6">🎯 Simulado Personalizado</h3>
+                                <div class="space-y-4">
+                                    <div>
+                                        <label class="block text-sm font-semibold mb-2">Disciplinas:</label>
+                                        <select id="select-disciplina-simulado" class="w-full p-3 border rounded-xl">
+                                            <option value="portugues">Português</option>
+                                            <option value="matematica">Matemática</option>
+                                            <option value="direito">Direito Constitucional</option>
+                                            <option value="informatica">Informática</option>
+                                            <option value="todas">Todas as Disciplinas</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <div>
+                                        <label class="block text-sm font-semibold mb-2">Número de Questões:</label>
+                                        <input type="range" id="range-questoes" min="5" max="50" value="20" class="w-full">
+                                        <div class="text-center text-sm text-gray-600" id="questoes-count">20 questões</div>
+                                    </div>
+                                    
+                                    <div>
+                                        <label class="block text-sm font-semibold mb-2">Dificuldade:</label>
+                                        <div class="flex gap-2" id="dificuldade-buttons">
+                                            <button class="btn-dificuldade flex-1 bg-green-100 text-green-800 py-2 rounded-xl" data-dificuldade="facil">Fácil</button>
+                                            <button class="btn-dificuldade flex-1 bg-yellow-100 text-yellow-800 py-2 rounded-xl active" data-dificuldade="medio">Médio</button>
+                                            <button class="btn-dificuldade flex-1 bg-red-100 text-red-800 py-2 rounded-xl" data-dificuldade="dificil">Difícil</button>
+                                        </div>
+                                    </div>
+                                    
+                                    <div>
+                                        <label class="block text-sm font-semibold mb-2">Tempo Limite:</label>
+                                        <select id="select-tempo-simulado" class="w-full p-3 border rounded-xl">
+                                            <option value="30">30 minutos</option>
+                                            <option value="60">1 hora</option>
+                                            <option value="90">1 hora 30min</option>
+                                            <option value="120">2 horas</option>
+                                            <option value="0">Sem limite</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <button id="btn-criar-simulado" class="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white py-4 rounded-xl font-semibold text-lg hover:shadow-lg transition-all pulse">
+                                        🚀 Criar Simulado Personalizado
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Redação -->
+                    <div id="tab-content-redacao" class="tab-content hidden fade-in">
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                            <!-- Temas de Redação -->
+                            <div class="glass-card rounded-2xl p-6 shadow-xl">
+                                <h3 class="text-2xl font-bold gradient-text mb-6">✍️ Temas de Redação</h3>
+                                <div class="space-y-4" id="lista-temas-redacao">
+                                    <!-- Temas serão carregados aqui -->
+                                </div>
+                            </div>
+
+                            <!-- Minhas Redações -->
+                            <div class="glass-card rounded-2xl p-6 shadow-xl">
+                                <h3 class="text-2xl font-bold gradient-text mb-6">📝 Minhas Redações</h3>
+                                <div class="space-y-4" id="minhas-redacoes">
+                                    <!-- Redações serão carregadas aqui -->
+                                </div>
+                                <button id="btn-nova-redacao" class="w-full mt-6 bg-gradient-to-r from-green-600 to-blue-600 text-white py-3 rounded-xl font-semibold hover:shadow-lg transition-all">
+                                    + Nova Redação
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Progresso -->
+                    <div id="tab-content-progresso" class="tab-content hidden fade-in">
+                        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+                            <!-- Estatísticas Gerais -->
+                            <div class="glass-card rounded-2xl p-6 shadow-xl">
+                                <h3 class="text-2xl font-bold gradient-text mb-6">📈 Estatísticas Gerais</h3>
+                                <div class="space-y-4" id="estatisticas-gerais">
+                                    <!-- Estatísticas serão carregadas aqui -->
+                                </div>
+                            </div>
+
+                            <!-- Desempenho por Disciplina -->
+                            <div class="glass-card rounded-2xl p-6 shadow-xl">
+                                <h3 class="text-2xl font-bold gradient-text mb-6">🎯 Desempenho por Disciplina</h3>
+                                <div class="space-y-4" id="desempenho-disciplinas">
+                                    <!-- Desempenho será carregado aqui -->
+                                </div>
+                            </div>
+
+                            <!-- Conquistas -->
+                            <div class="glass-card rounded-2xl p-6 shadow-xl">
+                                <h3 class="text-2xl font-bold gradient-text mb-6">🏆 Conquistas</h3>
+                                <div class="grid grid-cols-2 gap-4" id="conquistas-list">
+                                    <!-- Conquistas serão carregadas aqui -->
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Gráfico de Progresso -->
+                        <div class="glass-card rounded-2xl p-6 shadow-xl">
+                            <h3 class="text-2xl font-bold gradient-text mb-6">📊 Evolução do Desempenho</h3>
+                            <div class="bg-white p-6 rounded-xl">
+                                <canvas id="progressChart" height="100"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Comunidade -->
+                    <div id="tab-content-comunidade" class="tab-content hidden fade-in">
+                        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                            <!-- Ranking -->
+                            <div class="glass-card rounded-2xl p-6 shadow-xl">
+                                <h3 class="text-2xl font-bold gradient-text mb-6">🏆 Ranking da Comunidade</h3>
+                                <div class="space-y-3" id="ranking-list">
+                                    <!-- Ranking será carregado aqui -->
+                                </div>
+                            </div>
+
+                            <!-- Fórum -->
+                            <div class="glass-card rounded-2xl p-6 shadow-xl">
+                                <h3 class="text-2xl font-bold gradient-text mb-6">💬 Fórum de Discussões</h3>
+                                <div class="space-y-4" id="forum-discussoes">
+                                    <!-- Discussões serão carregadas aqui -->
+                                </div>
+                                <button id="btn-nova-discussao" class="w-full mt-6 bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 rounded-xl font-semibold hover:shadow-lg transition-all">
+                                    + Nova Discussão
+                                </button>
+                            </div>
+
+                            <!-- Amigos e Grupos -->
+                            <div class="glass-card rounded-2xl p-6 shadow-xl">
+                                <h3 class="text-2xl font-bold gradient-text mb-6">👥 Amigos e Grupos</h3>
+                                <div class="space-y-4">
+                                    <div class="bg-white p-4 rounded-xl shadow">
+                                        <h4 class="font-semibold mb-3">Grupos de Estudo</h4>
+                                        <div class="space-y-2" id="grupos-estudo">
+                                            <!-- Grupos serão carregados aqui -->
+                                        </div>
+                                    </div>
+
+                                    <div class="bg-white p-4 rounded-xl shadow">
+                                        <h4 class="font-semibold mb-3">Amigos Online</h4>
+                                        <div class="flex space-x-2" id="amigos-online">
+                                            <!-- Amigos online serão carregados aqui -->
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <button id="btn-convidar-amigos" class="w-full mt-6 bg-gradient-to-r from-green-600 to-blue-600 text-white py-3 rounded-xl font-semibold hover:shadow-lg transition-all">
+                                    👋 Convidar Amigos
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <footer class="text-center mt-12 text-white/70">
+                <p>GFConcursos © 2025 - Edinho S. Paiva</p>
+                <p class="text-sm mt-2">Desenvolvido com 💙 para ajudar na sua aprovação</p>
+            </footer>
+        </div>
     </div>
 
     <!-- Modal de Questões -->
@@ -497,13 +603,13 @@
                 
                 <div class="flex gap-4">
                     <button id="btn-salvar-rascunho" class="flex-1 bg-gray-600 text-white py-3 rounded-xl font-semibold hover:bg-gray-700 transition-all">
-                    💾 Salvar Rascunho
+                        💾 Salvar Rascunho
                     </button>
                     <button id="btn-corrigir-redacao" class="flex-1 bg-yellow-600 text-white py-3 rounded-xl font-semibold hover:bg-yellow-700 transition-all">
-                    📝 Corrigir Redação
+                        📝 Corrigir Redação
                     </button>
                     <button id="btn-finalizar-redacao" class="flex-1 bg-green-600 text-white py-3 rounded-xl font-semibold hover:bg-green-700 transition-all">
-                    ✅ Finalizar
+                        ✅ Finalizar
                     </button>
                 </div>
                 
@@ -564,935 +670,1436 @@
         </div>
     </div>
 
+    <!-- Modal de Termos de Uso -->
+    <div id="modal-termos" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-2xl p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-2xl font-bold">📄 Termos de Uso</h3>
+                <button class="text-2xl text-gray-600 hover:text-gray-800" onclick="fecharModal('modal-termos')">×</button>
+            </div>
+            <div class="space-y-4">
+                <p><strong>1. Aceitação dos Termos</strong><br>
+                Ao acessar e usar a plataforma GFConcursos, você concorda com estes termos de uso.</p>
+                
+                <p><strong>2. Uso da Plataforma</strong><br>
+                A plataforma é destinada para fins educacionais e de preparação para concursos públicos.</p>
+                
+                <p><strong>3. Conta do Usuário</strong><br>
+                Você é responsável por manter a confidencialidade de sua conta e senha.</p>
+                
+                <p><strong>4. Propriedade Intelectual</strong><br>
+                Todo o conteúdo da plataforma é protegido por direitos autorais.</p>
+            </div>
+            <div class="mt-6 text-center">
+                <button class="bg-blue-600 text-white px-6 py-2 rounded-xl" onclick="fecharModal('modal-termos')">
+                    Entendi
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Política de Privacidade -->
+    <div id="modal-privacidade" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-2xl p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-2xl font-bold">🔒 Política de Privacidade</h3>
+                <button class="text-2xl text-gray-600 hover:text-gray-800" onclick="fecharModal('modal-privacidade')">×</button>
+            </div>
+            <div class="space-y-4">
+                <p><strong>1. Coleta de Dados</strong><br>
+                Coletamos apenas informações necessárias para fornecer nossos serviços.</p>
+                
+                <p><strong>2. Uso das Informações</strong><br>
+                Seus dados são usados para personalizar sua experiência de estudo.</p>
+                
+                <p><strong>3. Segurança</strong><br>
+                Implementamos medidas de segurança para proteger suas informações.</p>
+                
+                <p><strong>4. Seus Direitos</strong><br>
+                Você pode solicitar a exclusão de seus dados a qualquer momento.</p>
+            </div>
+            <div class="mt-6 text-center">
+                <button class="bg-blue-600 text-white px-6 py-2 rounded-xl" onclick="fecharModal('modal-privacidade')">
+                    Entendi
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Esqueci Senha -->
+    <div id="modal-esqueci-senha" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-2xl p-6 max-w-md w-full">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-2xl font-bold">🔑 Recuperar Senha</h3>
+                <button class="text-2xl text-gray-600 hover:text-gray-800" onclick="fecharModal('modal-esqueci-senha')">×</button>
+            </div>
+            <div class="space-y-4">
+                <p class="text-gray-600">Digite seu email para receber um link de recuperação:</p>
+                <input type="email" id="recovery-email" class="w-full p-3 border rounded-xl" placeholder="seu@email.com">
+                <button id="btn-enviar-recuperacao" class="w-full bg-blue-600 text-white py-3 rounded-xl font-semibold hover:bg-blue-700 transition-all">
+                    Enviar Link de Recuperação
+                </button>
+            </div>
+        </div>
+    </div>
+
     <script>
         // =========================
-        // SISTEMA DE DADOS
+        // SISTEMA DE AUTENTICAÇÃO
         // =========================
-        const appData = {
-            usuario: {
-                nome: "Estudante GFConcursos",
-                email: "estudante@gfconcursos.com",
-                pontos: 1420,
-                nivel: "Intermediário"
+        const AuthSystem = {
+            // Chave para criptografia (em produção, isso viria de variáveis de ambiente)
+            encryptionKey: 'GFConcursos2025SecureKey',
+            
+            // Usuários salvos (em produção, seria um banco de dados)
+            usuarios: JSON.parse(localStorage.getItem('gfconcursos_usuarios')) || [],
+            
+            // Usuário logado atualmente
+            usuarioLogado: JSON.parse(localStorage.getItem('gfconcursos_usuario_logado')) || null,
+            
+            // Inicializar sistema
+            init() {
+                this.verificarLoginAuto();
+                this.configurarEventListeners();
             },
             
-            disciplinas: [
-                { id: 1, nome: "Português", cor: "#3B82F6", progresso: 68, questoesFeitas: 324, tempoEstudado: 45 },
-                { id: 2, nome: "Matemática", cor: "#10B981", progresso: 75, questoesFeitas: 287, tempoEstudado: 38 },
-                { id: 3, nome: "Direito Constitucional", cor: "#8B5CF6", progresso: 82, questoesFeitas: 198, tempoEstudado: 32 },
-                { id: 4, nome: "Informática", cor: "#F59E0B", progresso: 58, questoesFeitas: 156, tempoEstudado: 25 },
-                { id: 5, nome: "Raciocínio Lógico", cor: "#EF4444", progresso: 71, questoesFeitas: 213, tempoEstudado: 29 }
-            ],
-            
-            metricas: {
-                tempoEstudadoHoje: 2.5,
-                questoesFeitasHoje: 24,
-                taxaAcertoHoje: 75,
-                diasConsecutivos: 7,
-                metaHoras: 3,
-                metaQuestoes: 30
-            },
-            
-            simulados: [
-                { id: 1, nome: "Simulado Completo - Nível Médio", descricao: "40 questões | 3h30min", dificuldade: "medio", tipo: "completo", novo: true },
-                { id: 2, nome: "Português - FGV", descricao: "20 questões | 1h30min", dificuldade: "medio", tipo: "especifico", popular: true },
-                { id: 3, nome: "Matemática - CESPE", descricao: "15 questões | 1h", dificuldade: "dificil", tipo: "especifico" }
-            ],
-            
-            temasRedacao: [
-                { id: 1, titulo: "Os desafios da educação digital no Brasil", descricao: "Tema atual sobre transformação digital na educação", categoria: "educacao" },
-                { id: 2, titulo: "Sustentabilidade e desenvolvimento econômico", descricao: "Como conciliar crescimento e preservação ambiental", categoria: "sustentabilidade" },
-                { id: 3, titulo: "A importância do voto consciente", descricao: "Democracia e responsabilidade cívica", categoria: "politica" }
-            ],
-            
-            redacoes: [
-                { id: 1, tema: "Educação Inclusiva no Brasil", data: "15/12/2024", nota: 7.5, feedback: "Boa estrutura, mas precisa aprofundar argumentos" },
-                { id: 2, tema: "Desafios do Transporte Público", data: "10/12/2024", nota: 8.2, feedback: "Excelente argumentação e coesão" },
-                { id: 3, tema: "Impactos das Redes Sociais", data: "05/12/2024", nota: 6.8, feedback: "Ideias interessantes, mas organização precisa melhorar" }
-            ],
-            
-            ranking: [
-                { posicao: 1, nome: "Maria Silva", pontos: 1850, disciplina: "Português" },
-                { posicao: 2, nome: "João Santos", pontos: 1720, disciplina: "Matemática" },
-                { posicao: 3, nome: "Ana Oliveira", pontos: 1650, disciplina: "Direito" },
-                { posicao: 4, nome: "Você", pontos: 1420, disciplina: "Geral" }
-            ],
-            
-            // Banco de questões
-            bancoQuestoes: [
-                {
-                    id: 1,
-                    disciplina: "Português",
-                    dificuldade: "medio",
-                    enunciado: "Qual é a função sintática do termo destacado na frase: 'O livro que comprei é muito interessante'?",
-                    opcoes: [
-                        "A) Sujeito",
-                        "B) Objeto direto",
-                        "C) Objeto indireto",
-                        "D) Adjunto adnominal"
-                    ],
-                    resposta: 3,
-                    explicacao: "O termo 'que comprei' exerce a função de adjunto adnominal, pois especifica o substantivo 'livro'."
-                },
-                {
-                    id: 2,
-                    disciplina: "Matemática",
-                    dificuldade: "facil",
-                    enunciado: "Qual é o resultado da expressão: 2 + 3 × 4?",
-                    opcoes: [
-                        "A) 20",
-                        "B) 14",
-                        "C) 24",
-                        "D) 10"
-                    ],
-                    resposta: 1,
-                    explicacao: "Segundo a ordem das operações, multiplicação vem antes da adição: 3 × 4 = 12, então 2 + 12 = 14."
-                },
-                {
-                    id: 3,
-                    disciplina: "Direito Constitucional",
-                    dificuldade: "dificil",
-                    enunciado: "De acordo com a Constituição Federal, qual é o prazo para o veto presidencial?",
-                    opcoes: [
-                        "A) 15 dias úteis",
-                        "B) 30 dias corridos",
-                        "C) 15 dias corridos",
-                        "D) 10 dias úteis"
-                    ],
-                    resposta: 2,
-                    explicacao: "O veto presidencial deve ser exercido no prazo de 15 dias úteis, nos termos do art. 66 da CF."
+            // Verificar se há usuário logado automaticamente
+            verificarLoginAuto() {
+                if (this.usuarioLogado) {
+                    this.entrarNaAplicacao(this.usuarioLogado);
                 }
-            ],
+            },
             
-            // Estado atual do app
-            estado: {
-                questaoAtual: 0,
-                respostas: [],
-                tempoInicio: null,
-                simuladoAtivo: null,
-                redacaoAtiva: null,
-                timerAtivo: false,
-                timerSegundos: 0
+            // Configurar event listeners
+            configurarEventListeners() {
+                // Login
+                document.getElementById('btn-login').addEventListener('click', () => this.fazerLogin());
+                document.getElementById('login-password').addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') this.fazerLogin();
+                });
+                
+                // Cadastro
+                document.getElementById('btn-cadastrar').addEventListener('click', () => this.fazerCadastro());
+                document.getElementById('cadastro-confirm-password').addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') this.fazerCadastro();
+                });
+                
+                // Logout
+                document.getElementById('btn-logout').addEventListener('click', () => this.fazerLogout());
+                
+                // Recuperação de senha
+                document.getElementById('btn-enviar-recuperacao').addEventListener('click', () => this.recuperarSenha());
+                
+                // Validação de senha em tempo real
+                document.getElementById('cadastro-password').addEventListener('input', (e) => {
+                    this.validarForcaSenha(e.target.value);
+                });
+                
+                document.getElementById('cadastro-confirm-password').addEventListener('input', (e) => {
+                    this.validarConfirmacaoSenha();
+                });
+            },
+            
+            // Criptografar senha
+            criptografarSenha(senha) {
+                return CryptoJS.AES.encrypt(senha, this.encryptionKey).toString();
+            },
+            
+            // Descriptografar senha (apenas para verificação)
+            descriptografarSenha(senhaCriptografada) {
+                try {
+                    return CryptoJS.AES.decrypt(senhaCriptografada, this.encryptionKey).toString(CryptoJS.enc.Utf8);
+                } catch (e) {
+                    return null;
+                }
+            },
+            
+            // Validar força da senha
+            validarForcaSenha(senha) {
+                const strengthDiv = document.getElementById('password-strength');
+                let strength = 0;
+                let message = '';
+                let color = 'red';
+                
+                if (senha.length >= 6) strength++;
+                if (senha.length >= 8) strength++;
+                if (/[A-Z]/.test(senha)) strength++;
+                if (/[0-9]/.test(senha)) strength++;
+                if (/[^A-Za-z0-9]/.test(senha)) strength++;
+                
+                if (strength < 2) {
+                    message = 'Senha fraca';
+                    color = 'red';
+                } else if (strength < 4) {
+                    message = 'Senha média';
+                    color = 'orange';
+                } else {
+                    message = 'Senha forte';
+                    color = 'green';
+                }
+                
+                strengthDiv.textContent = message;
+                strengthDiv.style.color = color;
+            },
+            
+            // Validar confirmação de senha
+            validarConfirmacaoSenha() {
+                const senha = document.getElementById('cadastro-password').value;
+                const confirmacao = document.getElementById('cadastro-confirm-password').value;
+                const errorDiv = document.getElementById('password-match-error');
+                
+                if (senha && confirmacao && senha !== confirmacao) {
+                    errorDiv.classList.remove('hidden');
+                    return false;
+                } else {
+                    errorDiv.classList.add('hidden');
+                    return true;
+                }
+            },
+            
+            // Fazer login
+            async fazerLogin() {
+                const email = document.getElementById('login-email').value.trim();
+                const senha = document.getElementById('login-password').value;
+                const lembrar = document.getElementById('remember-me').checked;
+                
+                if (!email || !senha) {
+                    this.mostrarNotificacao('❌ Preencha todos os campos', 'error');
+                    return;
+                }
+                
+                // Simular delay de rede
+                this.mostrarLoading(true);
+                
+                setTimeout(() => {
+                    const usuario = this.usuarios.find(u => u.email === email);
+                    
+                    if (usuario && this.descriptografarSenha(usuario.senha) === senha) {
+                        this.usuarioLogado = usuario;
+                        
+                        // Salvar sessão
+                        if (lembrar) {
+                            localStorage.setItem('gfconcursos_usuario_logado', JSON.stringify(usuario));
+                        }
+                        
+                        this.entrarNaAplicacao(usuario);
+                        this.mostrarNotificacao(`✅ Bem-vindo de volta, ${usuario.nome.split(' ')[0]}!`, 'success');
+                    } else {
+                        this.mostrarNotificacao('❌ Email ou senha incorretos', 'error');
+                    }
+                    
+                    this.mostrarLoading(false);
+                }, 1000);
+            },
+            
+            // Fazer cadastro
+            async fazerCadastro() {
+                const nome = document.getElementById('cadastro-nome').value.trim();
+                const email = document.getElementById('cadastro-email').value.trim();
+                const senha = document.getElementById('cadastro-password').value;
+                const confirmacao = document.getElementById('cadastro-confirm-password').value;
+                const aceitarTermos = document.getElementById('aceitar-termos').checked;
+                
+                // Validações
+                if (!nome || !email || !senha || !confirmacao) {
+                    this.mostrarNotificacao('❌ Preencha todos os campos', 'error');
+                    return;
+                }
+                
+                if (!this.validarEmail(email)) {
+                    this.mostrarNotificacao('❌ Digite um email válido', 'error');
+                    return;
+                }
+                
+                if (senha.length < 6) {
+                    this.mostrarNotificacao('❌ A senha deve ter pelo menos 6 caracteres', 'error');
+                    return;
+                }
+                
+                if (!this.validarConfirmacaoSenha()) {
+                    this.mostrarNotificacao('❌ As senhas não coincidem', 'error');
+                    return;
+                }
+                
+                if (!aceitarTermos) {
+                    this.mostrarNotificacao('❌ Aceite os termos de uso para continuar', 'error');
+                    return;
+                }
+                
+                // Verificar se email já existe
+                if (this.usuarios.find(u => u.email === email)) {
+                    this.mostrarNotificacao('❌ Este email já está cadastrado', 'error');
+                    return;
+                }
+                
+                // Simular delay de rede
+                this.mostrarLoading(true);
+                
+                setTimeout(() => {
+                    // Criar novo usuário
+                    const novoUsuario = {
+                        id: Date.now().toString(),
+                        nome: nome,
+                        email: email,
+                        senha: this.criptografarSenha(senha),
+                        dataCadastro: new Date().toISOString(),
+                        nivel: 'Iniciante',
+                        pontos: 0,
+                        avatar: this.gerarAvatar(nome)
+                    };
+                    
+                    // Adicionar à lista de usuários
+                    this.usuarios.push(novoUsuario);
+                    this.salvarUsuarios();
+                    
+                    // Logar automaticamente
+                    this.usuarioLogado = novoUsuario;
+                    localStorage.setItem('gfconcursos_usuario_logado', JSON.stringify(novoUsuario));
+                    
+                    this.entrarNaAplicacao(novoUsuario);
+                    this.mostrarNotificacao(`🎉 Conta criada com sucesso, ${nome.split(' ')[0]}!`, 'success');
+                    this.mostrarLoading(false);
+                }, 1500);
+            },
+            
+            // Fazer logout
+            fazerLogout() {
+                this.usuarioLogado = null;
+                localStorage.removeItem('gfconcursos_usuario_logado');
+                
+                document.getElementById('app-wrapper').classList.add('hidden');
+                document.getElementById('login-system').classList.remove('hidden');
+                
+                this.mostrarNotificacao('👋 Até logo! Volte em breve.', 'info');
+                
+                // Limpar formulários
+                document.getElementById('login-form').classList.remove('hidden');
+                document.getElementById('cadastro-form').classList.add('hidden');
+                document.getElementById('login-email').value = '';
+                document.getElementById('login-password').value = '';
+            },
+            
+            // Recuperar senha
+            recuperarSenha() {
+                const email = document.getElementById('recovery-email').value.trim();
+                
+                if (!this.validarEmail(email)) {
+                    this.mostrarNotificacao('❌ Digite um email válido', 'error');
+                    return;
+                }
+                
+                if (!this.usuarios.find(u => u.email === email)) {
+                    this.mostrarNotificacao('❌ Email não encontrado', 'error');
+                    return;
+                }
+                
+                // Simular envio de email
+                this.mostrarLoading(true);
+                
+                setTimeout(() => {
+                    fecharModal('modal-esqueci-senha');
+                    this.mostrarNotificacao('📧 Email de recuperação enviado! Verifique sua caixa de entrada.', 'success');
+                    this.mostrarLoading(false);
+                }, 1000);
+            },
+            
+            // Entrar na aplicação
+            entrarNaAplicacao(usuario) {
+                document.getElementById('login-system').classList.add('hidden');
+                document.getElementById('app-wrapper').classList.remove('hidden');
+                
+                // Atualizar interface com dados do usuário
+                document.getElementById('user-info').textContent = `Bem-vindo, ${usuario.nome.split(' ')[0]}!`;
+                document.getElementById('user-stats').textContent = `Nível ${usuario.nivel} | ${usuario.pontos} pontos`;
+                
+                // Inicializar aplicação principal
+                this.inicializarAplicacaoPrincipal();
+            },
+            
+            // Validar email
+            validarEmail(email) {
+                const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                return regex.test(email);
+            },
+            
+            // Gerar avatar baseado no nome
+            gerarAvatar(nome) {
+                const iniciais = nome.split(' ').map(n => n[0]).join('').toUpperCase();
+                const cores = ['#3B82F6', '#EF4444', '#10B981', '#F59E0B', '#8B5CF6'];
+                const cor = cores[iniciais.charCodeAt(0) % cores.length];
+                
+                return {
+                    iniciais: iniciais.substring(0, 2),
+                    cor: cor
+                };
+            },
+            
+            // Salvar usuários no localStorage
+            salvarUsuarios() {
+                localStorage.setItem('gfconcursos_usuarios', JSON.stringify(this.usuarios));
+            },
+            
+            // Mostrar loading
+            mostrarLoading(mostrar) {
+                const btnLogin = document.getElementById('btn-login');
+                const btnCadastrar = document.getElementById('btn-cadastrar');
+                
+                if (mostrar) {
+                    btnLogin.innerHTML = '⏳ Entrando...';
+                    btnCadastrar.innerHTML = '⏳ Criando conta...';
+                    btnLogin.disabled = true;
+                    btnCadastrar.disabled = true;
+                } else {
+                    btnLogin.innerHTML = '🚀 Entrar';
+                    btnCadastrar.innerHTML = '📝 Criar Conta';
+                    btnLogin.disabled = false;
+                    btnCadastrar.disabled = false;
+                }
+            },
+            
+            // Mostrar notificação
+            mostrarNotificacao(mensagem, tipo = 'info') {
+                const notificacao = document.createElement('div');
+                notificacao.className = `fixed top-4 right-4 p-4 rounded-xl shadow-lg text-white max-w-sm z-50 fade-in ${
+                    tipo === 'success' ? 'bg-green-500' :
+                    tipo === 'error' ? 'bg-red-500' :
+                    tipo === 'warning' ? 'bg-yellow-500' : 'bg-blue-500'
+                }`;
+                
+                notificacao.innerHTML = `
+                    <div class="flex items-center">
+                        <span class="text-lg mr-2">${tipo === 'success' ? '✅' : tipo === 'error' ? '❌' : tipo === 'warning' ? '⚠️' : 'ℹ️'}</span>
+                        <span>${mensagem}</span>
+                    </div>
+                `;
+                
+                document.body.appendChild(notificacao);
+                
+                setTimeout(() => {
+                    notificacao.classList.add('fade-out');
+                    setTimeout(() => {
+                        if (document.body.contains(notificacao)) {
+                            document.body.removeChild(notificacao);
+                        }
+                    }, 500);
+                }, 5000);
+            },
+            
+            // Inicializar aplicação principal
+            inicializarAplicacaoPrincipal() {
+                // Aqui você inicializaria todas as funcionalidades da aplicação
+                console.log('Aplicação principal inicializada para:', this.usuarioLogado.nome);
+                
+                // Exemplo: Carregar dados do usuário
+                this.carregarDadosUsuario();
+            },
+            
+            // Carregar dados do usuário
+            carregarDadosUsuario() {
+                // Em uma aplicação real, buscaria dados do backend
+                const usuario = this.usuarioLogado;
+                
+                // Atualizar interface
+                document.getElementById('user-info').textContent = `Bem-vindo, ${usuario.nome.split(' ')[0]}!`;
+                document.getElementById('user-stats').textContent = `Nível ${usuario.nivel} | ${usuario.pontos} pontos`;
+                
+                // Inicializar outras funcionalidades...
+                this.inicializarAplicacaoEstudo();
+            },
+            
+            // Inicializar sistema de estudo
+            inicializarAplicacaoEstudo() {
+                // Aqui você inicializaria o sistema de estudo
+                // Por enquanto, vamos apenas mostrar uma notificação
+                this.mostrarNotificacao('📚 Sistema de estudo carregado!', 'success');
             }
         };
 
         // =========================
-        // SISTEMA DE INICIALIZAÇÃO
+        // SISTEMA DE ESTUDO COMPLETO
         // =========================
-        document.addEventListener('DOMContentLoaded', function() {
-            inicializarApp();
-        });
-
-        function inicializarApp() {
-            carregarDadosUsuario();
-            carregarDisciplinas();
-            carregarMetricas();
-            carregarSimulados();
-            carregarTemasRedacao();
-            carregarRedacoes();
-            carregarRanking();
-            carregarCronograma();
-            inicializarGrafico();
-            configurarEventListeners();
-            
-            console.log('🚀 GFConcursos - Plataforma inicializada com sucesso!');
-        }
-
-        // =========================
-        // SISTEMA DE CARREGAMENTO DE DADOS
-        // =========================
-        function carregarDadosUsuario() {
-            document.getElementById('user-info').textContent = `Bem-vindo, ${appData.usuario.nome}!`;
-            document.getElementById('user-stats').textContent = `Nível ${appData.usuario.nivel} | ${appData.usuario.pontos} pontos`;
-        }
-
-        function carregarDisciplinas() {
-            const container = document.getElementById('disciplinas-list');
-            const selectCronometro = document.getElementById('select-disciplina-cronometro');
-            
-            container.innerHTML = '';
-            selectCronometro.innerHTML = '<option value="">Selecione uma disciplina</option>';
-            
-            appData.disciplinas.forEach(disciplina => {
-                // Card da disciplina
-                const div = document.createElement('div');
-                div.className = 'flex justify-between items-center p-4 rounded-xl';
-                div.style.backgroundColor = `${disciplina.cor}15`;
-                div.style.borderLeft = `4px solid ${disciplina.cor}`;
+        const StudySystem = {
+            // Dados do sistema de estudo
+            dados: {
+                disciplinas: [
+                    { id: 1, nome: "Português", cor: "#3B82F6", progresso: 68, questoesFeitas: 324, tempoEstudado: 45 },
+                    { id: 2, nome: "Matemática", cor: "#10B981", progresso: 75, questoesFeitas: 287, tempoEstudado: 38 },
+                    { id: 3, nome: "Direito Constitucional", cor: "#8B5CF6", progresso: 82, questoesFeitas: 198, tempoEstudado: 32 },
+                    { id: 4, nome: "Informática", cor: "#F59E0B", progresso: 58, questoesFeitas: 156, tempoEstudado: 25 },
+                    { id: 5, nome: "Raciocínio Lógico", cor: "#EF4444", progresso: 71, questoesFeitas: 213, tempoEstudado: 29 }
+                ],
                 
-                div.innerHTML = `
-                    <div class="flex items-center">
-                        <div class="w-3 h-3 rounded-full mr-3" style="background-color: ${disciplina.cor}"></div>
-                        <div>
-                            <div class="font-semibold">${disciplina.nome}</div>
-                            <div class="text-sm text-gray-600">${disciplina.questoesFeitas} questões</div>
-                        </div>
-                    </div>
-                    <div class="text-right">
-                        <div class="font-bold" style="color: ${disciplina.cor}">${disciplina.progresso}%</div>
-                        <div class="text-xs text-gray-500">progresso</div>
-                    </div>
-                `;
-                
-                container.appendChild(div);
-                
-                // Option para o cronômetro
-                const option = document.createElement('option');
-                option.value = disciplina.id;
-                option.textContent = disciplina.nome;
-                selectCronometro.appendChild(option);
-            });
-        }
-
-        function carregarMetricas() {
-            const progresso = (appData.metricas.tempoEstudadoHoje / appData.metricas.metaHoras) * 100;
-            
-            document.getElementById('metric-tempo').textContent = `${appData.metricas.tempoEstudadoHoje}h`;
-            document.getElementById('metric-questoes').textContent = appData.metricas.questoesFeitasHoje;
-            document.getElementById('metric-acerto').textContent = `${appData.metricas.taxaAcertoHoje}%`;
-            document.getElementById('metric-dias').textContent = appData.metricas.diasConsecutivos;
-            document.getElementById('meta-progresso').style.width = `${Math.min(progresso, 100)}%`;
-        }
-
-        function carregarSimulados() {
-            const container = document.getElementById('lista-simulados');
-            container.innerHTML = '';
-            
-            appData.simulados.forEach(simulado => {
-                const div = document.createElement('div');
-                div.className = 'bg-white p-6 rounded-xl shadow border-2 border-blue-200';
-                
-                let badges = '';
-                if (simulado.novo) {
-                    badges += '<span class="bg-blue-600 text-white px-3 py-1 rounded-full text-sm mr-2">Novo</span>';
-                }
-                if (simulado.popular) {
-                    badges += '<span class="bg-green-600 text-white px-3 py-1 rounded-full text-sm">Popular</span>';
-                }
-                
-                div.innerHTML = `
-                    <div class="flex justify-between items-start mb-3">
-                        <div>
-                            <h4 class="font-bold text-lg">${simulado.nome}</h4>
-                            <p class="text-gray-600">${simulado.descricao}</p>
-                        </div>
-                        <div>${badges}</div>
-                    </div>
-                    <button class="btn-iniciar-simulado w-full bg-blue-600 text-white py-3 rounded-xl font-semibold hover:bg-blue-700 transition-all" data-simulado="${simulado.id}">
-                        Iniciar Simulado
-                    </button>
-                `;
-                
-                container.appendChild(div);
-            });
-        }
-
-        function carregarTemasRedacao() {
-            const container = document.getElementById('lista-temas-redacao');
-            container.innerHTML = '';
-            
-            appData.temasRedacao.forEach(tema => {
-                const div = document.createElement('div');
-                div.className = 'bg-white p-6 rounded-xl shadow border-l-4 border-blue-500';
-                
-                div.innerHTML = `
-                    <h4 class="font-bold text-lg mb-2">${tema.titulo}</h4>
-                    <p class="text-gray-600 text-sm mb-3">${tema.descricao}</p>
-                    <button class="btn-escrever-redacao bg-blue-600 text-white px-6 py-2 rounded-xl hover:bg-blue-700 transition-all" data-tema="${tema.id}">
-                        Escrever Redação
-                    </button>
-                `;
-                
-                container.appendChild(div);
-            });
-        }
-
-        function carregarRedacoes() {
-            const container = document.getElementById('minhas-redacoes');
-            container.innerHTML = '';
-            
-            appData.redacoes.forEach(redacao => {
-                const div = document.createElement('div');
-                div.className = 'bg-white p-4 rounded-xl shadow';
-                
-                div.innerHTML = `
-                    <div class="flex justify-between items-start">
-                        <div>
-                            <h4 class="font-semibold">${redacao.tema}</h4>
-                            <p class="text-sm text-gray-600">Enviada em ${redacao.data}</p>
-                            <p class="text-sm text-gray-500 mt-1">${redacao.feedback}</p>
-                        </div>
-                        <span class="bg-yellow-500 text-white px-2 py-1 rounded text-sm">${redacao.nota}</span>
-                    </div>
-                `;
-                
-                container.appendChild(div);
-            });
-        }
-
-        function carregarRanking() {
-            const container = document.getElementById('ranking-list');
-            container.innerHTML = '';
-            
-            appData.ranking.forEach(participante => {
-                const div = document.createElement('div');
-                let bgColor = 'bg-gray-100';
-                let emoji = '4';
-                
-                if (participante.posicao === 1) {
-                    bgColor = 'bg-yellow-100';
-                    emoji = '🥇';
-                } else if (participante.posicao === 2) {
-                    bgColor = 'bg-gray-100';
-                    emoji = '🥈';
-                } else if (participante.posicao === 3) {
-                    bgColor = 'bg-orange-100';
-                    emoji = '🥉';
-                } else if (participante.posicao === 4) {
-                    bgColor = 'bg-blue-50';
-                    emoji = '🎯';
-                }
-                
-                div.className = `flex items-center justify-between p-3 ${bgColor} rounded-xl`;
-                div.innerHTML = `
-                    <div class="flex items-center">
-                        <span class="text-xl mr-3">${emoji}</span>
-                        <div>
-                            <div class="font-semibold">${participante.nome}</div>
-                            <div class="text-sm text-gray-600">${participante.pontos} pontos</div>
-                        </div>
-                    </div>
-                    <span class="bg-gray-500 text-white px-2 py-1 rounded text-sm">${participante.posicao}º</span>
-                `;
-                
-                container.appendChild(div);
-            });
-        }
-
-        function carregarCronograma() {
-            const container = document.getElementById('cronograma-semanal');
-            const dias = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo'];
-            
-            container.innerHTML = '';
-            
-            dias.forEach(dia => {
-                const div = document.createElement('div');
-                div.className = 'bg-white p-4 rounded-xl shadow';
-                
-                let tarefas = '';
-                if (dia === 'Segunda') {
-                    tarefas = `
-                        <div class="bg-blue-100 p-2 rounded text-sm mb-2">09:00 - Português</div>
-                        <div class="bg-green-100 p-2 rounded text-sm">14:00 - Matemática</div>
-                    `;
-                } else if (dia === 'Terça') {
-                    tarefas = `<div class="bg-purple-100 p-2 rounded text-sm">10:00 - Direito</div>`;
-                } else if (dia === 'Quarta') {
-                    tarefas = `
-                        <div class="bg-yellow-100 p-2 rounded text-sm mb-2">09:00 - Informática</div>
-                        <div class="bg-red-100 p-2 rounded text-sm">15:00 - Simulado</div>
-                    `;
-                } else if (dia === 'Quinta') {
-                    tarefas = `
-                        <div class="bg-blue-100 p-2 rounded text-sm mb-2">09:00 - Português</div>
-                        <div class="bg-green-100 p-2 rounded text-sm">14:00 - Matemática</div>
-                    `;
-                } else if (dia === 'Sexta') {
-                    tarefas = `<div class="bg-purple-100 p-2 rounded text-sm">10:00 - Direito</div>`;
-                } else if (dia === 'Sábado') {
-                    tarefas = `<div class="bg-red-100 p-2 rounded text-sm">08:00 - Revisão Geral</div>`;
-                } else {
-                    tarefas = `<div class="text-sm text-gray-500 text-center">Descanso</div>`;
-                }
-                
-                div.innerHTML = `
-                    <div class="font-semibold text-center mb-3">${dia}</div>
-                    <div class="space-y-2">${tarefas}</div>
-                `;
-                
-                container.appendChild(div);
-            });
-        }
-
-        function inicializarGrafico() {
-            const ctx = document.getElementById('progressChart').getContext('2d');
-            new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'],
-                    datasets: [{
-                        label: 'Taxa de Acerto (%)',
-                        data: [65, 68, 70, 72, 71, 75, 78, 76, 80, 82, 85, 88],
-                        borderColor: '#4f46e5',
-                        backgroundColor: 'rgba(79, 70, 229, 0.1)',
-                        tension: 0.4,
-                        fill: true
-                    }]
+                metricas: {
+                    tempoEstudadoHoje: 2.5,
+                    questoesFeitasHoje: 24,
+                    taxaAcertoHoje: 75,
+                    diasConsecutivos: 7,
+                    metaHoras: 3,
+                    metaQuestoes: 30
                 },
-                options: {
-                    responsive: true,
-                    plugins: {
-                        legend: {
-                            display: false
-                        }
+                
+                simulados: [
+                    { id: 1, nome: "Simulado Completo - Nível Médio", descricao: "40 questões | 3h30min", dificuldade: "medio", tipo: "completo", novo: true },
+                    { id: 2, nome: "Português - FGV", descricao: "20 questões | 1h30min", dificuldade: "medio", tipo: "especifico", popular: true },
+                    { id: 3, nome: "Matemática - CESPE", descricao: "15 questões | 1h", dificuldade: "dificil", tipo: "especifico" }
+                ],
+                
+                temasRedacao: [
+                    { id: 1, titulo: "Os desafios da educação digital no Brasil", descricao: "Tema atual sobre transformação digital na educação", categoria: "educacao" },
+                    { id: 2, titulo: "Sustentabilidade e desenvolvimento econômico", descricao: "Como conciliar crescimento e preservação ambiental", categoria: "sustentabilidade" },
+                    { id: 3, titulo: "A importância do voto consciente", descricao: "Democracia e responsabilidade cívica", categoria: "politica" }
+                ],
+                
+                redacoes: [
+                    { id: 1, tema: "Educação Inclusiva no Brasil", data: "15/12/2024", nota: 7.5, feedback: "Boa estrutura, mas precisa aprofundar argumentos" },
+                    { id: 2, tema: "Desafios do Transporte Público", data: "10/12/2024", nota: 8.2, feedback: "Excelente argumentação e coesão" },
+                    { id: 3, tema: "Impactos das Redes Sociais", data: "05/12/2024", nota: 6.8, feedback: "Ideias interessantes, mas organização precisa melhorar" }
+                ],
+                
+                ranking: [
+                    { posicao: 1, nome: "Maria Silva", pontos: 1850, disciplina: "Português" },
+                    { posicao: 2, nome: "João Santos", pontos: 1720, disciplina: "Matemática" },
+                    { posicao: 3, nome: "Ana Oliveira", pontos: 1650, disciplina: "Direito" },
+                    { posicao: 4, nome: "Você", pontos: 1420, disciplina: "Geral" }
+                ],
+                
+                // Banco de questões
+                bancoQuestoes: [
+                    {
+                        id: 1,
+                        disciplina: "Português",
+                        dificuldade: "medio",
+                        enunciado: "Qual é a função sintática do termo destacado na frase: 'O livro que comprei é muito interessante'?",
+                        opcoes: [
+                            "A) Sujeito",
+                            "B) Objeto direto",
+                            "C) Objeto indireto",
+                            "D) Adjunto adnominal"
+                        ],
+                        resposta: 3,
+                        explicacao: "O termo 'que comprei' exerce a função de adjunto adnominal, pois especifica o substantivo 'livro'."
                     },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            max: 100
+                    {
+                        id: 2,
+                        disciplina: "Matemática",
+                        dificuldade: "facil",
+                        enunciado: "Qual é o resultado da expressão: 2 + 3 × 4?",
+                        opcoes: [
+                            "A) 20",
+                            "B) 14",
+                            "C) 24",
+                            "D) 10"
+                        ],
+                        resposta: 1,
+                        explicacao: "Segundo a ordem das operações, multiplicação vem antes da adição: 3 × 4 = 12, então 2 + 12 = 14."
+                    },
+                    {
+                        id: 3,
+                        disciplina: "Direito Constitucional",
+                        dificuldade: "dificil",
+                        enunciado: "De acordo com a Constituição Federal, qual é o prazo para o veto presidencial?",
+                        opcoes: [
+                            "A) 15 dias úteis",
+                            "B) 30 dias corridos",
+                            "C) 15 dias corridos",
+                            "D) 10 dias úteis"
+                        ],
+                        resposta: 2,
+                        explicacao: "O veto presidencial deve ser exercido no prazo de 15 dias úteis, nos termos do art. 66 da CF."
+                    }
+                ],
+                
+                // Estado atual do app
+                estado: {
+                    questaoAtual: 0,
+                    respostas: [],
+                    tempoInicio: null,
+                    simuladoAtivo: null,
+                    redacaoAtiva: null,
+                    timerAtivo: false,
+                    timerSegundos: 0
+                }
+            },
+            
+            // Inicializar sistema de estudo
+            init() {
+                this.carregarDisciplinas();
+                this.carregarMetricas();
+                this.carregarSimulados();
+                this.carregarTemasRedacao();
+                this.carregarRedacoes();
+                this.carregarRanking();
+                this.carregarCronograma();
+                this.inicializarGrafico();
+                this.configurarEventListeners();
+            },
+            
+            // Carregar disciplinas
+            carregarDisciplinas() {
+                const container = document.getElementById('disciplinas-list');
+                const selectCronometro = document.getElementById('select-disciplina-cronometro');
+                
+                container.innerHTML = '';
+                selectCronometro.innerHTML = '<option value="">Selecione uma disciplina</option>';
+                
+                this.dados.disciplinas.forEach(disciplina => {
+                    // Card da disciplina
+                    const div = document.createElement('div');
+                    div.className = 'flex justify-between items-center p-4 rounded-xl';
+                    div.style.backgroundColor = `${disciplina.cor}15`;
+                    div.style.borderLeft = `4px solid ${disciplina.cor}`;
+                    
+                    div.innerHTML = `
+                        <div class="flex items-center">
+                            <div class="w-3 h-3 rounded-full mr-3" style="background-color: ${disciplina.cor}"></div>
+                            <div>
+                                <div class="font-semibold">${disciplina.nome}</div>
+                                <div class="text-sm text-gray-600">${disciplina.questoesFeitas} questões</div>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <div class="font-bold" style="color: ${disciplina.cor}">${disciplina.progresso}%</div>
+                            <div class="text-xs text-gray-500">progresso</div>
+                        </div>
+                    `;
+                    
+                    container.appendChild(div);
+                    
+                    // Option para o cronômetro
+                    const option = document.createElement('option');
+                    option.value = disciplina.id;
+                    option.textContent = disciplina.nome;
+                    selectCronometro.appendChild(option);
+                });
+            },
+            
+            // Carregar métricas
+            carregarMetricas() {
+                const progresso = (this.dados.metricas.tempoEstudadoHoje / this.dados.metricas.metaHoras) * 100;
+                
+                document.getElementById('metric-tempo').textContent = `${this.dados.metricas.tempoEstudadoHoje}h`;
+                document.getElementById('metric-questoes').textContent = this.dados.metricas.questoesFeitasHoje;
+                document.getElementById('metric-acerto').textContent = `${this.dados.metricas.taxaAcertoHoje}%`;
+                document.getElementById('metric-dias').textContent = this.dados.metricas.diasConsecutivos;
+                document.getElementById('meta-progresso').style.width = `${Math.min(progresso, 100)}%`;
+            },
+            
+            // Carregar simulados
+            carregarSimulados() {
+                const container = document.getElementById('lista-simulados');
+                container.innerHTML = '';
+                
+                this.dados.simulados.forEach(simulado => {
+                    const div = document.createElement('div');
+                    div.className = 'bg-white p-6 rounded-xl shadow border-2 border-blue-200';
+                    
+                    let badges = '';
+                    if (simulado.novo) {
+                        badges += '<span class="bg-blue-600 text-white px-3 py-1 rounded-full text-sm mr-2">Novo</span>';
+                    }
+                    if (simulado.popular) {
+                        badges += '<span class="bg-green-600 text-white px-3 py-1 rounded-full text-sm">Popular</span>';
+                    }
+                    
+                    div.innerHTML = `
+                        <div class="flex justify-between items-start mb-3">
+                            <div>
+                                <h4 class="font-bold text-lg">${simulado.nome}</h4>
+                                <p class="text-gray-600">${simulado.descricao}</p>
+                            </div>
+                            <div>${badges}</div>
+                        </div>
+                        <button class="btn-iniciar-simulado w-full bg-blue-600 text-white py-3 rounded-xl font-semibold hover:bg-blue-700 transition-all" data-simulado="${simulado.id}">
+                            Iniciar Simulado
+                        </button>
+                    `;
+                    
+                    container.appendChild(div);
+                });
+            },
+            
+            // Carregar temas de redação
+            carregarTemasRedacao() {
+                const container = document.getElementById('lista-temas-redacao');
+                container.innerHTML = '';
+                
+                this.dados.temasRedacao.forEach(tema => {
+                    const div = document.createElement('div');
+                    div.className = 'bg-white p-6 rounded-xl shadow border-l-4 border-blue-500';
+                    
+                    div.innerHTML = `
+                        <h4 class="font-bold text-lg mb-2">${tema.titulo}</h4>
+                        <p class="text-gray-600 text-sm mb-3">${tema.descricao}</p>
+                        <button class="btn-escrever-redacao bg-blue-600 text-white px-6 py-2 rounded-xl hover:bg-blue-700 transition-all" data-tema="${tema.id}">
+                            Escrever Redação
+                        </button>
+                    `;
+                    
+                    container.appendChild(div);
+                });
+            },
+            
+            // Carregar redações
+            carregarRedacoes() {
+                const container = document.getElementById('minhas-redacoes');
+                container.innerHTML = '';
+                
+                this.dados.redacoes.forEach(redacao => {
+                    const div = document.createElement('div');
+                    div.className = 'bg-white p-4 rounded-xl shadow';
+                    
+                    div.innerHTML = `
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <h4 class="font-semibold">${redacao.tema}</h4>
+                                <p class="text-sm text-gray-600">Enviada em ${redacao.data}</p>
+                                <p class="text-sm text-gray-500 mt-1">${redacao.feedback}</p>
+                            </div>
+                            <span class="bg-yellow-500 text-white px-2 py-1 rounded text-sm">${redacao.nota}</span>
+                        </div>
+                    `;
+                    
+                    container.appendChild(div);
+                });
+            },
+            
+            // Carregar ranking
+            carregarRanking() {
+                const container = document.getElementById('ranking-list');
+                container.innerHTML = '';
+                
+                this.dados.ranking.forEach(participante => {
+                    const div = document.createElement('div');
+                    let bgColor = 'bg-gray-100';
+                    let emoji = '4';
+                    
+                    if (participante.posicao === 1) {
+                        bgColor = 'bg-yellow-100';
+                        emoji = '🥇';
+                    } else if (participante.posicao === 2) {
+                        bgColor = 'bg-gray-100';
+                        emoji = '🥈';
+                    } else if (participante.posicao === 3) {
+                        bgColor = 'bg-orange-100';
+                        emoji = '🥉';
+                    } else if (participante.posicao === 4) {
+                        bgColor = 'bg-blue-50';
+                        emoji = '🎯';
+                    }
+                    
+                    div.className = `flex items-center justify-between p-3 ${bgColor} rounded-xl`;
+                    div.innerHTML = `
+                        <div class="flex items-center">
+                            <span class="text-xl mr-3">${emoji}</span>
+                            <div>
+                                <div class="font-semibold">${participante.nome}</div>
+                                <div class="text-sm text-gray-600">${participante.pontos} pontos</div>
+                            </div>
+                        </div>
+                        <span class="bg-gray-500 text-white px-2 py-1 rounded text-sm">${participante.posicao}º</span>
+                    `;
+                    
+                    container.appendChild(div);
+                });
+            },
+            
+            // Carregar cronograma
+            carregarCronograma() {
+                const container = document.getElementById('cronograma-semanal');
+                const dias = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo'];
+                
+                container.innerHTML = '';
+                
+                dias.forEach(dia => {
+                    const div = document.createElement('div');
+                    div.className = 'bg-white p-4 rounded-xl shadow';
+                    
+                    let tarefas = '';
+                    if (dia === 'Segunda') {
+                        tarefas = `
+                            <div class="bg-blue-100 p-2 rounded text-sm mb-2">09:00 - Português</div>
+                            <div class="bg-green-100 p-2 rounded text-sm">14:00 - Matemática</div>
+                        `;
+                    } else if (dia === 'Terça') {
+                        tarefas = `<div class="bg-purple-100 p-2 rounded text-sm">10:00 - Direito</div>`;
+                    } else if (dia === 'Quarta') {
+                        tarefas = `
+                            <div class="bg-yellow-100 p-2 rounded text-sm mb-2">09:00 - Informática</div>
+                            <div class="bg-red-100 p-2 rounded text-sm">15:00 - Simulado</div>
+                        `;
+                    } else if (dia === 'Quinta') {
+                        tarefas = `
+                            <div class="bg-blue-100 p-2 rounded text-sm mb-2">09:00 - Português</div>
+                            <div class="bg-green-100 p-2 rounded text-sm">14:00 - Matemática</div>
+                        `;
+                    } else if (dia === 'Sexta') {
+                        tarefas = `<div class="bg-purple-100 p-2 rounded text-sm">10:00 - Direito</div>`;
+                    } else if (dia === 'Sábado') {
+                        tarefas = `<div class="bg-red-100 p-2 rounded text-sm">08:00 - Revisão Geral</div>`;
+                    } else {
+                        tarefas = `<div class="text-sm text-gray-500 text-center">Descanso</div>`;
+                    }
+                    
+                    div.innerHTML = `
+                        <div class="font-semibold text-center mb-3">${dia}</div>
+                        <div class="space-y-2">${tarefas}</div>
+                    `;
+                    
+                    container.appendChild(div);
+                });
+            },
+            
+            // Inicializar gráfico
+            inicializarGrafico() {
+                const ctx = document.getElementById('progressChart
+').getContext('2d');
+                
+                new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'],
+                        datasets: [{
+                            label: 'Taxa de Acerto (%)',
+                            data: [65, 68, 72, 70, 75, 78, 80, 82, 85, 83, 87, 90],
+                            borderColor: '#3B82F6',
+                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                            tension: 0.4,
+                            fill: true
+                        }, {
+                            label: 'Questões por Mês',
+                            data: [120, 150, 180, 160, 200, 220, 240, 260, 280, 270, 300, 320],
+                            borderColor: '#10B981',
+                            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                            tension: 0.4,
+                            fill: true
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            title: {
+                                display: true,
+                                text: 'Evolução do Desempenho'
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            }
                         }
                     }
-                }
-            });
-        }
-
-        // =========================
-        // SISTEMA DE EVENT LISTENERS
-        // =========================
-        function configurarEventListeners() {
-            // Navegação por tabs
-            document.querySelectorAll('.tab-button').forEach(button => {
-                button.addEventListener('click', function() {
-                    document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
-                    document.querySelectorAll('.tab-content').forEach(content => content.classList.add('hidden'));
-                    
-                    this.classList.add('active');
-                    const tabId = this.getAttribute('data-tab');
-                    const tabContent = document.getElementById(`tab-content-${tabId}`);
-                    if (tabContent) {
-                        tabContent.classList.remove('hidden');
-                        tabContent.classList.add('fade-in');
-                    }
                 });
-            });
-
-            // Botões de prática rápida
-            document.querySelectorAll('.btn-pratica-rapida').forEach(button => {
-                button.addEventListener('click', function() {
-                    const questoes = this.getAttribute('data-questoes');
-                    const disciplina = this.getAttribute('data-disciplina');
-                    iniciarPraticaRapida(questoes, disciplina);
-                });
-            });
-
-            // Botão iniciar sessão
-            document.getElementById('btn-iniciar-sessao').addEventListener('click', function() {
-                document.querySelector('[data-tab="cronograma"]').click();
-                mostrarNotificacao('⏰ Hora de estudar! Configure seu cronômetro.', 'info');
-            });
-
-            // Botão adicionar disciplina
-            document.getElementById('btn-add-disciplina').addEventListener('click', function() {
-                const novaDisciplina = prompt('Digite o nome da nova disciplina:');
-                if (novaDisciplina) {
-                    mostrarNotificacao(`📚 Disciplina "${novaDisciplina}" adicionada com sucesso!`, 'success');
-                    // Em uma versão real, aqui você adicionaria ao array e recarregaria
-                }
-            });
-
-            // Botões do cronômetro
-            document.getElementById('btn-start').addEventListener('click', iniciarCronometro);
-            document.getElementById('btn-pause').addEventListener('click', pausarCronometro);
-            document.getElementById('btn-reset').addEventListener('click', resetarCronometro);
-
-            // Botões de simulado
-            document.querySelectorAll('.btn-iniciar-simulado').forEach(button => {
-                button.addEventListener('click', function() {
-                    const simuladoId = this.getAttribute('data-simulado');
-                    iniciarSimulado(simuladoId);
-                });
-            });
-
-            // Configurações de simulado personalizado
-            document.getElementById('range-questoes').addEventListener('input', function() {
-                document.getElementById('questoes-count').textContent = `${this.value} questões`;
-            });
-
-            document.querySelectorAll('.btn-dificuldade').forEach(button => {
-                button.addEventListener('click', function() {
-                    document.querySelectorAll('.btn-dificuldade').forEach(btn => {
-                        btn.classList.remove('active', 'bg-green-500', 'bg-yellow-500', 'bg-red-500', 'text-white');
-                        btn.classList.add('bg-gray-100');
+            },
+            
+            // Configurar event listeners
+            configurarEventListeners() {
+                // Navegação entre abas
+                document.querySelectorAll('.tab-button').forEach(button => {
+                    button.addEventListener('click', (e) => {
+                        const tab = e.target.getAttribute('data-tab');
+                        this.mudarAba(tab);
                     });
+                });
+                
+                // Prática rápida
+                document.querySelectorAll('.btn-pratica-rapida').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const questoes = parseInt(e.target.getAttribute('data-questoes'));
+                        const disciplina = e.target.getAttribute('data-disciplina');
+                        this.iniciarPraticaRapida(questoes, disciplina);
+                    });
+                });
+                
+                // Simulados
+                document.querySelectorAll('.btn-iniciar-simulado').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const simuladoId = parseInt(e.target.getAttribute('data-simulado'));
+                        this.iniciarSimulado(simuladoId);
+                    });
+                });
+                
+                // Redação
+                document.querySelectorAll('.btn-escrever-redacao').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const temaId = parseInt(e.target.getAttribute('data-tema'));
+                        this.abrirEditorRedacao(temaId);
+                    });
+                });
+                
+                // Nova redação
+                document.getElementById('btn-nova-redacao').addEventListener('click', () => {
+                    this.abrirEditorRedacao();
+                });
+                
+                // Cronômetro
+                document.getElementById('btn-start').addEventListener('click', () => this.iniciarCronometro());
+                document.getElementById('btn-pause').addEventListener('click', () => this.pausarCronometro());
+                document.getElementById('btn-reset').addEventListener('click', () => this.resetarCronometro());
+                
+                // Configurações
+                document.getElementById('btn-config').addEventListener('click', () => {
+                    this.abrirConfiguracoes();
+                });
+                
+                document.getElementById('btn-salvar-configuracoes').addEventListener('click', () => {
+                    this.salvarConfiguracoes();
+                });
+                
+                // Dashboard
+                document.getElementById('btn-dashboard').addEventListener('click', () => {
+                    this.mudarAba('progresso');
+                });
+                
+                // Controle de questões no modal
+                document.getElementById('btn-questao-proxima').addEventListener('click', () => {
+                    this.proximaQuestao();
+                });
+                
+                document.getElementById('btn-questao-anterior').addEventListener('click', () => {
+                    this.questaoAnterior();
+                });
+                
+                document.getElementById('btn-finalizar-simulado').addEventListener('click', () => {
+                    this.finalizarSimulado();
+                });
+                
+                // Controle de redação no modal
+                document.getElementById('btn-salvar-rascunho').addEventListener('click', () => {
+                    this.salvarRascunhoRedacao();
+                });
+                
+                document.getElementById('btn-corrigir-redacao').addEventListener('click', () => {
+                    this.corrigirRedacao();
+                });
+                
+                document.getElementById('btn-finalizar-redacao').addEventListener('click', () => {
+                    this.finalizarRedacao();
+                });
+                
+                // Controle de slider de questões
+                document.getElementById('range-questoes').addEventListener('input', (e) => {
+                    document.getElementById('questoes-count').textContent = `${e.target.value} questões`;
+                });
+                
+                // Botões de dificuldade
+                document.querySelectorAll('.btn-dificuldade').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        document.querySelectorAll('.btn-dificuldade').forEach(b => b.classList.remove('active'));
+                        e.target.classList.add('active');
+                    });
+                });
+                
+                // Criar simulado personalizado
+                document.getElementById('btn-criar-simulado').addEventListener('click', () => {
+                    this.criarSimuladoPersonalizado();
+                });
+            },
+            
+            // Mudar aba
+            mudarAba(tab) {
+                // Atualizar botões ativos
+                document.querySelectorAll('.tab-button').forEach(button => {
+                    button.classList.remove('active');
+                });
+                
+                document.querySelector(`[data-tab="${tab}"]`).classList.add('active');
+                
+                // Mostrar conteúdo da aba
+                document.querySelectorAll('.tab-content').forEach(content => {
+                    content.classList.add('hidden');
+                });
+                
+                document.getElementById(`tab-content-${tab}`).classList.remove('hidden');
+                
+                // Efeito de fade
+                document.querySelectorAll('.tab-content').forEach(content => {
+                    content.classList.remove('fade-in');
+                    void content.offsetWidth; // Trigger reflow
+                    content.classList.add('fade-in');
+                });
+            },
+            
+            // Iniciar prática rápida
+            iniciarPraticaRapida(numQuestoes, disciplina) {
+                const questoesFiltradas = this.dados.bancoQuestoes.filter(q => 
+                    disciplina === 'revisao' || q.disciplina.toLowerCase().includes(disciplina)
+                ).slice(0, numQuestoes);
+                
+                if (questoesFiltradas.length === 0) {
+                    AuthSystem.mostrarNotificacao('❌ Nenhuma questão disponível para esta prática', 'error');
+                    return;
+                }
+                
+                this.dados.estado.simuladoAtivo = {
+                    tipo: 'pratica-rapida',
+                    questoes: questoesFiltradas,
+                    questaoAtual: 0,
+                    respostas: [],
+                    tempoInicio: new Date()
+                };
+                
+                this.mostrarQuestao(0);
+            },
+            
+            // Iniciar simulado
+            iniciarSimulado(simuladoId) {
+                const simulado = this.dados.simulados.find(s => s.id === simuladoId);
+                if (!simulado) return;
+                
+                // Gerar questões aleatórias baseadas no simulado
+                const numQuestoes = simulado.tipo === 'completo' ? 40 : 
+                                  simulado.tipo === 'especifico' ? 20 : 15;
+                
+                const questoesFiltradas = this.dados.bancoQuestoes
+                    .filter(q => q.dificuldade === simulado.dificuldade)
+                    .slice(0, numQuestoes);
+                
+                this.dados.estado.simuladoAtivo = {
+                    tipo: 'simulado',
+                    id: simuladoId,
+                    nome: simulado.nome,
+                    questoes: questoesFiltradas,
+                    questaoAtual: 0,
+                    respostas: [],
+                    tempoInicio: new Date()
+                };
+                
+                AuthSystem.mostrarNotificacao(`🧪 Iniciando: ${simulado.nome}`, 'success');
+                this.mostrarQuestao(0);
+            },
+            
+            // Criar simulado personalizado
+            criarSimuladoPersonalizado() {
+                const disciplina = document.getElementById('select-disciplina-simulado').value;
+                const numQuestoes = parseInt(document.getElementById('range-questoes').value);
+                const dificuldade = document.querySelector('.btn-dificuldade.active').getAttribute('data-dificuldade');
+                const tempo = parseInt(document.getElementById('select-tempo-simulado').value);
+                
+                let questoesFiltradas = this.dados.bancoQuestoes;
+                
+                if (disciplina !== 'todas') {
+                    questoesFiltradas = questoesFiltradas.filter(q => 
+                        q.disciplina.toLowerCase().includes(disciplina)
+                    );
+                }
+                
+                if (dificuldade !== 'todas') {
+                    questoesFiltradas = questoesFiltradas.filter(q => q.dificuldade === dificuldade);
+                }
+                
+                questoesFiltradas = questoesFiltradas.slice(0, numQuestoes);
+                
+                if (questoesFiltradas.length === 0) {
+                    AuthSystem.mostrarNotificacao('❌ Nenhuma questão encontrada com os filtros selecionados', 'error');
+                    return;
+                }
+                
+                this.dados.estado.simuladoAtivo = {
+                    tipo: 'personalizado',
+                    questoes: questoesFiltradas,
+                    questaoAtual: 0,
+                    respostas: [],
+                    tempoLimite: tempo,
+                    tempoInicio: new Date()
+                };
+                
+                AuthSystem.mostrarNotificacao(`🎯 Simulado personalizado criado com ${questoesFiltradas.length} questões`, 'success');
+                this.mostrarQuestao(0);
+            },
+            
+            // Mostrar questão
+            mostrarQuestao(index) {
+                const simulado = this.dados.estado.simuladoAtivo;
+                if (!simulado || index >= simulado.questoes.length) return;
+                
+                const questao = simulado.questoes[index];
+                simulado.questaoAtual = index;
+                
+                // Atualizar modal
+                document.getElementById('modal-questao-titulo').textContent = `Questão #${index + 1}`;
+                document.getElementById('modal-questao-disciplina').textContent = questao.disciplina;
+                document.getElementById('modal-questao-dificuldade').textContent = 
+                    questao.dificuldade === 'facil' ? 'Fácil' : 
+                    questao.dificuldade === 'medio' ? 'Médio' : 'Difícil';
+                
+                document.getElementById('modal-questao-enunciado').textContent = questao.enunciado;
+                
+                // Opções
+                const opcoesContainer = document.getElementById('modal-questao-opcoes');
+                opcoesContainer.innerHTML = '';
+                
+                questao.opcoes.forEach((opcao, i) => {
+                    const button = document.createElement('button');
+                    button.className = 'option-button w-full text-left p-4 border rounded-xl hover:bg-gray-50 transition-all';
+                    button.innerHTML = opcao;
+                    button.addEventListener('click', () => this.selecionarResposta(i));
                     
-                    this.classList.remove('bg-gray-100');
-                    this.classList.add('active', 'text-white');
-                    
-                    if (this.getAttribute('data-dificuldade') === 'facil') {
-                        this.classList.add('bg-green-500');
-                    } else if (this.getAttribute('data-dificuldade') === 'medio') {
-                        this.classList.add('bg-yellow-500');
-                    } else {
-                        this.classList.add('bg-red-500');
+                    // Verificar se já foi respondida
+                    const resposta = simulado.respostas.find(r => r.questaoId === questao.id);
+                    if (resposta) {
+                        if (resposta.opcaoSelecionada === i) {
+                            button.classList.add(i === questao.resposta ? 'correct' : 'incorrect');
+                        }
+                        if (i === questao.resposta) {
+                            button.classList.add('correct');
+                        }
                     }
+                    
+                    opcoesContainer.appendChild(button);
                 });
-            });
-
-            document.getElementById('btn-criar-simulado').addEventListener('click', criarSimuladoPersonalizado);
-
-            // Botões de redação
-            document.querySelectorAll('.btn-escrever-redacao').forEach(button => {
-                button.addEventListener('click', function() {
-                    const temaId = this.getAttribute('data-tema');
-                    abrirEditorRedacao(temaId);
-                });
-            });
-
-            document.getElementById('btn-nova-redacao').addEventListener('click', function() {
-                abrirEditorRedacao(null);
-            });
-
-            // Botões do modal de redação
-            document.getElementById('btn-salvar-rascunho').addEventListener('click', salvarRascunhoRedacao);
-            document.getElementById('btn-corrigir-redacao').addEventListener('click', corrigirRedacao);
-            document.getElementById('btn-finalizar-redacao').addEventListener('click', finalizarRedacao);
-
-            // Botões do modal de questões
-            document.getElementById('btn-questao-anterior').addEventListener('click', questaoAnterior);
-            document.getElementById('btn-questao-proxima').addEventListener('click', questaoProxima);
-            document.getElementById('btn-finalizar-simulado').addEventListener('click', finalizarSimulado);
-
-            // Botões de configurações
-            document.getElementById('btn-config').addEventListener('click', function() {
-                abrirModal('modal-configuracoes');
-            });
-
-            document.getElementById('btn-dashboard').addEventListener('click', function() {
-                document.querySelector('[data-tab="progresso"]').click();
-            });
-
-            document.getElementById('btn-salvar-configuracoes').addEventListener('click', salvarConfiguracoes);
-
-            // Botões da comunidade
-            document.getElementById('btn-nova-discussao').addEventListener('click', function() {
-                const topico = prompt('Digite o título do novo tópico:');
-                if (topico) {
-                    mostrarNotificacao(`💬 Tópico "${topico}" criado com sucesso!`, 'success');
+                
+                // Explicação (se já respondida)
+                const explicacaoDiv = document.getElementById('modal-questao-explicacao');
+                const resposta = simulado.respostas.find(r => r.questaoId === questao.id);
+                if (resposta) {
+                    document.getElementById('explicacao-texto').textContent = questao.explicacao;
+                    explicacaoDiv.classList.remove('hidden');
+                } else {
+                    explicacaoDiv.classList.add('hidden');
                 }
-            });
-
-            document.getElementById('btn-convidar-amigos').addEventListener('click', function() {
-                mostrarNotificacao('👥 Link de convite copiado para a área de transferência!', 'info');
-                // Em uma versão real, copiaria um link para a área de transferência
-            });
-        }
-
-        // =========================
-        // SISTEMA DE CRONÔMETRO
-        // =========================
-        let timerInterval;
-        let timerSegundos = 0;
-
-        function iniciarCronometro() {
-            const disciplinaSelect = document.getElementById('select-disciplina-cronometro');
-            if (!disciplinaSelect.value) {
-                mostrarNotificacao('📚 Selecione uma disciplina antes de iniciar!', 'warning');
-                return;
-            }
-
-            if (!appData.estado.timerAtivo) {
-                appData.estado.timerAtivo = true;
-                appData.estado.tempoInicio = new Date();
                 
-                timerInterval = setInterval(() => {
-                    timerSegundos++;
-                    appData.estado.timerSegundos = timerSegundos;
-                    atualizarDisplayTempo();
-                }, 1000);
+                // Controles de navegação
+                document.getElementById('btn-questao-anterior').style.display = 
+                    index === 0 ? 'none' : 'block';
                 
-                document.getElementById('btn-start').textContent = '⏸️ Pausar';
-                document.getElementById('btn-start').classList.remove('bg-green-600');
-                document.getElementById('btn-start').classList.add('bg-yellow-600');
+                document.getElementById('btn-questao-proxima').style.display = 
+                    index === simulado.questoes.length - 1 ? 'none' : 'block';
                 
-                mostrarNotificacao('⏱️ Cronômetro iniciado! Bons estudos!', 'success');
-            } else {
-                pausarCronometro();
-            }
-        }
-
-        function pausarCronometro() {
-            if (appData.estado.timerAtivo) {
-                appData.estado.timerAtivo = false;
-                clearInterval(timerInterval);
+                document.getElementById('btn-finalizar-simulado').style.display = 
+                    index === simulado.questoes.length - 1 ? 'block' : 'none';
                 
+                // Mostrar modal
+                this.abrirModal('modal-questao');
+            },
+            
+            // Selecionar resposta
+            selecionarResposta(opcaoIndex) {
+                const simulado = this.dados.estado.simuladoAtivo;
+                if (!simulado) return;
+                
+                const questao = simulado.questoes[simulado.questaoAtual];
+                const respostaExistente = simulado.respostas.findIndex(r => r.questaoId === questao.id);
+                
+                if (respostaExistente !== -1) {
+                    simulado.respostas[respostaExistente].opcaoSelecionada = opcaoIndex;
+                } else {
+                    simulado.respostas.push({
+                        questaoId: questao.id,
+                        opcaoSelecionada: opcaoIndex,
+                        correta: opcaoIndex === questao.resposta
+                    });
+                }
+                
+                // Atualizar interface
+                this.mostrarQuestao(simulado.questaoAtual);
+                
+                // Feedback imediato
+                if (opcaoIndex === questao.resposta) {
+                    AuthSystem.mostrarNotificacao('✅ Resposta correta!', 'success');
+                } else {
+                    AuthSystem.mostrarNotificacao('❌ Resposta incorreta', 'error');
+                }
+            },
+            
+            // Próxima questão
+            proximaQuestao() {
+                const simulado = this.dados.estado.simuladoAtivo;
+                if (simulado && simulado.questaoAtual < simulado.questoes.length - 1) {
+                    this.mostrarQuestao(simulado.questaoAtual + 1);
+                }
+            },
+            
+            // Questão anterior
+            questaoAnterior() {
+                const simulado = this.dados.estado.simuladoAtivo;
+                if (simulado && simulado.questaoAtual > 0) {
+                    this.mostrarQuestao(simulado.questaoAtual - 1);
+                }
+            },
+            
+            // Finalizar simulado
+            finalizarSimulado() {
+                const simulado = this.dados.estado.simuladoAtivo;
+                if (!simulado) return;
+                
+                const tempoDecorrido = Math.floor((new Date() - simulado.tempoInicio) / 1000 / 60);
+                const respostasCorretas = simulado.respostas.filter(r => r.correta).length;
+                const totalQuestoes = simulado.questoes.length;
+                const percentualAcerto = Math.round((respostasCorretas / totalQuestoes) * 100);
+                
+                // Mostrar resultados
+                AuthSystem.mostrarNotificacao(
+                    `🏁 Simulado finalizado! ${respostasCorretas}/${totalQuestoes} corretas (${percentualAcerto}%)`, 
+                    'success'
+                );
+                
+                // Atualizar métricas
+                this.dados.metricas.questoesFeitasHoje += totalQuestoes;
+                this.dados.metricas.tempoEstudadoHoje += tempoDecorrido / 60;
+                this.carregarMetricas();
+                
+                // Fechar modal
+                this.fecharModal('modal-questao');
+                this.dados.estado.simuladoAtivo = null;
+            },
+            
+            // Abrir editor de redação
+            abrirEditorRedacao(temaId = null) {
+                if (temaId) {
+                    const tema = this.dados.temasRedacao.find(t => t.id === temaId);
+                    if (tema) {
+                        document.getElementById('input-tema-redacao').value = tema.titulo;
+                    }
+                }
+                
+                this.dados.estado.redacaoAtiva = {
+                    tema: temaId ? this.dados.temasRedacao.find(t => t.id === temaId).titulo : '',
+                    texto: '',
+                    data: new Date()
+                };
+                
+                this.abrirModal('modal-redacao');
+            },
+            
+            // Salvar rascunho de redação
+            salvarRascunhoRedacao() {
+                const tema = document.getElementById('input-tema-redacao').value;
+                const texto = document.getElementById('textarea-redacao').value;
+                
+                if (!tema || !texto) {
+                    AuthSystem.mostrarNotificacao('❌ Preencha o tema e a redação', 'error');
+                    return;
+                }
+                
+                AuthSystem.mostrarNotificacao('💾 Rascunho salvo com sucesso', 'success');
+            },
+            
+            // Corrigir redação
+            corrigirRedacao() {
+                const texto = document.getElementById('textarea-redacao').value;
+                
+                if (!texto) {
+                    AuthSystem.mostrarNotificacao('❌ Escreva sua redação primeiro', 'error');
+                    return;
+                }
+                
+                // Simular correção automática
+                const correcaoDiv = document.getElementById('correcao-resultado');
+                const correcaoTexto = document.getElementById('correcao-texto');
+                
+                // Análise simples (em uma aplicação real, seria mais sofisticada)
+                const palavras = texto.split(' ').length;
+                const paragrafos = texto.split('\n\n').length;
+                
+                let feedback = `
+                    <div class="space-y-2">
+                        <div><strong>Estatísticas:</strong> ${palavras} palavras, ${paragrafos} parágrafos</div>
+                        <div><strong>Pontos fortes:</strong> Estrutura adequada, argumentação clara</div>
+                        <div><strong>Sugestões:</strong> Desenvolver mais os exemplos, revisar concordância</div>
+                        <div><strong>Nota estimada:</strong> 7.5/10</div>
+                    </div>
+                `;
+                
+                correcaoTexto.innerHTML = feedback;
+                correcaoDiv.classList.remove('hidden');
+                
+                AuthSystem.mostrarNotificacao('📝 Redação corrigida! Veja as sugestões abaixo.', 'success');
+            },
+            
+            // Finalizar redação
+            finalizarRedacao() {
+                const tema = document.getElementById('input-tema-redacao').value;
+                const texto = document.getElementById('textarea-redacao').value;
+                
+                if (!tema || !texto) {
+                    AuthSystem.mostrarNotificacao('❌ Preencha o tema e a redação', 'error');
+                    return;
+                }
+                
+                // Adicionar à lista de redações
+                const novaRedacao = {
+                    id: Date.now(),
+                    tema: tema,
+                    data: new Date().toLocaleDateString('pt-BR'),
+                    nota: '7.5',
+                    feedback: 'Redação enviada para correção'
+                };
+                
+                this.dados.redacoes.unshift(novaRedacao);
+                this.carregarRedacoes();
+                
+                AuthSystem.mostrarNotificacao('✅ Redação enviada com sucesso!', 'success');
+                this.fecharModal('modal-redacao');
+            },
+            
+            // Sistema de cronômetro
+            iniciarCronometro() {
+                if (!this.dados.estado.timerAtivo) {
+                    this.dados.estado.timerAtivo = true;
+                    this.dados.estado.tempoInicio = new Date();
+                    this.atualizarCronometro();
+                    document.getElementById('btn-start').textContent = '⏸️ Pausar';
+                } else {
+                    this.pausarCronometro();
+                }
+            },
+            
+            pausarCronometro() {
+                this.dados.estado.timerAtivo = false;
+                document.getElementById('btn-start').textContent = '▶ Retomar';
+            },
+            
+            resetarCronometro() {
+                this.dados.estado.timerAtivo = false;
+                this.dados.estado.timerSegundos = 0;
+                document.getElementById('timer-display').textContent = '00:00:00';
                 document.getElementById('btn-start').textContent = '▶ Iniciar';
-                document.getElementById('btn-start').classList.remove('bg-yellow-600');
-                document.getElementById('btn-start').classList.add('bg-green-600');
-                
-                mostrarNotificacao('⏸️ Cronômetro pausado', 'info');
-            }
-        }
-
-        function resetarCronometro() {
-            appData.estado.timerAtivo = false;
-            clearInterval(timerInterval);
-            timerSegundos = 0;
-            appData.estado.timerSegundos = 0;
+            },
             
-            atualizarDisplayTempo();
-            
-            document.getElementById('btn-start').textContent = '▶ Iniciar';
-            document.getElementById('btn-start').classList.remove('bg-yellow-600');
-            document.getElementById('btn-start').classList.add('bg-green-600');
-            
-            mostrarNotificacao('🔄 Cronômetro resetado', 'info');
-        }
-
-        function atualizarDisplayTempo() {
-            const horas = Math.floor(timerSegundos / 3600);
-            const minutos = Math.floor((timerSegundos % 3600) / 60);
-            const segundos = timerSegundos % 60;
-            
-            document.getElementById('timer-display').textContent = 
-                `${horas.toString().padStart(2, '0')}:${minutos.toString().padStart(2, '0')}:${segundos.toString().padStart(2, '0')}`;
-        }
-
-        // =========================
-        // SISTEMA DE SIMULADOS
-        // =========================
-        function iniciarPraticaRapida(questoes, disciplina) {
-            const questoesFiltradas = appData.bancoQuestoes.filter(q => 
-                disciplina === 'revisao' || q.disciplina.toLowerCase().includes(disciplina)
-            ).slice(0, parseInt(questoes));
-            
-            if (questoesFiltradas.length === 0) {
-                mostrarNotificacao('❌ Nenhuma questão encontrada para os critérios selecionados.', 'error');
-                return;
-            }
-            
-            appData.estado.simuladoAtivo = {
-                tipo: 'pratica-rapida',
-                questoes: questoesFiltradas,
-                questaoAtual: 0,
-                respostas: []
-            };
-            
-            abrirModalQuestao();
-        }
-
-        function iniciarSimulado(simuladoId) {
-            const simulado = appData.simulados.find(s => s.id == simuladoId);
-            if (!simulado) return;
-            
-            // Em uma versão real, buscaria questões do banco de dados
-            const questoesSimulado = appData.bancoQuestoes.slice(0, 5); // Apenas para demonstração
-            
-            appData.estado.simuladoAtivo = {
-                tipo: 'simulado',
-                id: simuladoId,
-                nome: simulado.nome,
-                questoes: questoesSimulado,
-                questaoAtual: 0,
-                respostas: []
-            };
-            
-            abrirModalQuestao();
-        }
-
-        function criarSimuladoPersonalizado() {
-            const disciplina = document.getElementById('select-disciplina-simulado').value;
-            const quantidade = document.getElementById('range-questoes').value;
-            const dificuldade = document.querySelector('.btn-dificuldade.active')?.getAttribute('data-dificuldade') || 'medio';
-            const tempo = document.getElementById('select-tempo-simulado').value;
-            
-            const questoesFiltradas = appData.bancoQuestoes.filter(q => 
-                disciplina === 'todas' || q.disciplina.toLowerCase().includes(disciplina)
-            ).filter(q => 
-                dificuldade === 'todas' || q.dificuldade === dificuldade
-            ).slice(0, parseInt(quantidade));
-            
-            if (questoesFiltradas.length === 0) {
-                mostrarNotificacao('❌ Nenhuma questão encontrada para os critérios selecionados.', 'error');
-                return;
-            }
-            
-            appData.estado.simuladoAtivo = {
-                tipo: 'personalizado',
-                disciplina: disciplina,
-                dificuldade: dificuldade,
-                tempo: tempo,
-                questoes: questoesFiltradas,
-                questaoAtual: 0,
-                respostas: []
-            };
-            
-            abrirModalQuestao();
-            mostrarNotificacao('🎯 Simulado personalizado criado com sucesso!', 'success');
-        }
-
-        function abrirModalQuestao() {
-            if (!appData.estado.simuladoAtivo) return;
-            
-            const simulado = appData.estado.simuladoAtivo;
-            const questao = simulado.questoes[simulado.questaoAtual];
-            
-            document.getElementById('modal-questao-titulo').textContent = 
-                `Questão ${simulado.questaoAtual + 1} de ${simulado.questoes.length}`;
-            document.getElementById('modal-questao-disciplina').textContent = questao.disciplina;
-            document.getElementById('modal-questao-dificuldade').textContent = 
-                questao.dificuldade === 'facil' ? 'Fácil' : questao.dificuldade === 'medio' ? 'Médio' : 'Difícil';
-            document.getElementById('modal-questao-enunciado').textContent = questao.enunciado;
-            
-            // Carregar opções
-            const opcoesContainer = document.getElementById('modal-questao-opcoes');
-            opcoesContainer.innerHTML = '';
-            
-            questao.opcoes.forEach((opcao, index) => {
-                const button = document.createElement('button');
-                button.className = 'option-button w-full text-left p-4 border rounded-xl hover:bg-gray-50 transition-all';
-                button.textContent = opcao;
-                button.addEventListener('click', () => selecionarResposta(index));
-                opcoesContainer.appendChild(button);
-            });
-            
-            // Esconder explicação
-            document.getElementById('modal-questao-explicacao').classList.add('hidden');
-            
-            // Configurar navegação
-            document.getElementById('btn-questao-anterior').style.display = 
-                simulado.questaoAtual > 0 ? 'block' : 'none';
-            
-            document.getElementById('btn-questao-proxima').textContent = 
-                simulado.questaoAtual === simulado.questoes.length - 1 ? 'Finalizar' : 'Próxima →';
-            
-            document.getElementById('btn-finalizar-simulado').style.display = 
-                simulado.questaoAtual === simulado.questoes.length - 1 ? 'block' : 'none';
-            
-            abrirModal('modal-questao');
-        }
-
-        function selecionarResposta(indice) {
-            const simulado = appData.estado.simuladoAtivo;
-            const questao = simulado.questoes[simulado.questaoAtual];
-            
-            // Remove seleção de todas as opções
-            document.querySelectorAll('.option-button').forEach(btn => {
-                btn.classList.remove('correct', 'incorrect');
-            });
-            
-            // Marca a resposta selecionada
-            const botaoSelecionado = document.querySelectorAll('.option-button')[indice];
-            
-            // Verifica se acertou
-            if (indice === questao.resposta) {
-                botaoSelecionado.classList.add('correct');
-                simulado.respostas[simulado.questaoAtual] = { resposta: indice, acertou: true };
-                mostrarNotificacao('✅ Resposta correta!', 'success');
-            } else {
-                botaoSelecionado.classList.add('incorrect');
-                // Mostra qual era a correta
-                document.querySelectorAll('.option-button')[questao.resposta].classList.add('correct');
-                simulado.respostas[simulado.questaoAtual] = { resposta: indice, acertou: false };
-                mostrarNotificacao('❌ Resposta incorreta', 'error');
-            }
-            
-            // Mostra explicação
-            document.getElementById('explicacao-texto').textContent = questao.explicacao;
-            document.getElementById('modal-questao-explicacao').classList.remove('hidden');
-        }
-
-        function questaoAnterior() {
-            if (appData.estado.simuladoAtivo.questaoAtual > 0) {
-                appData.estado.simuladoAtivo.questaoAtual--;
-                abrirModalQuestao();
-            }
-        }
-
-        function questaoProxima() {
-            const simulado = appData.estado.simuladoAtivo;
-            
-            if (simulado.questaoAtual < simulado.questoes.length - 1) {
-                simulado.questaoAtual++;
-                abrirModalQuestao();
-            } else {
-                finalizarSimulado();
-            }
-        }
-
-        function finalizarSimulado() {
-            const simulado = appData.estado.simuladoAtivo;
-            const acertos = simulado.respostas.filter(r => r && r.acertou).length;
-            const total = simulado.questoes.length;
-            const percentual = Math.round((acertos / total) * 100);
-            
-            fecharModal('modal-questao');
-            
-            mostrarNotificacao(
-                `🏁 Simulado finalizado! ${acertos}/${total} acertos (${percentual}%)`,
-                'success'
-            );
-            
-            // Atualizar métricas
-            appData.metricas.questoesFeitasHoje += total;
-            appData.metricas.taxaAcertoHoje = Math.round(
-                (appData.metricas.taxaAcertoHoje * (appData.metricas.questoesFeitasHoje - total) + percentual * total) / appData.metricas.questoesFeitasHoje
-            );
-            
-            carregarMetricas();
-            appData.estado.simuladoAtivo = null;
-        }
-
-        // =========================
-        // SISTEMA DE REDAÇÃO
-        // =========================
-        function abrirEditorRedacao(temaId) {
-            if (temaId) {
-                const tema = appData.temasRedacao.find(t => t.id == temaId);
-                if (tema) {
-                    document.getElementById('input-tema-redacao').value = tema.titulo;
+            atualizarCronometro() {
+                if (this.dados.estado.timerAtivo) {
+                    this.dados.estado.timerSegundos++;
+                    
+                    const horas = Math.floor(this.dados.estado.timerSegundos / 3600);
+                    const minutos = Math.floor((this.dados.estado.timerSegundos % 3600) / 60);
+                    const segundos = this.dados.estado.timerSegundos % 60;
+                    
+                    const display = `${horas.toString().padStart(2, '0')}:${minutos.toString().padStart(2, '0')}:${segundos.toString().padStart(2, '0')}`;
+                    document.getElementById('timer-display').textContent = display;
+                    
+                    setTimeout(() => this.atualizarCronometro(), 1000);
                 }
-            } else {
-                document.getElementById('input-tema-redacao').value = '';
+            },
+            
+            // Configurações
+            abrirConfiguracoes() {
+                document.getElementById('input-meta-horas').value = this.dados.metricas.metaHoras;
+                document.getElementById('input-meta-questoes').value = this.dados.metricas.metaQuestoes;
+                this.abrirModal('modal-configuracoes');
+            },
+            
+            salvarConfiguracoes() {
+                const metaHoras = parseInt(document.getElementById('input-meta-horas').value);
+                const metaQuestoes = parseInt(document.getElementById('input-meta-questoes').value);
+                
+                this.dados.metricas.metaHoras = metaHoras;
+                this.dados.metricas.metaQuestoes = metaQuestoes;
+                
+                this.carregarMetricas();
+                AuthSystem.mostrarNotificacao('⚙️ Configurações salvas com sucesso', 'success');
+                this.fecharModal('modal-configuracoes');
+            },
+            
+            // Utilitários de modal
+            abrirModal(modalId) {
+                document.getElementById(modalId).classList.remove('hidden');
+            },
+            
+            fecharModal(modalId) {
+                document.getElementById(modalId).classList.add('hidden');
             }
-            
-            document.getElementById('textarea-redacao').value = '';
-            document.getElementById('correcao-resultado').classList.add('hidden');
-            
-            appData.estado.redacaoAtiva = {
-                temaId: temaId,
-                texto: '',
-                dataInicio: new Date()
-            };
-            
-            abrirModal('modal-redacao');
-        }
-
-        function salvarRascunhoRedacao() {
-            const tema = document.getElementById('input-tema-redacao').value;
-            const texto = document.getElementById('textarea-redacao').value;
-            
-            if (!tema || !texto) {
-                mostrarNotificacao('❌ Preencha o tema e a redação antes de salvar.', 'error');
-                return;
-            }
-            
-            mostrarNotificacao('💾 Rascunho salvo com sucesso!', 'success');
-        }
-
-        function corrigirRedacao() {
-            const texto = document.getElementById('textarea-redacao').value;
-            
-            if (!texto) {
-                mostrarNotificacao('❌ Escreva sua redação antes de corrigir.', 'error');
-                return;
-            }
-            
-            // Simulação de correção automática
-            const nota = Math.floor(Math.random() * 300) + 700; // Nota entre 700-1000
-            const feedbacks = [
-                "Excelente estrutura argumentativa!",
-                "Bom uso de conectivos e coesão textual.",
-                "Poderia aprofundar mais os argumentos.",
-                "Cuidado com a pontuação e concordância.",
-                "Vocabulário adequado para o tema."
-            ];
-            
-            const feedback = feedbacks[Math.floor(Math.random() * feedbacks.length)];
-            
-            document.getElementById('correcao-texto').innerHTML = `
-                <div class="text-center mb-4">
-                    <div class="text-3xl font-bold text-blue-600">${nota}</div>
-                    <div class="text-sm text-gray-600">Pontuação</div>
-                </div>
-                <p><strong>Feedback:</strong> ${feedback}</p>
-                <p class="text-sm text-gray-600 mt-2">Esta é uma correção simulada. Em uma versão real, a correção seria feita por professores especializados.</p>
-            `;
-            
-            document.getElementById('correcao-resultado').classList.remove('hidden');
-            mostrarNotificacao('📝 Redação corrigida com sucesso!', 'success');
-        }
-
-        function finalizarRedacao() {
-            const tema = document.getElementById('input-tema-redacao').value;
-            const texto = document.getElementById('textarea-redacao').value;
-            
-            if (!tema || !texto) {
-                mostrarNotificacao('❌ Preencha o tema e a redação antes de finalizar.', 'error');
-                return;
-            }
-            
-            fecharModal('modal-redacao');
-            mostrarNotificacao('✅ Redação enviada para correção!', 'success');
-            
-            // Em uma versão real, salvaria no banco de dados
-            appData.estado.redacaoAtiva = null;
-        }
+        };
 
         // =========================
-        // SISTEMA DE CONFIGURAÇÕES
+        // FUNÇÕES GLOBAIS
         // =========================
-        function salvarConfiguracoes() {
-            const metaHoras = document.getElementById('input-meta-horas').value;
-            const metaQuestoes = document.getElementById('input-meta-questoes').value;
-            const notificacoes = document.getElementById('check-notificacoes').checked;
-            const email = document.getElementById('check-email').checked;
-            
-            appData.metricas.metaHoras = parseInt(metaHoras);
-            appData.metricas.metaQuestoes = parseInt(metaQuestoes);
-            
-            carregarMetricas();
-            fecharModal('modal-configuracoes');
-            
-            mostrarNotificacao('⚙️ Configurações salvas com sucesso!', 'success');
-        }
-
-        // =========================
-        // SISTEMA DE UTILIDADES
-        // =========================
-        function abrirModal(modalId) {
+        
+        // Mostrar modal
+        function mostrarModal(modalId) {
             document.getElementById(modalId).classList.remove('hidden');
         }
-
+        
+        // Fechar modal
         function fecharModal(modalId) {
             document.getElementById(modalId).classList.add('hidden');
         }
-
-        function mostrarNotificacao(mensagem, tipo = 'info') {
-            // Criar elemento de notificação
-            const notificacao = document.createElement('div');
-            notificacao.className = `fixed top-4 right-4 p-4 rounded-xl shadow-lg text-white max-w-sm z-50 fade-in ${
-                tipo === 'success' ? 'bg-green-500' :
-                tipo === 'error' ? 'bg-red-500' :
-                tipo === 'warning' ? 'bg-yellow-500' : 'bg-blue-500'
-            }`;
-            
-            notificacao.innerHTML = `
-                <div class="flex items-center">
-                    <span class="text-lg mr-2">${tipo === 'success' ? '✅' : tipo === 'error' ? '❌' : tipo === 'warning' ? '⚠️' : 'ℹ️'}</span>
-                    <span>${mensagem}</span>
-                </div>
-            `;
-            
-            document.body.appendChild(notificacao);
-            
-            // Remover após 5 segundos
-            setTimeout(() => {
-                notificacao.classList.add('fade-out');
-                setTimeout(() => {
-                    document.body.removeChild(notificacao);
-                }, 500);
-            }, 5000);
+        
+        // Mostrar formulário de cadastro
+        function mostrarCadastro() {
+            document.getElementById('login-form').classList.add('hidden');
+            document.getElementById('cadastro-form').classList.remove('hidden');
         }
-
-        // Efeitos visuais para botões
-        document.querySelectorAll('button').forEach(button => {
-            button.addEventListener('click', function() {
-                this.style.transform = 'scale(0.95)';
-                setTimeout(() => {
-                    this.style.transform = 'scale(1)';
-                }, 150);
+        
+        // Mostrar formulário de login
+        function mostrarLogin() {
+            document.getElementById('cadastro-form').classList.add('hidden');
+            document.getElementById('login-form').classList.remove('hidden');
+        }
+        
+        // =========================
+        // INICIALIZAÇÃO DA APLICAÇÃO
+        // =========================
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            // Inicializar sistema de autenticação
+            AuthSystem.init();
+            
+            // Inicializar sistema de estudo quando usuário estiver logado
+            if (AuthSystem.usuarioLogado) {
+                StudySystem.init();
+            }
+            
+            // Fechar modais ao clicar fora
+            document.querySelectorAll('[id^="modal-"]').forEach(modal => {
+                modal.addEventListener('click', (e) => {
+                    if (e.target === modal) {
+                        modal.classList.add('hidden');
+                    }
+                });
             });
-        });
-
-        // Fechar modais clicando fora
-        document.querySelectorAll('.fixed.inset-0').forEach(modal => {
-            modal.addEventListener('click', function(e) {
-                if (e.target === this) {
-                    this.classList.add('hidden');
+            
+            // Adicionar estilo para fade-out
+            const style = document.createElement('style');
+            style.textContent = `
+                .fade-out {
+                    animation: fadeOut 0.5s ease-out forwards;
                 }
-            });
+                
+                @keyframes fadeOut {
+                    from { opacity: 1; transform: translateY(0); }
+                    to { opacity: 0; transform: translateY(-20px); }
+                }
+            `;
+            document.head.appendChild(style);
         });
+
+        // =========================
+        // EXEMPLO DE USO AVANÇADO
+        // =========================
+        
+        // Simular alguns usuários para teste
+        function popularUsuariosExemplo() {
+            if (AuthSystem.usuarios.length === 0) {
+                const usuariosExemplo = [
+                    {
+                        id: '1',
+                        nome: 'João Silva',
+                        email: 'joao@exemplo.com',
+                        senha: AuthSystem.criptografarSenha('123456'),
+                        dataCadastro: new Date().toISOString(),
+                        nivel: 'Intermediário',
+                        pontos: 1420,
+                        avatar: { iniciais: 'JS', cor: '#3B82F6' }
+                    },
+                    {
+                        id: '2', 
+                        nome: 'Maria Santos',
+                        email: 'maria@exemplo.com',
+                        senha: AuthSystem.criptografarSenha('123456'),
+                        dataCadastro: new Date().toISOString(),
+                        nivel: 'Avançado',
+                        pontos: 1850,
+                        avatar: { iniciais: 'MS', cor: '#EF4444' }
+                    }
+                ];
+                
+                AuthSystem.usuarios = usuariosExemplo;
+                AuthSystem.salvarUsuarios();
+            }
+        }
+        
+        // Chamar função para popular usuários (apenas para demonstração)
+        setTimeout(popularUsuariosExemplo, 1000);
     </script>
 </body>
 </html>
-
