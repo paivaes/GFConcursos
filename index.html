@@ -707,6 +707,12 @@
                 if (senha === senhaDescriptografada) {
                     this.usuarioLogado = usuario;
                     
+                    // Garantir que a estrutura de dados existe
+                    if (!usuario.dados) {
+                        usuario.dados = this.criarDadosUsuarioPadrao();
+                        this.salvarUsuarios();
+                    }
+                    
                     if (lembrar) {
                         localStorage.setItem('gfconcursos_usuario_logado', JSON.stringify(usuario));
                     } else {
@@ -763,7 +769,7 @@
                 };
                 
                 this.usuarios.push(novoUsuario);
-                localStorage.setItem('gfconcursos_usuarios', JSON.stringify(this.usuarios));
+                this.salvarUsuarios();
                 
                 this.mostrarNotificacao('Cadastro realizado com sucesso!', 'success');
                 setTimeout(() => {
@@ -865,9 +871,30 @@
             criarDadosUsuarioPadrao() {
                 return {
                     disciplinas: [
-                        { id: '1', nome: 'Português', cor: '#3B82F6', horasEstudadas: 0, questoesResolvidas: 0 },
-                        { id: '2', nome: 'Matemática', cor: '#10B981', horasEstudadas: 0, questoesResolvidas: 0 },
-                        { id: '3', nome: 'Direito Constitucional', cor: '#8B5CF6', horasEstudadas: 0, questoesResolvidas: 0 }
+                        { 
+                            id: '1', 
+                            nome: 'Português', 
+                            cor: '#3B82F6', 
+                            horasEstudadas: 0, 
+                            questoesResolvidas: 0,
+                            progresso: 0
+                        },
+                        { 
+                            id: '2', 
+                            nome: 'Matemática', 
+                            cor: '#10B981', 
+                            horasEstudadas: 0, 
+                            questoesResolvidas: 0,
+                            progresso: 0
+                        },
+                        { 
+                            id: '3', 
+                            nome: 'Direito Constitucional', 
+                            cor: '#8B5CF6', 
+                            horasEstudadas: 0, 
+                            questoesResolvidas: 0,
+                            progresso: 0
+                        }
                     ],
                     cronograma: [],
                     simulados: [],
@@ -921,6 +948,10 @@
                 this.mostrarNotificacao('Logout realizado com sucesso', 'success');
             },
             
+            salvarUsuarios() {
+                localStorage.setItem('gfconcursos_usuarios', JSON.stringify(this.usuarios));
+            },
+            
             mostrarNotificacao(mensagem, tipo = 'info') {
                 // Implementação simples de notificação
                 console.log(`[${tipo.toUpperCase()}] ${mensagem}`);
@@ -938,6 +969,8 @@
                     alert(`❌ ${mensagem}`);
                 } else if (tipo === 'success') {
                     alert(`✅ ${mensagem}`);
+                } else {
+                    alert(`ℹ️ ${mensagem}`);
                 }
             }
         };
@@ -951,7 +984,7 @@
             
             init(usuario) {
                 this.usuario = usuario;
-                this.dados = usuario.dados;
+                this.dados = usuario.dados || this.criarDadosPadrao();
                 
                 this.configurarNavegacao();
                 this.configurarEventListeners();
@@ -959,6 +992,10 @@
                 this.atualizarInterface();
                 
                 console.log('Aplicação inicializada para:', usuario.nome);
+            },
+            
+            criarDadosPadrao() {
+                return AuthSystem.criarDadosUsuarioPadrao();
             },
             
             configurarNavegacao() {
@@ -975,7 +1012,10 @@
                         
                         // Atualizar conteúdo visível
                         tabContents.forEach(content => content.classList.add('hidden'));
-                        document.getElementById(`tab-content-${tabId}`).classList.remove('hidden');
+                        const targetContent = document.getElementById(`tab-content-${tabId}`);
+                        if (targetContent) {
+                            targetContent.classList.remove('hidden');
+                        }
                     });
                 });
             },
@@ -1008,6 +1048,11 @@
                     userInfo.textContent = `Olá, ${this.usuario.nome}!`;
                 }
                 
+                // Garantir que disciplinas existem
+                if (!this.dados.disciplinas) {
+                    this.dados.disciplinas = this.criarDadosPadrao().disciplinas;
+                }
+                
                 // Carregar disciplinas
                 this.carregarDisciplinas();
                 
@@ -1022,11 +1067,24 @@
                 const container = document.getElementById('disciplinas-list');
                 if (!container) return;
                 
+                // Limpar container
                 container.innerHTML = '';
                 
+                // Verificar se existem disciplinas
+                if (!this.dados.disciplinas || this.dados.disciplinas.length === 0) {
+                    container.innerHTML = `
+                        <div class="text-center text-gray-500 py-4">
+                            <p>Nenhuma disciplina cadastrada.</p>
+                            <p class="text-sm">Adicione sua primeira disciplina!</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                // Carregar disciplinas existentes
                 this.dados.disciplinas.forEach(disciplina => {
                     const div = document.createElement('div');
-                    div.className = 'bg-white p-4 rounded-xl shadow-sm border border-gray-200';
+                    div.className = 'bg-white p-4 rounded-xl shadow-sm border border-gray-200 priority-item';
                     div.innerHTML = `
                         <div class="flex justify-between items-center">
                             <div class="flex items-center">
@@ -1034,11 +1092,11 @@
                                 <span class="font-semibold">${disciplina.nome}</span>
                             </div>
                             <div class="text-sm text-gray-600">
-                                ${disciplina.horasEstudadas}h | ${disciplina.questoesResolvidas} questões
+                                ${disciplina.horasEstudadas || 0}h | ${disciplina.questoesResolvidas || 0} questões
                             </div>
                         </div>
                         <div class="w-full bg-gray-200 rounded-full h-2 mt-2">
-                            <div class="h-2 rounded-full progress-bar" style="width: ${Math.min((disciplina.horasEstudadas / 50) * 100, 100)}%; background-color: ${disciplina.cor}"></div>
+                            <div class="h-2 rounded-full progress-bar" style="width: ${Math.min(((disciplina.horasEstudadas || 0) / 50) * 100, 100)}%; background-color: ${disciplina.cor}"></div>
                         </div>
                     `;
                     container.appendChild(div);
@@ -1074,6 +1132,7 @@
             },
             
             obterTarefasDia(diaIndex) {
+                if (!this.dados.cronograma) return [];
                 return this.dados.cronograma.filter(tarefa => tarefa.dia === diaIndex);
             },
             
@@ -1083,9 +1142,9 @@
             },
             
             atualizarMetricas() {
-                // Atualizar métricas do dia
-                const totalHoras = this.dados.disciplinas.reduce((sum, disc) => sum + disc.horasEstudadas, 0);
-                const totalQuestoes = this.dados.disciplinas.reduce((sum, disc) => sum + disc.questoesResolvidas, 0);
+                // Calcular totais
+                const totalHoras = (this.dados.disciplinas || []).reduce((sum, disc) => sum + (disc.horasEstudadas || 0), 0);
+                const totalQuestoes = (this.dados.disciplinas || []).reduce((sum, disc) => sum + (disc.questoesResolvidas || 0), 0);
                 
                 // Atualizar elementos da interface
                 const metricTempo = document.getElementById('metric-tempo');
@@ -1098,14 +1157,14 @@
                 if (metricTempo) metricTempo.textContent = `${totalHoras}h`;
                 if (metricQuestoes) metricQuestoes.textContent = totalQuestoes;
                 if (metricAcerto) metricAcerto.textContent = '75%'; // Exemplo
-                if (metricDias) metricDias.textContent = this.dados.progresso.diasConsecutivos || 0;
+                if (metricDias) metricDias.textContent = this.dados.progresso?.diasConsecutivos || 0;
                 if (totalHorasElem) totalHorasElem.textContent = `${totalHoras}h`;
                 if (totalQuestoesElem) totalQuestoesElem.textContent = totalQuestoes;
                 
                 // Atualizar barra de progresso da meta
                 const metaProgresso = document.getElementById('meta-progresso');
                 if (metaProgresso) {
-                    const metaHoras = this.dados.configuracoes.metaDiaria.horas;
+                    const metaHoras = this.dados.configuracoes?.metaDiaria?.horas || 3;
                     const progresso = Math.min((totalHoras / metaHoras) * 100, 100);
                     metaProgresso.style.width = `${progresso}%`;
                 }
@@ -1129,18 +1188,27 @@
                     return;
                 }
                 
+                // Garantir que o array de disciplinas existe
+                if (!this.dados.disciplinas) {
+                    this.dados.disciplinas = [];
+                }
+                
                 const novaDisciplina = {
                     id: Date.now().toString(),
                     nome,
-                    cor,
+                    cor: cor || '#3B82F6',
                     horasEstudadas: 0,
-                    questoesResolvidas: 0
+                    questoesResolvidas: 0,
+                    progresso: 0
                 };
                 
                 this.dados.disciplinas.push(novaDisciplina);
                 this.salvarDadosUsuario();
                 this.carregarDisciplinas();
                 fecharModal('modal-nova-disciplina');
+                
+                // Limpar campo
+                document.getElementById('nova-disciplina-nome').value = '';
                 
                 AuthSystem.mostrarNotificacao(`Disciplina "${nome}" adicionada com sucesso!`, 'success');
             },
@@ -1157,7 +1225,10 @@
             
             mostrarDashboard() {
                 // Navegar para a aba de progresso
-                document.querySelector('[data-tab="progresso"]').click();
+                const progressoTab = document.querySelector('[data-tab="progresso"]');
+                if (progressoTab) {
+                    progressoTab.click();
+                }
             },
             
             mostrarConfiguracoes() {
@@ -1169,7 +1240,7 @@
                 const usuarioIndex = AuthSystem.usuarios.findIndex(u => u.id === this.usuario.id);
                 if (usuarioIndex !== -1) {
                     AuthSystem.usuarios[usuarioIndex].dados = this.dados;
-                    localStorage.setItem('gfconcursos_usuarios', JSON.stringify(AuthSystem.usuarios));
+                    AuthSystem.salvarUsuarios();
                     
                     // Atualizar usuário logado
                     if (AuthSystem.usuarioLogado) {
