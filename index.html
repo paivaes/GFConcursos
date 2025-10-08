@@ -170,6 +170,23 @@
         .btn-acao:hover {
             transform: scale(1.1);
         }
+
+        .questao-item {
+            border-left: 4px solid #3B82F6;
+        }
+        
+        .questao-correta {
+            border-left-color: #10B981;
+        }
+        
+        .questao-errada {
+            border-left-color: #EF4444;
+        }
+
+        .tarefa-concluida {
+            opacity: 0.7;
+            text-decoration: line-through;
+        }
     </style>
 </head>
 <body class="min-h-screen">
@@ -311,7 +328,7 @@
                             📈 Progresso
                         </button>
                         <button class="tab-button px-6 py-3 rounded-xl font-semibold transition-all" data-tab="edital">
-                            📋 Edital
+                            📋 Edital Verticalizado
                         </button>
                         <button class="tab-button px-6 py-3 rounded-xl font-semibold transition-all" data-tab="comunidade">
                             👥 Comunidade
@@ -389,72 +406,200 @@
                         </div>
                     </div>
 
-                    <!-- Conteúdo das outras abas... -->
-
-                    <!-- NOVA ABA: Edital -->
-                    <div id="tab-content-edital" class="tab-content hidden fade-in">
+                    <!-- Cronograma -->
+                    <div id="tab-content-cronograma" class="tab-content hidden fade-in">
                         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                            <!-- Card 1: Gerenciar Edital -->
+                            <!-- Card 1: Cronograma Semanal -->
                             <div class="glass-card rounded-2xl p-6 shadow-xl">
-                                <h3 class="text-2xl font-bold gradient-text mb-6">📋 Gerenciar Edital</h3>
-                                <div class="space-y-4">
-                                    <div>
-                                        <label class="block text-sm font-semibold mb-2">Nome do Concurso:</label>
-                                        <input type="text" id="edital-nome" class="w-full p-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Ex: Concurso PF 2025">
-                                    </div>
-                                    <div>
-                                        <label class="block text-sm font-semibold mb-2">Disciplina:</label>
-                                        <select id="edital-disciplina" class="w-full p-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                                            <option value="">Selecione uma disciplina</option>
-                                        </select>
-                                    </div>
-                                    <div>
-                                        <label class="block text-sm font-semibold mb-2">Assunto:</label>
-                                        <div class="flex gap-2">
-                                            <input type="text" id="edital-assunto" class="flex-1 p-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Ex: Direito Constitucional">
-                                            <button id="btn-adicionar-assunto" class="bg-blue-600 text-white px-4 py-3 rounded-xl font-semibold hover:bg-blue-700 transition-all">
-                                                +
-                                            </button>
-                                        </div>
-                                    </div>
+                                <h3 class="text-2xl font-bold gradient-text mb-6">🗓️ Cronograma Semanal</h3>
+                                <div class="grid grid-cols-7 gap-2 mb-6" id="cronograma-dias">
+                                    <!-- Dias da semana serão gerados aqui -->
                                 </div>
-                                <button id="btn-salvar-edital" class="w-full mt-6 bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 rounded-xl font-semibold hover:shadow-lg transition-all">
-                                    💾 Salvar Edital
+                                <div class="space-y-3 max-h-96 overflow-y-auto" id="lista-tarefas">
+                                    <!-- Tarefas serão carregadas aqui -->
+                                </div>
+                                <button id="btn-nova-tarefa" class="w-full mt-6 bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 rounded-xl font-semibold hover:shadow-lg transition-all">
+                                    + Nova Tarefa
                                 </button>
                             </div>
 
-                            <!-- Card 2: Assuntos do Edital -->
+                            <!-- Card 2: Estatísticas do Cronograma -->
                             <div class="glass-card rounded-2xl p-6 shadow-xl">
-                                <h3 class="text-2xl font-bold gradient-text mb-6">📚 Assuntos do Edital</h3>
-                                <div class="mb-4">
-                                    <label class="block text-sm font-semibold mb-2">Selecione o Edital:</label>
-                                    <select id="selecionar-edital" class="w-full p-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                                        <option value="">Selecione um edital</option>
-                                    </select>
-                                </div>
-                                <div class="space-y-3 max-h-96 overflow-y-auto" id="lista-assuntos">
-                                    <!-- Assuntos serão carregados aqui -->
-                                </div>
-                                <div class="mt-4 p-4 bg-gradient-to-r from-green-500 to-blue-500 rounded-xl text-white">
-                                    <div class="font-semibold">📊 Progresso do Edital</div>
-                                    <div class="text-sm mt-1" id="progresso-edital">0% concluído</div>
-                                    <div class="w-full bg-white/20 rounded-full h-2 mt-2">
-                                        <div class="bg-white h-2 rounded-full progress-bar" id="barra-progresso-edital" style="width: 0%"></div>
+                                <h3 class="text-2xl font-bold gradient-text mb-6">📊 Estatísticas</h3>
+                                <div class="grid grid-cols-2 gap-4 mb-6">
+                                    <div class="bg-white p-4 rounded-xl text-center shadow">
+                                        <div class="text-2xl font-bold text-blue-600" id="tarefas-totais">0</div>
+                                        <div class="text-sm text-gray-600">Tarefas Totais</div>
+                                    </div>
+                                    <div class="bg-white p-4 rounded-xl text-center shadow">
+                                        <div class="text-2xl font-bold text-green-600" id="tarefas-concluidas">0</div>
+                                        <div class="text-sm text-gray-600">Concluídas</div>
                                     </div>
                                 </div>
-                            </div>
-                        </div>
-
-                        <!-- Card 3: Visualização do Edital -->
-                        <div class="glass-card rounded-2xl p-6 shadow-xl mt-8">
-                            <h3 class="text-2xl font-bold gradient-text mb-6">👁️ Visualização do Edital Verticalizado</h3>
-                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="visualizacao-edital">
-                                <!-- Visualização em colunas será carregada aqui -->
+                                <div class="p-4 bg-gradient-to-r from-green-500 to-blue-500 rounded-xl text-white">
+                                    <div class="font-semibold">📈 Progresso Semanal</div>
+                                    <div class="text-sm mt-1" id="progresso-cronograma">0% concluído</div>
+                                    <div class="w-full bg-white/20 rounded-full h-2 mt-2">
+                                        <div class="bg-white h-2 rounded-full progress-bar" id="barra-progresso-cronograma" style="width: 0%"></div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- As outras abas permanecem aqui -->
+                    <!-- Simulados -->
+                    <div id="tab-content-simulados" class="tab-content hidden fade-in">
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                            <!-- Card 1: Simulados Disponíveis -->
+                            <div class="glass-card rounded-2xl p-6 shadow-xl">
+                                <h3 class="text-2xl font-bold gradient-text mb-6">🧪 Simulados Disponíveis</h3>
+                                <div class="space-y-4" id="lista-simulados">
+                                    <!-- Simulados serão carregados aqui -->
+                                </div>
+                                <button id="btn-novo-simulado" class="w-full mt-6 bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 rounded-xl font-semibold hover:shadow-lg transition-all">
+                                    🎯 Criar Simulado Personalizado
+                                </button>
+                            </div>
+
+                            <!-- Card 2: Resultados -->
+                            <div class="glass-card rounded-2xl p-6 shadow-xl">
+                                <h3 class="text-2xl font-bold gradient-text mb-6">📊 Meus Resultados</h3>
+                                <div class="space-y-4" id="resultados-simulados">
+                                    <!-- Resultados serão carregados aqui -->
+                                </div>
+                                <button id="btn-exportar-resultados" class="w-full mt-6 bg-gradient-to-r from-green-600 to-blue-600 text-white py-3 rounded-xl font-semibold hover:shadow-lg transition-all">
+                                    📥 Exportar Resultados
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Card 3: Questões -->
+                        <div class="glass-card rounded-2xl p-6 shadow-xl mt-8">
+                            <h3 class="text-2xl font-bold gradient-text mb-6">❓ Banco de Questões</h3>
+                            <div class="space-y-4" id="banco-questoes">
+                                <!-- Questões serão carregadas aqui -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Redação -->
+                    <div id="tab-content-redacao" class="tab-content hidden fade-in">
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                            <!-- Card 1: Nova Redação -->
+                            <div class="glass-card rounded-2xl p-6 shadow-xl">
+                                <h3 class="text-2xl font-bold gradient-text mb-6">✍️ Nova Redação</h3>
+                                <div class="space-y-4">
+                                    <div>
+                                        <label class="block text-sm font-semibold mb-2">Tema:</label>
+                                        <input type="text" id="redacao-tema" class="w-full p-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Digite o tema da redação">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-semibold mb-2">Tipo:</label>
+                                        <select id="redacao-tipo" class="w-full p-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                            <option value="dissertativa">Dissertativa</option>
+                                            <option value="narracao">Narração</option>
+                                            <option value="descricao">Descrição</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-semibold mb-2">Texto:</label>
+                                        <textarea id="redacao-texto" rows="10" class="w-full p-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Escreva sua redação aqui..."></textarea>
+                                    </div>
+                                </div>
+                                <button id="btn-salvar-redacao" class="w-full mt-6 bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 rounded-xl font-semibold hover:shadow-lg transition-all">
+                                    💾 Salvar Redação
+                                </button>
+                            </div>
+
+                            <!-- Card 2: Minhas Redações -->
+                            <div class="glass-card rounded-2xl p-6 shadow-xl">
+                                <h3 class="text-2xl font-bold gradient-text mb-6">📚 Minhas Redações</h3>
+                                <div class="space-y-4 max-h-96 overflow-y-auto" id="lista-redacoes">
+                                    <!-- Redações serão carregadas aqui -->
+                                </div>
+                                <button id="btn-corrigir-redacao" class="w-full mt-6 bg-gradient-to-r from-green-600 to-blue-600 text-white py-3 rounded-xl font-semibold hover:shadow-lg transition-all">
+                                    🔍 Solicitar Correção
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Progresso -->
+                    <div id="tab-content-progresso" class="tab-content hidden fade-in">
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                            <!-- Card 1: Gráficos -->
+                            <div class="glass-card rounded-2xl p-6 shadow-xl">
+                                <h3 class="text-2xl font-bold gradient-text mb-6">📈 Estatísticas de Progresso</h3>
+                                <div class="h-64">
+                                    <canvas id="progresso-chart"></canvas>
+                                </div>
+                                <div class="grid grid-cols-2 gap-4 mt-6">
+                                    <div class="bg-white p-4 rounded-xl text-center shadow">
+                                        <div class="text-2xl font-bold text-blue-600" id="total-horas">0h</div>
+                                        <div class="text-sm text-gray-600">Total de Horas</div>
+                                    </div>
+                                    <div class="bg-white p-4 rounded-xl text-center shadow">
+                                        <div class="text-2xl font-bold text-green-600" id="total-questoes">0</div>
+                                        <div class="text-sm text-gray-600">Questões Resolvidas</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Card 2: Metas -->
+                            <div class="glass-card rounded-2xl p-6 shadow-xl">
+                                <h3 class="text-2xl font-bold gradient-text mb-6">🎯 Metas e Conquistas</h3>
+                                <div class="space-y-4" id="lista-conquistas">
+                                    <!-- Conquistas serão carregadas aqui -->
+                                </div>
+                                <button id="btn-definir-meta" class="w-full mt-6 bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 rounded-xl font-semibold hover:shadow-lg transition-all">
+                                    🎯 Definir Nova Meta
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Edital Verticalizado -->
+                    <div id="tab-content-edital" class="tab-content hidden fade-in">
+                        <!-- Conteúdo do edital verticalizado -->
+                    </div>
+
+                    <!-- Comunidade -->
+                    <div id="tab-content-comunidade" class="tab-content hidden fade-in">
+                        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                            <!-- Card 1: Ranking -->
+                            <div class="glass-card rounded-2xl p-6 shadow-xl">
+                                <h3 class="text-2xl font-bold gradient-text mb-6">👥 Ranking da Comunidade</h3>
+                                <div class="space-y-4" id="ranking-comunidade">
+                                    <!-- Ranking será carregado aqui -->
+                                </div>
+                                <button id="btn-atualizar-ranking" class="w-full mt-6 bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 rounded-xl font-semibold hover:shadow-lg transition-all">
+                                    🔄 Atualizar Ranking
+                                </button>
+                            </div>
+
+                            <!-- Card 2: Fórum -->
+                            <div class="glass-card rounded-2xl p-6 shadow-xl">
+                                <h3 class="text-2xl font-bold gradient-text mb-6">💬 Fórum de Discussão</h3>
+                                <div class="space-y-4 max-h-96 overflow-y-auto" id="forum-discussao">
+                                    <!-- Discussões serão carregadas aqui -->
+                                </div>
+                                <button id="btn-nova-discussao" class="w-full mt-6 bg-gradient-to-r from-green-600 to-blue-600 text-white py-3 rounded-xl font-semibold hover:shadow-lg transition-all">
+                                    💬 Nova Discussão
+                                </button>
+                            </div>
+
+                            <!-- Card 3: Grupos -->
+                            <div class="glass-card rounded-2xl p-6 shadow-xl">
+                                <h3 class="text-2xl font-bold gradient-text mb-6">🤝 Grupos de Estudo</h3>
+                                <div class="space-y-4 max-h-96 overflow-y-auto" id="grupos-estudo">
+                                    <!-- Grupos serão carregados aqui -->
+                                </div>
+                                <button id="btn-criar-grupo" class="w-full mt-6 bg-gradient-to-r from-purple-600 to-pink-600 text-white py-3 rounded-xl font-semibold hover:shadow-lg transition-all">
+                                    👥 Criar Grupo
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -485,6 +630,50 @@
                         Cancelar
                     </button>
                     <button id="btn-confirmar-disciplina" class="flex-1 bg-blue-600 text-white py-3 rounded-xl font-semibold hover:bg-blue-700 transition-all">
+                        Adicionar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Nova Tarefa -->
+    <div id="modal-nova-tarefa" class="fixed inset-0 flex items-center justify-center z-50 hidden">
+        <div class="modal-overlay absolute inset-0"></div>
+        <div class="glass-card rounded-2xl p-8 shadow-2xl w-full max-w-md mx-4 z-10">
+            <h3 class="text-2xl font-bold gradient-text mb-4">Nova Tarefa</h3>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-semibold mb-2">Título:</label>
+                    <input type="text" id="tarefa-titulo" class="w-full p-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Ex: Estudar Direito Constitucional">
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold mb-2">Disciplina:</label>
+                    <select id="tarefa-disciplina" class="w-full p-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <option value="">Selecione uma disciplina</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold mb-2">Dia da Semana:</label>
+                    <select id="tarefa-dia" class="w-full p-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <option value="0">Segunda-feira</option>
+                        <option value="1">Terça-feira</option>
+                        <option value="2">Quarta-feira</option>
+                        <option value="3">Quinta-feira</option>
+                        <option value="4">Sexta-feira</option>
+                        <option value="5">Sábado</option>
+                        <option value="6">Domingo</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold mb-2">Horário:</label>
+                    <input type="time" id="tarefa-horario" class="w-full p-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                </div>
+                <div class="flex gap-4">
+                    <button onclick="fecharModal('modal-nova-tarefa')" class="flex-1 bg-gray-500 text-white py-3 rounded-xl font-semibold hover:bg-gray-600 transition-all">
+                        Cancelar
+                    </button>
+                    <button id="btn-confirmar-tarefa" class="flex-1 bg-blue-600 text-white py-3 rounded-xl font-semibold hover:bg-blue-700 transition-all">
                         Adicionar
                     </button>
                 </div>
@@ -805,6 +994,7 @@
             usuario: null,
             dados: null,
             editalAtual: null,
+            chart: null,
             
             init(usuario) {
                 this.usuario = usuario;
@@ -841,8 +1031,25 @@
                             targetContent.classList.remove('hidden');
                             
                             // Carregar conteúdo específico da aba
-                            if (tabId === 'edital') {
-                                this.carregarAbaEdital();
+                            switch(tabId) {
+                                case 'cronograma':
+                                    this.carregarAbaCronograma();
+                                    break;
+                                case 'simulados':
+                                    this.carregarAbaSimulados();
+                                    break;
+                                case 'redacao':
+                                    this.carregarAbaRedacao();
+                                    break;
+                                case 'progresso':
+                                    this.carregarAbaProgresso();
+                                    break;
+                                case 'edital':
+                                    this.carregarAbaEdital();
+                                    break;
+                                case 'comunidade':
+                                    this.carregarAbaComunidade();
+                                    break;
                             }
                         }
                     });
@@ -869,10 +1076,25 @@
                     });
                 });
                 
-                // Botões do edital verticalizado
-                document.getElementById('btn-adicionar-assunto')?.addEventListener('click', () => this.adicionarAssunto());
-                document.getElementById('btn-salvar-edital')?.addEventListener('click', () => this.salvarEdital());
-                document.getElementById('selecionar-edital')?.addEventListener('change', (e) => this.selecionarEdital(e.target.value));
+                // Botões do cronograma
+                document.getElementById('btn-nova-tarefa')?.addEventListener('click', () => this.abrirModalNovaTarefa());
+                document.getElementById('btn-confirmar-tarefa')?.addEventListener('click', () => this.adicionarTarefa());
+                
+                // Botões de simulados
+                document.getElementById('btn-novo-simulado')?.addEventListener('click', () => this.criarSimulado());
+                document.getElementById('btn-exportar-resultados')?.addEventListener('click', () => this.exportarResultados());
+                
+                // Botões de redação
+                document.getElementById('btn-salvar-redacao')?.addEventListener('click', () => this.salvarRedacao());
+                document.getElementById('btn-corrigir-redacao')?.addEventListener('click', () => this.solicitarCorrecaoRedacao());
+                
+                // Botões de progresso
+                document.getElementById('btn-definir-meta')?.addEventListener('click', () => this.definirNovaMeta());
+                
+                // Botões da comunidade
+                document.getElementById('btn-atualizar-ranking')?.addEventListener('click', () => this.atualizarRanking());
+                document.getElementById('btn-nova-discussao')?.addEventListener('click', () => this.novaDiscussao());
+                document.getElementById('btn-criar-grupo')?.addEventListener('click', () => this.criarGrupoEstudo());
             },
             
             carregarDadosUsuario() {
@@ -936,37 +1158,108 @@
                 });
             },
             
-            // CORREÇÃO: Método para excluir disciplina
-            excluirDisciplina(disciplinaId) {
-                if (confirm('Tem certeza que deseja excluir esta disciplina? Esta ação não pode ser desfeita.')) {
-                    // Remover disciplina do array
-                    this.dados.disciplinas = this.dados.disciplinas.filter(d => d.id !== disciplinaId);
+            // =========================
+            // CRONOGRAMA
+            // =========================
+            carregarAbaCronograma() {
+                this.carregarDiasSemana();
+                this.carregarTarefas();
+                this.carregarSelectDisciplinasTarefa();
+                this.atualizarEstatisticasCronograma();
+            },
+            
+            carregarDiasSemana() {
+                const container = document.getElementById('cronograma-dias');
+                if (!container) return;
+                
+                const dias = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
+                const hoje = new Date().getDay();
+                const diaAjustado = hoje === 0 ? 6 : hoje - 1;
+                
+                container.innerHTML = '';
+                
+                dias.forEach((dia, index) => {
+                    const div = document.createElement('div');
+                    div.className = `text-center p-3 rounded-xl cursor-pointer transition-all ${
+                        index === diaAjustado 
+                            ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg transform scale-105' 
+                            : 'bg-white hover:bg-gray-50 shadow'
+                    }`;
+                    div.innerHTML = `
+                        <div class="font-semibold">${dia}</div>
+                        <div class="text-sm opacity-75">${this.obterTarefasDia(index).length}</div>
+                    `;
                     
-                    // Remover disciplinas dos editais que usam essa disciplina
-                    if (this.dados.editais) {
-                        this.dados.editais = this.dados.editais.filter(edital => edital.disciplinaId !== disciplinaId);
-                    }
-                    
-                    // Salvar dados
-                    this.salvarDadosUsuario();
-                    
-                    // Recarregar a interface
-                    this.carregarDisciplinas();
-                    this.carregarAbaEdital(); // Recarregar edital se estiver na aba
-                    
-                    AuthSystem.mostrarNotificacao('Disciplina excluída com sucesso!', 'success');
+                    div.addEventListener('click', () => this.mostrarTarefasDia(index));
+                    container.appendChild(div);
+                });
+            },
+            
+            carregarTarefas() {
+                const container = document.getElementById('lista-tarefas');
+                if (!container) return;
+                
+                container.innerHTML = '';
+                
+                if (!this.dados.cronograma || this.dados.cronograma.length === 0) {
+                    container.innerHTML = `
+                        <div class="text-center text-gray-500 py-8">
+                            <p>Nenhuma tarefa agendada.</p>
+                            <p class="text-sm">Clique em "Nova Tarefa" para começar!</p>
+                        </div>
+                    `;
+                    return;
                 }
+                
+                this.dados.cronograma.forEach((tarefa, index) => {
+                    const div = document.createElement('div');
+                    div.className = `bg-white p-4 rounded-xl shadow border-l-4 flex justify-between items-center ${
+                        tarefa.concluida ? 'tarefa-concluida' : ''
+                    }`;
+                    div.style.borderLeftColor = this.obterCorDisciplina(tarefa.disciplinaId);
+                    div.innerHTML = `
+                        <div class="flex-1">
+                            <div class="font-semibold">${tarefa.titulo}</div>
+                            <div class="text-sm text-gray-600">
+                                ${this.obterNomeDisciplina(tarefa.disciplinaId)} • ${tarefa.horario} • ${this.obterNomeDia(tarefa.dia)}
+                            </div>
+                        </div>
+                        <div class="flex gap-2">
+                            <button class="btn-acao ${tarefa.concluida ? 'text-gray-400' : 'text-green-500 hover:text-green-700'}" 
+                                    onclick="GFConcursosApp.concluirTarefa(${index})" 
+                                    ${tarefa.concluida ? 'disabled' : ''}>
+                                ${tarefa.concluida ? '✓' : '○'}
+                            </button>
+                            <button class="btn-acao text-red-500 hover:text-red-700" onclick="GFConcursosApp.excluirTarefa(${index})">
+                                🗑️
+                            </button>
+                        </div>
+                    `;
+                    container.appendChild(div);
+                });
             },
             
-            // Métodos para o Edital Verticalizado
-            carregarAbaEdital() {
-                this.carregarSelectDisciplinas();
-                this.carregarSelectEditais();
-                this.carregarVisualizacaoEdital();
+            obterTarefasDia(dia) {
+                return (this.dados.cronograma || []).filter(tarefa => tarefa.dia === dia);
             },
             
-            carregarSelectDisciplinas() {
-                const select = document.getElementById('edital-disciplina');
+            obterCorDisciplina(disciplinaId) {
+                const disciplina = this.dados.disciplinas.find(d => d.id === disciplinaId);
+                return disciplina ? disciplina.cor : '#6B7280';
+            },
+            
+            obterNomeDisciplina(disciplinaId) {
+                const disciplina = this.dados.disciplinas.find(d => d.id === disciplinaId);
+                return disciplina ? disciplina.nome : 'Geral';
+            },
+            
+            obterNomeDia(dia) {
+                const dias = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo'];
+                return dias[dia] || 'Dia inválido';
+            },
+            
+            carregarSelectDisciplinasTarefa() {
+                const select = document.getElementById('tarefa-disciplina');
                 if (!select) return;
                 
                 select.innerHTML = '<option value="">Selecione uma disciplina</option>';
@@ -979,260 +1272,471 @@
                 });
             },
             
-            carregarSelectEditais() {
-                const select = document.getElementById('selecionar-edital');
-                if (!select) return;
-                
-                select.innerHTML = '<option value="">Selecione um edital</option>';
-                
-                (this.dados.editais || []).forEach((edital, index) => {
-                    const option = document.createElement('option');
-                    option.value = index;
-                    option.textContent = edital.nome;
-                    select.appendChild(option);
-                });
+            abrirModalNovaTarefa() {
+                mostrarModal('modal-nova-tarefa');
             },
             
-            adicionarAssunto() {
-                const assuntoInput = document.getElementById('edital-assunto');
-                const assunto = assuntoInput?.value.trim();
+            adicionarTarefa() {
+                const titulo = document.getElementById('tarefa-titulo')?.value.trim();
+                const disciplinaId = document.getElementById('tarefa-disciplina')?.value;
+                const dia = parseInt(document.getElementById('tarefa-dia')?.value);
+                const horario = document.getElementById('tarefa-horario')?.value;
                 
-                if (!assunto) {
-                    AuthSystem.mostrarNotificacao('Por favor, digite um assunto', 'error');
+                if (!titulo || !disciplinaId || !horario) {
+                    AuthSystem.mostrarNotificacao('Por favor, preencha todos os campos', 'error');
                     return;
                 }
                 
-                const lista = document.getElementById('lista-assuntos');
-                if (lista) {
-                    const assuntoId = Date.now().toString();
-                    const assuntoItem = document.createElement('div');
-                    assuntoItem.className = 'assunto-item bg-white p-3 rounded-xl border border-gray-200 flex items-center justify-between';
-                    assuntoItem.innerHTML = `
-                        <div class="flex items-center">
-                            <div class="checkbox-custom mr-3" data-id="${assuntoId}"></div>
-                            <span>${assunto}</span>
-                        </div>
-                        <button class="text-red-500 hover:text-red-700" onclick="GFConcursosApp.removerAssunto('${assuntoId}')">
-                            🗑️
-                        </button>
-                    `;
-                    lista.appendChild(assuntoItem);
-                    
-                    const checkbox = assuntoItem.querySelector('.checkbox-custom');
-                    checkbox.addEventListener('click', function() {
-                        this.classList.toggle('checked');
-                        const assuntoElement = this.closest('.assunto-item');
-                        assuntoElement.classList.toggle('assunto-concluido');
-                        GFConcursosApp.atualizarProgressoEdital();
-                    });
-                }
-                
-                assuntoInput.value = '';
-            },
-            
-            removerAssunto(assuntoId) {
-                const assuntoElement = document.querySelector(`[data-id="${assuntoId}"]`)?.closest('.assunto-item');
-                if (assuntoElement) {
-                    assuntoElement.remove();
-                    this.atualizarProgressoEdital();
-                }
-            },
-            
-            salvarEdital() {
-                const nome = document.getElementById('edital-nome')?.value.trim();
-                const disciplinaId = document.getElementById('edital-disciplina')?.value;
-                
-                if (!nome || !disciplinaId) {
-                    AuthSystem.mostrarNotificacao('Por favor, preencha o nome do concurso e selecione uma disciplina', 'error');
-                    return;
-                }
-                
-                // Coletar assuntos da lista
-                const assuntos = [];
-                document.querySelectorAll('#lista-assuntos .assunto-item').forEach(item => {
-                    const texto = item.querySelector('span').textContent;
-                    const concluido = item.classList.contains('assunto-concluido');
-                    assuntos.push({ texto, concluido });
-                });
-                
-                if (assuntos.length === 0) {
-                    AuthSystem.mostrarNotificacao('Adicione pelo menos um assunto ao edital', 'error');
-                    return;
-                }
-                
-                const novaEdital = {
+                const novaTarefa = {
                     id: Date.now().toString(),
-                    nome,
+                    titulo,
                     disciplinaId,
-                    disciplinaNome: this.dados.disciplinas.find(d => d.id === disciplinaId)?.nome || 'Desconhecida',
-                    assuntos,
+                    dia,
+                    horario,
+                    concluida: false,
                     dataCriacao: new Date().toISOString()
                 };
                 
-                if (!this.dados.editais) {
-                    this.dados.editais = [];
+                if (!this.dados.cronograma) {
+                    this.dados.cronograma = [];
                 }
                 
-                this.dados.editais.push(novaEdital);
+                this.dados.cronograma.push(novaTarefa);
                 this.salvarDadosUsuario();
                 
-                // Limpar formulário
-                document.getElementById('edital-nome').value = '';
-                document.getElementById('edital-disciplina').value = '';
-                document.getElementById('lista-assuntos').innerHTML = '';
+                // Fechar modal e recarregar
+                fecharModal('modal-nova-tarefa');
+                this.carregarTarefas();
+                this.carregarDiasSemana();
+                this.atualizarEstatisticasCronograma();
                 
-                // Atualizar selects
-                this.carregarSelectEditais();
-                this.carregarVisualizacaoEdital();
-                
-                AuthSystem.mostrarNotificacao('Edital salvo com sucesso!', 'success');
+                AuthSystem.mostrarNotificacao('Tarefa adicionada com sucesso!', 'success');
             },
             
-            selecionarEdital(editalIndex) {
-                if (!editalIndex) {
-                    this.editalAtual = null;
-                    document.getElementById('lista-assuntos').innerHTML = '';
-                    this.atualizarProgressoEdital();
-                    return;
-                }
-                
-                this.editalAtual = this.dados.editais[editalIndex];
-                this.carregarAssuntosEdital();
-            },
-            
-            carregarAssuntosEdital() {
-                const lista = document.getElementById('lista-assuntos');
-                if (!lista || !this.editalAtual) return;
-                
-                lista.innerHTML = '';
-                
-                this.editalAtual.assuntos.forEach(assunto => {
-                    const assuntoId = Date.now().toString() + Math.random();
-                    const assuntoItem = document.createElement('div');
-                    assuntoItem.className = `assunto-item bg-white p-3 rounded-xl border border-gray-200 flex items-center justify-between ${
-                        assunto.concluido ? 'assunto-concluido' : ''
-                    }`;
-                    assuntoItem.innerHTML = `
-                        <div class="flex items-center">
-                            <div class="checkbox-custom mr-3 ${assunto.concluido ? 'checked' : ''}" data-id="${assuntoId}"></div>
-                            <span>${assunto.texto}</span>
-                        </div>
-                        <button class="text-red-500 hover:text-red-700" onclick="GFConcursosApp.removerAssuntoEdital('${assuntoId}')">
-                            🗑️
-                        </button>
-                    `;
-                    lista.appendChild(assuntoItem);
-                    
-                    const checkbox = assuntoItem.querySelector('.checkbox-custom');
-                    checkbox.addEventListener('click', function() {
-                        this.classList.toggle('checked');
-                        const assuntoElement = this.closest('.assunto-item');
-                        assuntoElement.classList.toggle('assunto-concluido');
-                        
-                        const index = Array.from(lista.children).indexOf(assuntoElement);
-                        if (index !== -1 && GFConcursosApp.editalAtual) {
-                            GFConcursosApp.editalAtual.assuntos[index].concluido = !GFConcursosApp.editalAtual.assuntos[index].concluido;
-                            GFConcursosApp.salvarDadosUsuario();
-                        }
-                        
-                        GFConcursosApp.atualizarProgressoEdital();
-                    });
-                });
-                
-                this.atualizarProgressoEdital();
-            },
-            
-            removerAssuntoEdital(assuntoId) {
-                const assuntoElement = document.querySelector(`[data-id="${assuntoId}"]`)?.closest('.assunto-item');
-                if (assuntoElement && this.editalAtual) {
-                    const index = Array.from(document.getElementById('lista-assuntos').children).indexOf(assuntoElement);
-                    if (index !== -1) {
-                        this.editalAtual.assuntos.splice(index, 1);
-                        this.salvarDadosUsuario();
-                        assuntoElement.remove();
-                        this.atualizarProgressoEdital();
-                    }
+            concluirTarefa(index) {
+                if (this.dados.cronograma && this.dados.cronograma[index]) {
+                    this.dados.cronograma[index].concluida = true;
+                    this.salvarDadosUsuario();
+                    this.carregarTarefas();
+                    this.atualizarEstatisticasCronograma();
+                    AuthSystem.mostrarNotificacao('Tarefa concluída!', 'success');
                 }
             },
             
-            atualizarProgressoEdital() {
-                if (!this.editalAtual) {
-                    document.getElementById('progresso-edital').textContent = '0% concluído';
-                    document.getElementById('barra-progresso-edital').style.width = '0%';
-                    return;
+            excluirTarefa(index) {
+                if (confirm('Tem certeza que deseja excluir esta tarefa?')) {
+                    this.dados.cronograma.splice(index, 1);
+                    this.salvarDadosUsuario();
+                    this.carregarTarefas();
+                    this.carregarDiasSemana();
+                    this.atualizarEstatisticasCronograma();
+                    AuthSystem.mostrarNotificacao('Tarefa excluída!', 'success');
                 }
-                
-                const totalAssuntos = this.editalAtual.assuntos.length;
-                const assuntosConcluidos = this.editalAtual.assuntos.filter(a => a.concluido).length;
-                const percentual = totalAssuntos > 0 ? Math.round((assuntosConcluidos / totalAssuntos) * 100) : 0;
-                
-                document.getElementById('progresso-edital').textContent = `${percentual}% concluído`;
-                document.getElementById('barra-progresso-edital').style.width = `${percentual}%`;
             },
             
-            carregarVisualizacaoEdital() {
-                const container = document.getElementById('visualizacao-edital');
+            atualizarEstatisticasCronograma() {
+                const total = this.dados.cronograma ? this.dados.cronograma.length : 0;
+                const concluidas = this.dados.cronograma ? this.dados.cronograma.filter(t => t.concluida).length : 0;
+                const percentual = total > 0 ? Math.round((concluidas / total) * 100) : 0;
+                
+                document.getElementById('tarefas-totais').textContent = total;
+                document.getElementById('tarefas-concluidas').textContent = concluidas;
+                document.getElementById('progresso-cronograma').textContent = `${percentual}% concluído`;
+                document.getElementById('barra-progresso-cronograma').style.width = `${percentual}%`;
+            },
+            
+            // =========================
+            // SIMULADOS
+            // =========================
+            carregarAbaSimulados() {
+                this.carregarSimuladosDisponiveis();
+                this.carregarResultadosSimulados();
+                this.carregarBancoQuestoes();
+            },
+            
+            carregarSimuladosDisponiveis() {
+                const container = document.getElementById('lista-simulados');
                 if (!container) return;
                 
-                container.innerHTML = '';
+                const simulados = [
+                    { id: 1, nome: 'Simulado ENEM 2024', questoes: 90, duracao: '5h', dificuldade: 'Alta' },
+                    { id: 2, nome: 'Simulado Português Básico', questoes: 20, duracao: '1h', dificuldade: 'Baixa' },
+                    { id: 3, nome: 'Simulado Raciocínio Lógico', questoes: 15, duracao: '45min', dificuldade: 'Média' }
+                ];
                 
-                if (!this.dados.editais || this.dados.editais.length === 0) {
+                container.innerHTML = simulados.map(simulado => `
+                    <div class="priority-item bg-white p-4 rounded-xl shadow">
+                        <div class="font-semibold">${simulado.nome}</div>
+                        <div class="text-sm text-gray-600">
+                            ${simulado.questoes} questões • ${simulado.duracao} • Dificuldade: ${simulado.dificuldade}
+                        </div>
+                        <button class="btn-iniciar-simulado w-full mt-3 bg-blue-600 text-white py-2 rounded-xl font-semibold hover:bg-blue-700 transition-all" data-id="${simulado.id}">
+                            🚀 Iniciar Simulado
+                        </button>
+                    </div>
+                `).join('');
+                
+                // Adicionar event listeners
+                container.querySelectorAll('.btn-iniciar-simulado').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const id = e.target.getAttribute('data-id');
+                        this.iniciarSimulado(id);
+                    });
+                });
+            },
+            
+            carregarResultadosSimulados() {
+                const container = document.getElementById('resultados-simulados');
+                if (!container) return;
+                
+                const resultados = [
+                    { nome: 'Simulado ENEM', data: '15/01/2025', acertos: 65, total: 90, percentual: '72%' },
+                    { nome: 'Português Básico', data: '10/01/2025', acertos: 18, total: 20, percentual: '90%' },
+                    { nome: 'Raciocínio Lógico', data: '05/01/2025', acertos: 12, total: 15, percentual: '80%' }
+                ];
+                
+                container.innerHTML = resultados.map(resultado => `
+                    <div class="bg-white p-4 rounded-xl shadow">
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <div class="font-semibold">${resultado.nome}</div>
+                                <div class="text-sm text-gray-600">${resultado.data}</div>
+                            </div>
+                            <div class="text-right">
+                                <div class="font-bold text-green-600">${resultado.percentual}</div>
+                                <div class="text-sm text-gray-600">${resultado.acertos}/${resultado.total}</div>
+                            </div>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2 mt-2">
+                            <div class="bg-green-500 h-2 rounded-full" style="width: ${resultado.percentual}"></div>
+                        </div>
+                    </div>
+                `).join('');
+            },
+            
+            carregarBancoQuestoes() {
+                const container = document.getElementById('banco-questoes');
+                if (!container) return;
+                
+                const questoes = [
+                    { id: 1, disciplina: 'Português', enunciado: 'Assinale a alternativa correta sobre concordância verbal:', dificuldade: 'Média', acertou: true },
+                    { id: 2, disciplina: 'Matemática', enunciado: 'Qual o valor de x na equação 2x + 5 = 15?', dificuldade: 'Fácil', acertou: true },
+                    { id: 3, disciplina: 'Direito', enunciado: 'Sobre os princípios constitucionais:', dificuldade: 'Difícil', acertou: false }
+                ];
+                
+                container.innerHTML = questoes.map(questao => `
+                    <div class="questao-item bg-white p-4 rounded-xl shadow ${questao.acertou ? 'questao-correta' : 'questao-errada'}">
+                        <div class="flex justify-between items-start mb-2">
+                            <span class="font-semibold">${questao.disciplina}</span>
+                            <span class="text-sm px-2 py-1 rounded ${questao.acertou ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
+                                ${questao.acertou ? '✓ Acertou' : '✗ Errou'}
+                            </span>
+                        </div>
+                        <p class="text-gray-700 mb-2">${questao.enunciado}</p>
+                        <div class="text-sm text-gray-500">Dificuldade: ${questao.dificuldade}</div>
+                    </div>
+                `).join('');
+            },
+            
+            iniciarSimulado(id) {
+                AuthSystem.mostrarNotificacao(`Iniciando simulado ID: ${id}`, 'info');
+            },
+            
+            criarSimulado() {
+                AuthSystem.mostrarNotificacao('Criando simulado personalizado...', 'info');
+            },
+            
+            exportarResultados() {
+                AuthSystem.mostrarNotificacao('Exportando resultados...', 'info');
+            },
+            
+            // =========================
+            // REDAÇÃO
+            // =========================
+            carregarAbaRedacao() {
+                this.carregarRedacoesSalvas();
+            },
+            
+            carregarRedacoesSalvas() {
+                const container = document.getElementById('lista-redacoes');
+                if (!container) return;
+                
+                if (!this.dados.redacoes || this.dados.redacoes.length === 0) {
                     container.innerHTML = `
-                        <div class="col-span-3 text-center text-gray-500 py-8">
-                            <p>Nenhum edital cadastrado.</p>
-                            <p class="text-sm">Comece criando seu primeiro edital verticalizado!</p>
+                        <div class="text-center text-gray-500 py-8">
+                            <p>Nenhuma redação salva ainda.</p>
+                            <p class="text-sm">Escreva sua primeira redação ao lado.</p>
                         </div>
                     `;
                     return;
                 }
                 
-                this.dados.editais.forEach(edital => {
-                    const editalCard = document.createElement('div');
-                    editalCard.className = 'bg-white rounded-xl p-4 shadow border border-gray-200';
-                    editalCard.innerHTML = `
-                        <h4 class="font-bold text-lg mb-2">${edital.nome}</h4>
-                        <p class="text-sm text-gray-600 mb-3">${edital.disciplinaNome}</p>
-                        <div class="space-y-2">
-                            ${edital.assuntos.slice(0, 5).map(assunto => `
-                                <div class="flex items-center text-sm">
-                                    <div class="w-2 h-2 rounded-full mr-2 ${assunto.concluido ? 'bg-green-500' : 'bg-gray-300'}"></div>
-                                    <span class="${assunto.concluido ? 'line-through text-gray-500' : ''}">${assunto.texto}</span>
-                                </div>
-                            `).join('')}
-                            ${edital.assuntos.length > 5 ? `<div class="text-xs text-blue-600 mt-2">+ ${edital.assuntos.length - 5} mais assuntos...</div>` : ''}
+                container.innerHTML = this.dados.redacoes.map(redacao => `
+                    <div class="priority-item bg-white p-4 rounded-xl shadow">
+                        <div class="font-semibold">${redacao.tema}</div>
+                        <div class="text-sm text-gray-600">
+                            ${redacao.tipo} • ${new Date(redacao.data).toLocaleDateString()}
                         </div>
-                        <div class="mt-3 text-xs">
-                            <div class="flex justify-between mb-1">
-                                <span>Progresso</span>
-                                <span>${Math.round((edital.assuntos.filter(a => a.concluido).length / edital.assuntos.length) * 100)}%</span>
-                            </div>
-                            <div class="w-full bg-gray-200 rounded-full h-1">
-                                <div class="bg-green-500 h-1 rounded-full" style="width: ${(edital.assuntos.filter(a => a.concluido).length / edital.assuntos.length) * 100}%"></div>
-                            </div>
+                        <div class="text-xs text-gray-500 mt-2 line-clamp-2">${redacao.texto.substring(0, 100)}...</div>
+                        <div class="flex gap-2 mt-3">
+                            <button class="btn-ver-redacao flex-1 bg-blue-600 text-white py-1 rounded text-sm hover:bg-blue-700">
+                                Ver
+                            </button>
+                            <button class="btn-excluir-redacao flex-1 bg-red-600 text-white py-1 rounded text-sm hover:bg-red-700">
+                                Excluir
+                            </button>
                         </div>
-                    `;
-                    container.appendChild(editalCard);
+                    </div>
+                `).join('');
+            },
+            
+            salvarRedacao() {
+                const tema = document.getElementById('redacao-tema')?.value.trim();
+                const tipo = document.getElementById('redacao-tipo')?.value;
+                const texto = document.getElementById('redacao-texto')?.value;
+                
+                if (!tema || !texto) {
+                    AuthSystem.mostrarNotificacao('Por favor, preencha o tema e o texto da redação', 'error');
+                    return;
+                }
+                
+                const novaRedacao = {
+                    id: Date.now().toString(),
+                    tema,
+                    tipo,
+                    texto,
+                    data: new Date().toISOString(),
+                    correcao: null
+                };
+                
+                if (!this.dados.redacoes) {
+                    this.dados.redacoes = [];
+                }
+                
+                this.dados.redacoes.push(novaRedacao);
+                this.salvarDadosUsuario();
+                this.carregarRedacoesSalvas();
+                
+                // Limpar formulário
+                document.getElementById('redacao-tema').value = '';
+                document.getElementById('redacao-texto').value = '';
+                
+                AuthSystem.mostrarNotificacao('Redação salva com sucesso!', 'success');
+            },
+            
+            solicitarCorrecaoRedacao() {
+                AuthSystem.mostrarNotificacao('Solicitando correção de redação...', 'info');
+            },
+            
+            // =========================
+            // PROGRESSO
+            // =========================
+            carregarAbaProgresso() {
+                this.inicializarGraficoProgresso();
+                this.carregarConquistas();
+                this.atualizarMetricasProgresso();
+            },
+            
+            inicializarGraficoProgresso() {
+                const ctx = document.getElementById('progresso-chart');
+                if (!ctx) return;
+                
+                if (this.chart) {
+                    this.chart.destroy();
+                }
+                
+                const data = {
+                    labels: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun'],
+                    datasets: [
+                        {
+                            label: 'Horas Estudadas',
+                            data: [20, 25, 22, 28, 30, 35],
+                            borderColor: '#3B82F6',
+                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                            fill: true,
+                            tension: 0.4
+                        },
+                        {
+                            label: 'Questões Resolvidas',
+                            data: [150, 180, 200, 220, 250, 245],
+                            borderColor: '#10B981',
+                            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                            fill: true,
+                            tension: 0.4
+                        }
+                    ]
+                };
+                
+                this.chart = new Chart(ctx, {
+                    type: 'line',
+                    data: data,
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: {
+                                position: 'top',
+                            },
+                            title: {
+                                display: true,
+                                text: 'Evolução do Seu Progresso'
+                            }
+                        }
+                    }
                 });
             },
             
-            atualizarMetricas() {
+            carregarConquistas() {
+                const container = document.getElementById('lista-conquistas');
+                if (!container) return;
+                
+                const conquistas = [
+                    { nome: '🎯 Meta Diária', descricao: 'Complete 3h de estudo em um dia', concluida: true },
+                    { nome: '📚 Disciplina Dedicada', descricao: 'Estude 10h em uma disciplina', concluida: false },
+                    { nome: '⚡ Ritmo Constante', descricao: 'Estude 7 dias consecutivos', concluida: true },
+                    { nome: '🧠 Mente Afiada', descricao: 'Resolva 100 questões', concluida: false }
+                ];
+                
+                container.innerHTML = conquistas.map(conquista => `
+                    <div class="bg-white p-4 rounded-xl shadow flex items-center justify-between">
+                        <div>
+                            <div class="font-semibold ${conquista.concluida ? 'text-green-600' : 'text-gray-600'}">
+                                ${conquista.nome}
+                            </div>
+                            <div class="text-sm text-gray-500">${conquista.descricao}</div>
+                        </div>
+                        <div class="text-2xl">
+                            ${conquista.concluida ? '✅' : '⏳'}
+                        </div>
+                    </div>
+                `).join('');
+            },
+            
+            atualizarMetricasProgresso() {
                 const totalHoras = (this.dados.disciplinas || []).reduce((sum, disc) => sum + (disc.horasEstudadas || 0), 0);
                 const totalQuestoes = (this.dados.disciplinas || []).reduce((sum, disc) => sum + (disc.questoesResolvidas || 0), 0);
                 
-                const metricTempo = document.getElementById('metric-tempo');
-                const metricQuestoes = document.getElementById('metric-questoes');
-                const totalHorasElem = document.getElementById('total-horas');
-                const totalQuestoesElem = document.getElementById('total-questoes');
-                
-                if (metricTempo) metricTempo.textContent = `${totalHoras}h`;
-                if (metricQuestoes) metricQuestoes.textContent = totalQuestoes;
-                if (totalHorasElem) totalHorasElem.textContent = `${totalHoras}h`;
-                if (totalQuestoesElem) totalQuestoesElem.textContent = totalQuestoes;
+                document.getElementById('total-horas').textContent = `${totalHoras}h`;
+                document.getElementById('total-questoes').textContent = totalQuestoes;
             },
             
-            atualizarInterface() {
-                this.atualizarMetricas();
-                this.carregarDisciplinas();
+            definirNovaMeta() {
+                const meta = prompt('Qual sua nova meta de estudo? (ex: "Estudar 3h por dia")');
+                if (meta) {
+                    AuthSystem.mostrarNotificacao(`Nova meta definida: "${meta}"`, 'success');
+                }
+            },
+            
+            // =========================
+            // COMUNIDADE
+            // =========================
+            carregarAbaComunidade() {
+                this.carregarRanking();
+                this.carregarForum();
+                this.carregarGruposEstudo();
+            },
+            
+            carregarRanking() {
+                const container = document.getElementById('ranking-comunidade');
+                if (!container) return;
+                
+                const ranking = [
+                    { posicao: 1, nome: 'Ana Silva', pontos: 1250 },
+                    { posicao: 2, nome: 'Carlos Santos', pontos: 1180 },
+                    { posicao: 3, nome: 'Marina Oliveira', pontos: 1120 },
+                    { posicao: 4, nome: 'Você', pontos: 980, destaque: true },
+                    { posicao: 5, nome: 'Pedro Costa', pontos: 920 }
+                ];
+                
+                container.innerHTML = ranking.map(participante => `
+                    <div class="flex justify-between items-center p-3 rounded-xl ${
+                        participante.destaque 
+                            ? 'bg-gradient-to-r from-yellow-400 to-yellow-600 text-white shadow-lg' 
+                            : 'bg-white hover:bg-gray-50 shadow'
+                    }">
+                        <div class="flex items-center gap-3">
+                            <div class="font-bold">${participante.posicao}º</div>
+                            <div>${participante.nome}</div>
+                        </div>
+                        <div class="font-semibold">${participante.pontos} pts</div>
+                    </div>
+                `).join('');
+            },
+            
+            carregarForum() {
+                const container = document.getElementById('forum-discussao');
+                if (!container) return;
+                
+                const discussoes = [
+                    { titulo: 'Dicas para matemática básica', respostas: 24, autor: 'Carlos' },
+                    { titulo: 'Como estudar português para concursos', respostas: 18, autor: 'Ana' },
+                    { titulo: 'Cronograma de estudos eficiente', respostas: 32, autor: 'Pedro' }
+                ];
+                
+                container.innerHTML = discussoes.map(discussao => `
+                    <div class="bg-white p-4 rounded-xl shadow hover:shadow-md transition-all cursor-pointer">
+                        <div class="font-semibold">${discussao.titulo}</div>
+                        <div class="text-sm text-gray-600 mt-1">
+                            por ${discussao.autor} • ${discussao.respostas} respostas
+                        </div>
+                    </div>
+                `).join('');
+            },
+            
+            carregarGruposEstudo() {
+                const container = document.getElementById('grupos-estudo');
+                if (!container) return;
+                
+                const grupos = [
+                    { nome: 'Grupo ENEM 2025', membros: 45, foco: 'Preparação para ENEM' },
+                    { nome: 'Matemática Avançada', membros: 28, foco: 'Cálculo e Estatística' },
+                    { nome: 'Português para Concursos', membros: 63, foco: 'Gramática e Interpretação' }
+                ];
+                
+                container.innerHTML = grupos.map(grupo => `
+                    <div class="bg-white p-4 rounded-xl shadow hover:shadow-md transition-all cursor-pointer">
+                        <div class="font-semibold">${grupo.nome}</div>
+                        <div class="text-sm text-gray-600">
+                            ${grupo.membros} membros • ${grupo.foco}
+                        </div>
+                        <button class="w-full mt-3 bg-blue-600 text-white py-2 rounded-xl text-sm font-semibold hover:bg-blue-700 transition-all">
+                            Participar
+                        </button>
+                    </div>
+                `).join('');
+            },
+            
+            atualizarRanking() {
+                AuthSystem.mostrarNotificacao('Atualizando ranking...', 'info');
+            },
+            
+            novaDiscussao() {
+                const titulo = prompt('Título da nova discussão:');
+                if (titulo) {
+                    AuthSystem.mostrarNotificacao(`Nova discussão criada: "${titulo}"`, 'success');
+                }
+            },
+            
+            criarGrupoEstudo() {
+                AuthSystem.mostrarNotificacao('Criando novo grupo de estudo...', 'info');
+            },
+            
+            // =========================
+            // FUNÇÕES COMPARTILHADAS
+            // =========================
+            excluirDisciplina(disciplinaId) {
+                if (confirm('Tem certeza que deseja excluir esta disciplina? Esta ação não pode ser desfeita.')) {
+                    this.dados.disciplinas = this.dados.disciplinas.filter(d => d.id !== disciplinaId);
+                    
+                    if (this.dados.editais) {
+                        this.dados.editais = this.dados.editais.filter(edital => edital.disciplinaId !== disciplinaId);
+                    }
+                    
+                    this.salvarDadosUsuario();
+                    this.carregarDisciplinas();
+                    this.carregarAbaEdital();
+                    
+                    AuthSystem.mostrarNotificacao('Disciplina excluída com sucesso!', 'success');
+                }
             },
             
             abrirModalNovaDisciplina() {
@@ -1248,7 +1752,6 @@
                     return;
                 }
                 
-                // Verificar se já existe disciplina com mesmo nome
                 const disciplinaExistente = this.dados.disciplinas.find(d => d.nome.toLowerCase() === nome.toLowerCase());
                 if (disciplinaExistente) {
                     AuthSystem.mostrarNotificacao('Já existe uma disciplina com este nome', 'error');
@@ -1295,6 +1798,26 @@
             
             mostrarConfiguracoes() {
                 AuthSystem.mostrarNotificacao('Abrindo configurações...', 'info');
+            },
+            
+            atualizarMetricas() {
+                const totalHoras = (this.dados.disciplinas || []).reduce((sum, disc) => sum + (disc.horasEstudadas || 0), 0);
+                const totalQuestoes = (this.dados.disciplinas || []).reduce((sum, disc) => sum + (disc.questoesResolvidas || 0), 0);
+                
+                const metricTempo = document.getElementById('metric-tempo');
+                const metricQuestoes = document.getElementById('metric-questoes');
+                const totalHorasElem = document.getElementById('total-horas');
+                const totalQuestoesElem = document.getElementById('total-questoes');
+                
+                if (metricTempo) metricTempo.textContent = `${totalHoras}h`;
+                if (metricQuestoes) metricQuestoes.textContent = totalQuestoes;
+                if (totalHorasElem) totalHorasElem.textContent = `${totalHoras}h`;
+                if (totalQuestoesElem) totalQuestoesElem.textContent = totalQuestoes;
+            },
+            
+            atualizarInterface() {
+                this.atualizarMetricas();
+                this.carregarDisciplinas();
             },
             
             salvarDadosUsuario() {
