@@ -827,7 +827,7 @@
         }
 
         // =========================
-        // FUNÇÕES PARA DISCIPLINAS
+        // FUNÇÕES PARA DISCIPLINAS (CORRIGIDAS)
         // =========================
 
         function abrirModalNovaDisciplina() {
@@ -836,9 +836,9 @@
                 document.getElementById('nova-disciplina-nome').value = '';
                 document.getElementById('nova-disciplina-cor').value = '#3B82F6';
                 
-                // Configurar o botão de confirmação
+                // Configurar o botão de confirmação - CORREÇÃO: usar arrow function
                 const btnConfirmar = document.getElementById('btn-confirmar-disciplina');
-                btnConfirmar.onclick = AplicacaoPrincipal.adicionarNovaDisciplina;
+                btnConfirmar.onclick = () => AplicacaoPrincipal.adicionarNovaDisciplina();
                 
                 mostrarModal('modal-nova-disciplina');
             } catch (error) {
@@ -852,9 +852,9 @@
                 document.getElementById('nova-disciplina-edital-nome').value = '';
                 document.getElementById('nova-disciplina-edital-cor').value = '#3B82F6';
                 
-                // Configurar o botão de confirmação
+                // Configurar o botão de confirmação - CORREÇÃO: usar arrow function
                 const btnConfirmar = document.getElementById('btn-confirmar-disciplina-edital');
-                btnConfirmar.onclick = AplicacaoPrincipal.adicionarNovaDisciplinaEdital;
+                btnConfirmar.onclick = () => AplicacaoPrincipal.adicionarNovaDisciplinaEdital();
                 
                 mostrarModal('modal-nova-disciplina-edital');
             } catch (error) {
@@ -1424,7 +1424,7 @@
                 }
             },
             
-            // FUNÇÕES PARA DISCIPLINAS
+            // FUNÇÕES PARA DISCIPLINAS (CORRIGIDAS)
             adicionarNovaDisciplina() {
                 try {
                     const nome = document.getElementById('nova-disciplina-nome').value.trim();
@@ -1432,6 +1432,12 @@
                     
                     if (!nome) {
                         AuthSystem.mostrarNotificacao('Digite o nome da disciplina', 'error');
+                        return;
+                    }
+                    
+                    // CORREÇÃO: garantir que this.usuario existe
+                    if (!this.usuario || !this.usuario.dados) {
+                        AuthSystem.mostrarNotificacao('Erro: usuário não carregado', 'error');
                         return;
                     }
                     
@@ -1452,6 +1458,7 @@
                     AuthSystem.mostrarNotificacao('Disciplina adicionada com sucesso!', 'success');
                 } catch (error) {
                     console.error('Erro ao adicionar disciplina:', error);
+                    AuthSystem.mostrarNotificacao('Erro ao adicionar disciplina', 'error');
                 }
             },
 
@@ -1465,12 +1472,30 @@
                         return;
                     }
                     
+                    // CORREÇÃO: garantir que this.usuario existe
+                    if (!this.usuario || !this.usuario.dados) {
+                        AuthSystem.mostrarNotificacao('Erro: usuário não carregado', 'error');
+                        return;
+                    }
+                    
                     const novaDisciplina = {
                         id: Date.now().toString(),
                         nome: nome,
                         cor: cor,
                         assuntos: []
                     };
+                    
+                    // CORREÇÃO: garantir que editalVerticalizado existe
+                    if (!this.usuario.dados.editalVerticalizado) {
+                        this.usuario.dados.editalVerticalizado = {
+                            nomeConcurso: '',
+                            disciplinas: []
+                        };
+                    }
+                    
+                    if (!this.usuario.dados.editalVerticalizado.disciplinas) {
+                        this.usuario.dados.editalVerticalizado.disciplinas = [];
+                    }
                     
                     this.usuario.dados.editalVerticalizado.disciplinas.push(novaDisciplina);
                     this.salvarDadosUsuario();
@@ -1480,6 +1505,7 @@
                     AuthSystem.mostrarNotificacao('Disciplina adicionada ao edital!', 'success');
                 } catch (error) {
                     console.error('Erro ao adicionar disciplina ao edital:', error);
+                    AuthSystem.mostrarNotificacao('Erro ao adicionar disciplina', 'error');
                 }
             },
             
