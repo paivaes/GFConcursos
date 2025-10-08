@@ -193,36 +193,6 @@
     </style>
 </head>
 <body class="min-h-screen">
-    <!-- ========================= -->
-    <!-- TRATAMENTO DE ERROS GLOBAIS -->
-    <!-- ========================= -->
-    <script>
-        // Handler global de erros - deve ser o PRIMEIRO script
-        window.addEventListener('error', (event) => {
-            if (event.error && event.error.message && 
-                event.error.message.includes('Could not establish connection')) {
-                console.warn('Erro de conexão suprimido (content-all.js)');
-                event.preventDefault();
-                return true;
-            }
-        });
-
-        // Handler para promises rejeitadas
-        window.addEventListener('unhandledrejection', (event) => {
-            if (event.reason && event.reason.message && 
-                event.reason.message.includes('Could not establish connection')) {
-                console.warn('Promise rejection de conexão suprimida');
-                event.preventDefault();
-                return true;
-            }
-        });
-
-        // Polyfill para garantir compatibilidade
-        if (typeof globalThis === 'undefined') {
-            window.globalThis = window;
-        }
-    </script>
-
     <!-- Sistema de Login -->
     <div id="login-system" class="login-container">
         <div class="glass-card rounded-2xl p-8 shadow-2xl w-full max-w-md mx-4">
@@ -473,6 +443,149 @@
         </div>
     </div>
 
+    <!-- Modal Nova Questão -->
+    <div id="modal-nova-questao" class="fixed inset-0 flex items-center justify-center z-50 hidden">
+        <div class="modal-overlay absolute inset-0"></div>
+        <div class="glass-card rounded-2xl p-8 shadow-2xl w-full max-w-2xl mx-4 z-10 max-h-[90vh] overflow-y-auto">
+            <h3 class="text-2xl font-bold gradient-text mb-4">Nova Questão</h3>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-semibold mb-2">Enunciado:</label>
+                    <textarea id="questao-enunciado" rows="4" class="w-full p-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Digite o enunciado da questão"></textarea>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-semibold mb-2">Disciplina:</label>
+                        <select id="questao-disciplina" class="w-full p-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            <option value="">Selecione uma disciplina</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold mb-2">Dificuldade:</label>
+                        <select id="questao-dificuldade" class="w-full p-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            <option value="facil">Fácil</option>
+                            <option value="medio" selected>Médio</option>
+                            <option value="dificil">Difícil</option>
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold mb-2">Status:</label>
+                    <select id="questao-status" class="w-full p-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <option value="pendente">Pendente</option>
+                        <option value="acertou">Acertou</option>
+                        <option value="errou">Errou</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold mb-2">Anotações:</label>
+                    <textarea id="questao-anotacao" rows="3" class="w-full p-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Anotações sobre a questão"></textarea>
+                </div>
+                <div class="flex gap-4">
+                    <button onclick="fecharModal('modal-nova-questao')" class="flex-1 bg-gray-500 text-white py-3 rounded-xl font-semibold hover:bg-gray-600 transition-all">
+                        Cancelar
+                    </button>
+                    <button id="btn-salvar-questao" class="flex-1 bg-blue-600 text-white py-3 rounded-xl font-semibold hover:bg-blue-700 transition-all">
+                        💾 Salvar Questão
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Ver Questão -->
+    <div id="modal-ver-questao" class="fixed inset-0 flex items-center justify-center z-50 hidden">
+        <div class="modal-overlay absolute inset-0"></div>
+        <div class="glass-card rounded-2xl p-8 shadow-2xl w-full max-w-2xl mx-4 z-10 max-h-[90vh] overflow-y-auto">
+            <h3 class="text-2xl font-bold gradient-text mb-4">Detalhes da Questão</h3>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-semibold mb-2">Enunciado:</label>
+                    <div class="p-3 bg-gray-50 rounded-xl" id="ver-questao-enunciado"></div>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-semibold mb-2">Disciplina:</label>
+                        <div class="p-3 bg-gray-50 rounded-xl" id="ver-questao-disciplina"></div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold mb-2">Dificuldade:</label>
+                        <div class="p-3 bg-gray-50 rounded-xl" id="ver-questao-dificuldade"></div>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-semibold mb-2">Status:</label>
+                        <div class="p-3 bg-gray-50 rounded-xl" id="ver-questao-status"></div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold mb-2">Data:</label>
+                        <div class="p-3 bg-gray-50 rounded-xl" id="ver-questao-data"></div>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold mb-2">Anotações:</label>
+                    <div class="p-3 bg-gray-50 rounded-xl min-h-[60px]" id="ver-questao-anotacao"></div>
+                </div>
+                <div class="flex gap-4 pt-4">
+                    <button onclick="fecharModal('modal-ver-questao')" class="flex-1 bg-gray-500 text-white py-3 rounded-xl font-semibold hover:bg-gray-600 transition-all">
+                        Fechar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Editar Questão -->
+    <div id="modal-editar-questao" class="fixed inset-0 flex items-center justify-center z-50 hidden">
+        <div class="modal-overlay absolute inset-0"></div>
+        <div class="glass-card rounded-2xl p-8 shadow-2xl w-full max-w-2xl mx-4 z-10 max-h-[90vh] overflow-y-auto">
+            <h3 class="text-2xl font-bold gradient-text mb-4">Editar Questão</h3>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-semibold mb-2">Enunciado:</label>
+                    <textarea id="editar-questao-enunciado" rows="4" class="w-full p-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"></textarea>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-semibold mb-2">Disciplina:</label>
+                        <select id="editar-questao-disciplina" class="w-full p-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            <option value="">Selecione uma disciplina</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold mb-2">Dificuldade:</label>
+                        <select id="editar-questao-dificuldade" class="w-full p-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            <option value="facil">Fácil</option>
+                            <option value="medio">Médio</option>
+                            <option value="dificil">Difícil</option>
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold mb-2">Status:</label>
+                    <select id="editar-questao-status" class="w-full p-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <option value="pendente">Pendente</option>
+                        <option value="acertou">Acertou</option>
+                        <option value="errou">Errou</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold mb-2">Anotações:</label>
+                    <textarea id="editar-questao-anotacao" rows="3" class="w-full p-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"></textarea>
+                </div>
+                <div class="flex gap-4">
+                    <button onclick="fecharModal('modal-editar-questao')" class="flex-1 bg-gray-500 text-white py-3 rounded-xl font-semibold hover:bg-gray-600 transition-all">
+                        Cancelar
+                    </button>
+                    <button id="btn-salvar-edicao-questao" class="flex-1 bg-blue-600 text-white py-3 rounded-xl font-semibold hover:bg-blue-700 transition-all">
+                        💾 Salvar Alterações
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Modal Nova Redação -->
     <div id="modal-nova-redacao" class="fixed inset-0 flex items-center justify-center z-50 hidden">
         <div class="modal-overlay absolute inset-0"></div>
@@ -480,20 +593,30 @@
             <h3 class="text-2xl font-bold gradient-text mb-4">Nova Redação</h3>
             <div class="space-y-4">
                 <div>
+                    <label class="block text-sm font-semibold mb-2">Título:</label>
+                    <input type="text" id="redacao-titulo" class="w-full p-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Título da redação">
+                </div>
+                <div>
                     <label class="block text-sm font-semibold mb-2">Tema:</label>
-                    <input type="text" id="redacao-tema" class="w-full p-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Digite o tema da redação">
+                    <input type="text" id="redacao-tema" class="w-full p-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Tema da redação">
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-semibold mb-2">Tempo Gasto (minutos):</label>
+                        <input type="number" id="redacao-tempo" class="w-full p-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="60">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold mb-2">Nota:</label>
+                        <input type="number" id="redacao-nota" class="w-full p-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="0-1000" min="0" max="1000" step="10">
+                    </div>
                 </div>
                 <div>
-                    <label class="block text-sm font-semibold mb-2">Tipo:</label>
-                    <select id="redacao-tipo" class="w-full p-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                        <option value="dissertativa">Dissertativa</option>
-                        <option value="narracao">Narração</option>
-                        <option value="descricao">Descrição</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-sm font-semibold mb-2">Texto:</label>
+                    <label class="block text-sm font-semibold mb-2">Texto da Redação:</label>
                     <textarea id="redacao-texto" rows="15" class="w-full p-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Escreva sua redação aqui..."></textarea>
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold mb-2">Comentários/Avaliação:</label>
+                    <textarea id="redacao-comentarios" rows="3" class="w-full p-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Comentários sobre a redação..."></textarea>
                 </div>
                 <div class="flex gap-4">
                     <button onclick="fecharModal('modal-nova-redacao')" class="flex-1 bg-gray-500 text-white py-3 rounded-xl font-semibold hover:bg-gray-600 transition-all">
@@ -501,6 +624,97 @@
                     </button>
                     <button id="btn-salvar-redacao" class="flex-1 bg-blue-600 text-white py-3 rounded-xl font-semibold hover:bg-blue-700 transition-all">
                         💾 Salvar Redação
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Ver Redação -->
+    <div id="modal-ver-redacao" class="fixed inset-0 flex items-center justify-center z-50 hidden">
+        <div class="modal-overlay absolute inset-0"></div>
+        <div class="glass-card rounded-2xl p-8 shadow-2xl w-full max-w-4xl mx-4 z-10 max-h-[90vh] overflow-y-auto">
+            <h3 class="text-2xl font-bold gradient-text mb-4" id="ver-redacao-titulo"></h3>
+            <div class="space-y-4">
+                <div class="grid grid-cols-3 gap-4 mb-4">
+                    <div>
+                        <label class="block text-sm font-semibold mb-2">Tema:</label>
+                        <div class="p-3 bg-gray-50 rounded-xl" id="ver-redacao-tema"></div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold mb-2">Tempo:</label>
+                        <div class="p-3 bg-gray-50 rounded-xl" id="ver-redacao-tempo"></div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold mb-2">Nota:</label>
+                        <div class="p-3 bg-gray-50 rounded-xl" id="ver-redacao-nota"></div>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label class="block text-sm font-semibold mb-2">Palavras:</label>
+                        <div class="p-3 bg-gray-50 rounded-xl" id="ver-redacao-palavras"></div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold mb-2">Data:</label>
+                        <div class="p-3 bg-gray-50 rounded-xl" id="ver-redacao-data"></div>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold mb-2">Redação:</label>
+                    <div class="p-4 bg-gray-50 rounded-xl min-h-[200px] whitespace-pre-wrap" id="ver-redacao-texto"></div>
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold mb-2">Comentários:</label>
+                    <div class="p-3 bg-gray-50 rounded-xl min-h-[60px]" id="ver-redacao-comentarios"></div>
+                </div>
+                <div class="flex gap-4 pt-4">
+                    <button onclick="fecharModal('modal-ver-redacao')" class="flex-1 bg-gray-500 text-white py-3 rounded-xl font-semibold hover:bg-gray-600 transition-all">
+                        Fechar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Editar Redação -->
+    <div id="modal-editar-redacao" class="fixed inset-0 flex items-center justify-center z-50 hidden">
+        <div class="modal-overlay absolute inset-0"></div>
+        <div class="glass-card rounded-2xl p-8 shadow-2xl w-full max-w-4xl mx-4 z-10 max-h-[90vh] overflow-y-auto">
+            <h3 class="text-2xl font-bold gradient-text mb-4">Editar Redação</h3>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-semibold mb-2">Título:</label>
+                    <input type="text" id="editar-redacao-titulo" class="w-full p-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold mb-2">Tema:</label>
+                    <input type="text" id="editar-redacao-tema" class="w-full p-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-semibold mb-2">Tempo Gasto (minutos):</label>
+                        <input type="number" id="editar-redacao-tempo" class="w-full p-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold mb-2">Nota:</label>
+                        <input type="number" id="editar-redacao-nota" class="w-full p-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent" min="0" max="1000" step="10">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold mb-2">Texto da Redação:</label>
+                    <textarea id="editar-redacao-texto" rows="15" class="w-full p-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"></textarea>
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold mb-2">Comentários/Avaliação:</label>
+                    <textarea id="editar-redacao-comentarios" rows="3" class="w-full p-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"></textarea>
+                </div>
+                <div class="flex gap-4">
+                    <button onclick="fecharModal('modal-editar-redacao')" class="flex-1 bg-gray-500 text-white py-3 rounded-xl font-semibold hover:bg-gray-600 transition-all">
+                        Cancelar
+                    </button>
+                    <button id="btn-salvar-edicao-redacao" class="flex-1 bg-blue-600 text-white py-3 rounded-xl font-semibold hover:bg-blue-700 transition-all">
+                        💾 Salvar Alterações
                     </button>
                 </div>
             </div>
@@ -1812,6 +2026,7 @@
             carregarQuestoes() {
                 try {
                     const conteudoPrincipal = document.getElementById('conteudo-principal');
+                    const questoes = this.usuario.dados.questoes || [];
                     
                     conteudoPrincipal.innerHTML = `
                         <div class="fade-in">
@@ -1821,21 +2036,291 @@
                             </div>
                             
                             <div class="glass-card rounded-2xl p-6 mb-6">
-                                <div class="text-center py-8">
-                                    <p class="text-gray-500 mb-4">Módulo de Questões em desenvolvimento</p>
-                                    <p class="text-sm text-gray-600">Em breve você poderá adicionar e gerenciar questões aqui.</p>
+                                <div class="flex justify-between items-center mb-6">
+                                    <h3 class="text-xl font-semibold">Filtrar Questões</h3>
+                                    <button onclick="AplicacaoPrincipal.novaQuestao()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors">
+                                        + Nova Questão
+                                    </button>
+                                </div>
+                                
+                                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                                    <select id="filtro-disciplina" class="p-3 border rounded-xl">
+                                        <option value="">Todas as disciplinas</option>
+                                        ${this.usuario.dados.disciplinas.map(d => 
+                                            `<option value="${d.nome}">${d.nome}</option>`
+                                        ).join('')}
+                                    </select>
+                                    
+                                    <select id="filtro-dificuldade" class="p-3 border rounded-xl">
+                                        <option value="">Todas as dificuldades</option>
+                                        <option value="facil">Fácil</option>
+                                        <option value="medio">Médio</option>
+                                        <option value="dificil">Difícil</option>
+                                    </select>
+                                    
+                                    <select id="filtro-status" class="p-3 border rounded-xl">
+                                        <option value="">Todos os status</option>
+                                        <option value="pendente">Pendente</option>
+                                        <option value="acertou">Acertou</option>
+                                        <option value="errou">Errou</option>
+                                    </select>
+                                    
+                                    <button onclick="AplicacaoPrincipal.filtrarQuestoes()" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-xl transition-colors">
+                                        🔍 Filtrar
+                                    </button>
+                                </div>
+                                
+                                <div id="lista-questoes">
+                                    ${this.renderizarQuestoes()}
                                 </div>
                             </div>
                         </div>
                     `;
+                    
+                    // Configurar eventos dos filtros
+                    document.getElementById('filtro-disciplina').addEventListener('change', () => this.filtrarQuestoes());
+                    document.getElementById('filtro-dificuldade').addEventListener('change', () => this.filtrarQuestoes());
+                    document.getElementById('filtro-status').addEventListener('change', () => this.filtrarQuestoes());
                 } catch (error) {
                     console.error('Erro ao carregar questões:', error);
+                }
+            },
+            
+            renderizarQuestoes(questoesFiltradas = null) {
+                try {
+                    const questoes = questoesFiltradas || this.usuario.dados.questoes || [];
+                    
+                    if (questoes.length === 0) {
+                        return `
+                            <div class="text-center py-8">
+                                <p class="text-gray-500 mb-4">Nenhuma questão encontrada.</p>
+                                <button onclick="AplicacaoPrincipal.novaQuestao()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors">
+                                    Adicionar Primeira Questão
+                                </button>
+                            </div>
+                        `;
+                    }
+                    
+                    return questoes.map(questao => {
+                        const statusClass = questao.status === 'acertou' ? 'bg-green-100 text-green-800' :
+                                          questao.status === 'errou' ? 'bg-red-100 text-red-800' :
+                                          'bg-yellow-100 text-yellow-800';
+                                          
+                        const statusText = questao.status === 'acertou' ? 'Acertou' :
+                                         questao.status === 'errou' ? 'Errou' :
+                                         'Pendente';
+                        
+                        return `
+                            <div class="questao-item border rounded-xl p-4 mb-4">
+                                <div class="flex justify-between items-start mb-3">
+                                    <div class="flex-1">
+                                        <h4 class="font-semibold text-lg mb-2">${questao.enunciado}</h4>
+                                        <div class="flex flex-wrap gap-2 mb-3">
+                                            <span class="px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                                ${questao.disciplina}
+                                            </span>
+                                            <span class="px-2 py-1 rounded-full text-xs font-medium ${statusClass}">
+                                                ${statusText}
+                                            </span>
+                                            <span class="px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                                                ${questao.dificuldade}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div class="flex gap-2 ml-4">
+                                        <button onclick="AplicacaoPrincipal.verQuestao('${questao.id}')" 
+                                                class="bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-lg transition-colors">
+                                            👀
+                                        </button>
+                                        <button onclick="AplicacaoPrincipal.editarQuestao('${questao.id}')" 
+                                                class="bg-green-600 hover:bg-green-700 text-white p-2 rounded-lg transition-colors">
+                                            ✏️
+                                        </button>
+                                        <button onclick="AplicacaoPrincipal.excluirQuestao('${questao.id}')" 
+                                                class="bg-red-600 hover:bg-red-700 text-white p-2 rounded-lg transition-colors">
+                                            🗑️
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                ${questao.anotacao ? `
+                                    <div class="bg-gray-50 p-3 rounded-lg mb-3">
+                                        <strong>Anotação:</strong> ${questao.anotacao}
+                                    </div>
+                                ` : ''}
+                                
+                                <div class="text-sm text-gray-500">
+                                    Adicionada em: ${new Date(questao.dataAdicao).toLocaleDateString('pt-BR')}
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+                } catch (error) {
+                    console.error('Erro ao renderizar questões:', error);
+                    return '';
+                }
+            },
+            
+            filtrarQuestoes() {
+                try {
+                    const disciplina = document.getElementById('filtro-disciplina').value;
+                    const dificuldade = document.getElementById('filtro-dificuldade').value;
+                    const status = document.getElementById('filtro-status').value;
+                    
+                    let questoesFiltradas = this.usuario.dados.questoes || [];
+                    
+                    if (disciplina) {
+                        questoesFiltradas = questoesFiltradas.filter(q => q.disciplina === disciplina);
+                    }
+                    
+                    if (dificuldade) {
+                        questoesFiltradas = questoesFiltradas.filter(q => q.dificuldade === dificuldade);
+                    }
+                    
+                    if (status) {
+                        questoesFiltradas = questoesFiltradas.filter(q => q.status === status);
+                    }
+                    
+                    document.getElementById('lista-questoes').innerHTML = this.renderizarQuestoes(questoesFiltradas);
+                } catch (error) {
+                    console.error('Erro ao filtrar questões:', error);
+                }
+            },
+            
+            novaQuestao() {
+                try {
+                    // Limpar campos do modal
+                    document.getElementById('questao-enunciado').value = '';
+                    document.getElementById('questao-disciplina').value = '';
+                    document.getElementById('questao-dificuldade').value = 'medio';
+                    document.getElementById('questao-status').value = 'pendente';
+                    document.getElementById('questao-anotacao').value = '';
+                    
+                    // Configurar modal para nova questão
+                    document.getElementById('btn-salvar-questao').onclick = () => this.salvarNovaQuestao();
+                    
+                    mostrarModal('modal-nova-questao');
+                } catch (error) {
+                    console.error('Erro ao criar nova questão:', error);
+                }
+            },
+            
+            salvarNovaQuestao() {
+                try {
+                    const enunciado = document.getElementById('questao-enunciado').value.trim();
+                    const disciplina = document.getElementById('questao-disciplina').value;
+                    const dificuldade = document.getElementById('questao-dificuldade').value;
+                    const status = document.getElementById('questao-status').value;
+                    const anotacao = document.getElementById('questao-anotacao').value.trim();
+                    
+                    if (!enunciado || !disciplina) {
+                        AuthSystem.mostrarNotificacao('Preencha o enunciado e a disciplina', 'error');
+                        return;
+                    }
+                    
+                    const novaQuestao = {
+                        id: Date.now().toString(),
+                        enunciado,
+                        disciplina,
+                        dificuldade,
+                        status,
+                        anotacao,
+                        dataAdicao: new Date().toISOString()
+                    };
+                    
+                    if (!this.usuario.dados.questoes) {
+                        this.usuario.dados.questoes = [];
+                    }
+                    
+                    this.usuario.dados.questoes.push(novaQuestao);
+                    this.salvarDadosUsuario();
+                    
+                    fecharModal('modal-nova-questao');
+                    this.carregarQuestoes();
+                    AuthSystem.mostrarNotificacao('Questão adicionada com sucesso!', 'success');
+                } catch (error) {
+                    console.error('Erro ao salvar nova questão:', error);
+                }
+            },
+            
+            verQuestao(questaoId) {
+                try {
+                    const questao = this.usuario.dados.questoes.find(q => q.id === questaoId);
+                    if (!questao) return;
+                    
+                    document.getElementById('ver-questao-enunciado').textContent = questao.enunciado;
+                    document.getElementById('ver-questao-disciplina').textContent = questao.disciplina;
+                    document.getElementById('ver-questao-dificuldade').textContent = questao.dificuldade;
+                    document.getElementById('ver-questao-status').textContent = questao.status === 'acertou' ? 'Acertou' :
+                                                                               questao.status === 'errou' ? 'Errou' : 'Pendente';
+                    document.getElementById('ver-questao-anotacao').textContent = questao.anotacao || 'Nenhuma anotação';
+                    document.getElementById('ver-questao-data').textContent = new Date(questao.dataAdicao).toLocaleDateString('pt-BR');
+                    
+                    mostrarModal('modal-ver-questao');
+                } catch (error) {
+                    console.error('Erro ao visualizar questão:', error);
+                }
+            },
+            
+            editarQuestao(questaoId) {
+                try {
+                    const questao = this.usuario.dados.questoes.find(q => q.id === questaoId);
+                    if (!questao) return;
+                    
+                    // Preencher campos do modal
+                    document.getElementById('editar-questao-enunciado').value = questao.enunciado;
+                    document.getElementById('editar-questao-disciplina').value = questao.disciplina;
+                    document.getElementById('editar-questao-dificuldade').value = questao.dificuldade;
+                    document.getElementById('editar-questao-status').value = questao.status;
+                    document.getElementById('editar-questao-anotacao').value = questao.anotacao || '';
+                    
+                    // Configurar modal para edição
+                    document.getElementById('btn-salvar-edicao-questao').onclick = () => this.salvarEdicaoQuestao(questaoId);
+                    
+                    mostrarModal('modal-editar-questao');
+                } catch (error) {
+                    console.error('Erro ao editar questão:', error);
+                }
+            },
+            
+            salvarEdicaoQuestao(questaoId) {
+                try {
+                    const questao = this.usuario.dados.questoes.find(q => q.id === questaoId);
+                    if (!questao) return;
+                    
+                    questao.enunciado = document.getElementById('editar-questao-enunciado').value.trim();
+                    questao.disciplina = document.getElementById('editar-questao-disciplina').value;
+                    questao.dificuldade = document.getElementById('editar-questao-dificuldade').value;
+                    questao.status = document.getElementById('editar-questao-status').value;
+                    questao.anotacao = document.getElementById('editar-questao-anotacao').value.trim();
+                    
+                    this.salvarDadosUsuario();
+                    
+                    fecharModal('modal-editar-questao');
+                    this.carregarQuestoes();
+                    AuthSystem.mostrarNotificacao('Questão atualizada com sucesso!', 'success');
+                } catch (error) {
+                    console.error('Erro ao salvar edição da questão:', error);
+                }
+            },
+            
+            excluirQuestao(questaoId) {
+                try {
+                    if (confirm('Tem certeza que deseja excluir esta questão?')) {
+                        this.usuario.dados.questoes = this.usuario.dados.questoes.filter(q => q.id !== questaoId);
+                        this.salvarDadosUsuario();
+                        this.carregarQuestoes();
+                        AuthSystem.mostrarNotificacao('Questão excluída!', 'success');
+                    }
+                } catch (error) {
+                    console.error('Erro ao excluir questão:', error);
                 }
             },
             
             carregarRedacoes() {
                 try {
                     const conteudoPrincipal = document.getElementById('conteudo-principal');
+                    const redacoes = this.usuario.dados.redacoes || [];
                     
                     conteudoPrincipal.innerHTML = `
                         <div class="fade-in">
@@ -1845,15 +2330,235 @@
                             </div>
                             
                             <div class="glass-card rounded-2xl p-6 mb-6">
-                                <div class="text-center py-8">
-                                    <p class="text-gray-500 mb-4">Módulo de Redações em desenvolvimento</p>
-                                    <p class="text-sm text-gray-600">Em breve você poderá escrever e gerenciar redações aqui.</p>
+                                <div class="flex justify-between items-center mb-6">
+                                    <h3 class="text-xl font-semibold">Minhas Redações</h3>
+                                    <button onclick="AplicacaoPrincipal.novaRedacao()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors">
+                                        + Nova Redação
+                                    </button>
+                                </div>
+                                
+                                <div id="lista-redacoes">
+                                    ${this.renderizarRedacoes()}
                                 </div>
                             </div>
                         </div>
                     `;
                 } catch (error) {
                     console.error('Erro ao carregar redações:', error);
+                }
+            },
+            
+            renderizarRedacoes() {
+                try {
+                    const redacoes = this.usuario.dados.redacoes || [];
+                    
+                    if (redacoes.length === 0) {
+                        return `
+                            <div class="text-center py-8">
+                                <p class="text-gray-500 mb-4">Nenhuma redação criada ainda.</p>
+                                <button onclick="AplicacaoPrincipal.novaRedacao()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors">
+                                    Escrever Primeira Redação
+                                </button>
+                            </div>
+                        `;
+                    }
+                    
+                    return redacoes.map(redacao => {
+                        const data = new Date(redacao.dataCriacao).toLocaleDateString('pt-BR');
+                        const preview = redacao.texto.length > 200 ? 
+                            redacao.texto.substring(0, 200) + '...' : redacao.texto;
+                        
+                        return `
+                            <div class="redacao-item border rounded-xl p-4 mb-4">
+                                <div class="flex justify-between items-start mb-3">
+                                    <div class="flex-1">
+                                        <h4 class="font-semibold text-lg mb-2">${redacao.titulo}</h4>
+                                        <div class="flex flex-wrap gap-2 mb-3">
+                                            <span class="px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                                ${redacao.tema}
+                                            </span>
+                                            ${redacao.nota ? `
+                                                <span class="px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                                    Nota: ${redacao.nota}
+                                                </span>
+                                            ` : `
+                                                <span class="px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                                                    Sem nota
+                                                </span>
+                                            `}
+                                        </div>
+                                    </div>
+                                    <div class="flex gap-2 ml-4">
+                                        <button onclick="AplicacaoPrincipal.verRedacao('${redacao.id}')" 
+                                                class="bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-lg transition-colors">
+                                            👀
+                                        </button>
+                                        <button onclick="AplicacaoPrincipal.editarRedacao('${redacao.id}')" 
+                                                class="bg-green-600 hover:bg-green-700 text-white p-2 rounded-lg transition-colors">
+                                            ✏️
+                                        </button>
+                                        <button onclick="AplicacaoPrincipal.excluirRedacao('${redacao.id}')" 
+                                                class="bg-red-600 hover:bg-red-700 text-white p-2 rounded-lg transition-colors">
+                                            🗑️
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <div class="redacao-preview text-sm text-gray-600 mb-3">
+                                    ${preview}
+                                </div>
+                                
+                                <div class="text-sm text-gray-500">
+                                    Criada em: ${data} | 
+                                    ${redacao.palavras} palavras | 
+                                    ${redacao.tempoGasto || 'N/A'} minutos
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+                } catch (error) {
+                    console.error('Erro ao renderizar redações:', error);
+                    return '';
+                }
+            },
+            
+            novaRedacao() {
+                try {
+                    // Limpar campos do modal
+                    document.getElementById('redacao-titulo').value = '';
+                    document.getElementById('redacao-tema').value = '';
+                    document.getElementById('redacao-texto').value = '';
+                    document.getElementById('redacao-tempo').value = '';
+                    document.getElementById('redacao-nota').value = '';
+                    document.getElementById('redacao-comentarios').value = '';
+                    
+                    // Configurar modal para nova redação
+                    document.getElementById('btn-salvar-redacao').onclick = () => this.salvarNovaRedacao();
+                    
+                    mostrarModal('modal-nova-redacao');
+                } catch (error) {
+                    console.error('Erro ao criar nova redação:', error);
+                }
+            },
+            
+            salvarNovaRedacao() {
+                try {
+                    const titulo = document.getElementById('redacao-titulo').value.trim();
+                    const tema = document.getElementById('redacao-tema').value.trim();
+                    const texto = document.getElementById('redacao-texto').value.trim();
+                    const tempoGasto = document.getElementById('redacao-tempo').value;
+                    const nota = document.getElementById('redacao-nota').value;
+                    const comentarios = document.getElementById('redacao-comentarios').value.trim();
+                    
+                    if (!titulo || !tema || !texto) {
+                        AuthSystem.mostrarNotificacao('Preencha título, tema e texto', 'error');
+                        return;
+                    }
+                    
+                    const novaRedacao = {
+                        id: Date.now().toString(),
+                        titulo,
+                        tema,
+                        texto,
+                        palavras: texto.split(/\s+/).length,
+                        tempoGasto: tempoGasto || null,
+                        nota: nota || null,
+                        comentarios: comentarios || '',
+                        dataCriacao: new Date().toISOString(),
+                        dataAtualizacao: new Date().toISOString()
+                    };
+                    
+                    if (!this.usuario.dados.redacoes) {
+                        this.usuario.dados.redacoes = [];
+                    }
+                    
+                    this.usuario.dados.redacoes.push(novaRedacao);
+                    this.salvarDadosUsuario();
+                    
+                    fecharModal('modal-nova-redacao');
+                    this.carregarRedacoes();
+                    AuthSystem.mostrarNotificacao('Redação salva com sucesso!', 'success');
+                } catch (error) {
+                    console.error('Erro ao salvar nova redação:', error);
+                }
+            },
+            
+            verRedacao(redacaoId) {
+                try {
+                    const redacao = this.usuario.dados.redacoes.find(r => r.id === redacaoId);
+                    if (!redacao) return;
+                    
+                    document.getElementById('ver-redacao-titulo').textContent = redacao.titulo;
+                    document.getElementById('ver-redacao-tema').textContent = redacao.tema;
+                    document.getElementById('ver-redacao-texto').textContent = redacao.texto;
+                    document.getElementById('ver-redacao-palavras').textContent = redacao.palavras;
+                    document.getElementById('ver-redacao-tempo').textContent = redacao.tempoGasto || 'Não informado';
+                    document.getElementById('ver-redacao-nota').textContent = redacao.nota || 'Sem nota';
+                    document.getElementById('ver-redacao-comentarios').textContent = redacao.comentarios || 'Sem comentários';
+                    document.getElementById('ver-redacao-data').textContent = new Date(redacao.dataCriacao).toLocaleDateString('pt-BR');
+                    
+                    mostrarModal('modal-ver-redacao');
+                } catch (error) {
+                    console.error('Erro ao visualizar redação:', error);
+                }
+            },
+            
+            editarRedacao(redacaoId) {
+                try {
+                    const redacao = this.usuario.dados.redacoes.find(r => r.id === redacaoId);
+                    if (!redacao) return;
+                    
+                    // Preencher campos do modal
+                    document.getElementById('editar-redacao-titulo').value = redacao.titulo;
+                    document.getElementById('editar-redacao-tema').value = redacao.tema;
+                    document.getElementById('editar-redacao-texto').value = redacao.texto;
+                    document.getElementById('editar-redacao-tempo').value = redacao.tempoGasto || '';
+                    document.getElementById('editar-redacao-nota').value = redacao.nota || '';
+                    document.getElementById('editar-redacao-comentarios').value = redacao.comentarios || '';
+                    
+                    // Configurar modal para edição
+                    document.getElementById('btn-salvar-edicao-redacao').onclick = () => this.salvarEdicaoRedacao(redacaoId);
+                    
+                    mostrarModal('modal-editar-redacao');
+                } catch (error) {
+                    console.error('Erro ao editar redação:', error);
+                }
+            },
+            
+            salvarEdicaoRedacao(redacaoId) {
+                try {
+                    const redacao = this.usuario.dados.redacoes.find(r => r.id === redacaoId);
+                    if (!redacao) return;
+                    
+                    redacao.titulo = document.getElementById('editar-redacao-titulo').value.trim();
+                    redacao.tema = document.getElementById('editar-redacao-tema').value.trim();
+                    redacao.texto = document.getElementById('editar-redacao-texto').value.trim();
+                    redacao.palavras = redacao.texto.split(/\s+/).length;
+                    redacao.tempoGasto = document.getElementById('editar-redacao-tempo').value || null;
+                    redacao.nota = document.getElementById('editar-redacao-nota').value || null;
+                    redacao.comentarios = document.getElementById('editar-redacao-comentarios').value.trim();
+                    redacao.dataAtualizacao = new Date().toISOString();
+                    
+                    this.salvarDadosUsuario();
+                    
+                    fecharModal('modal-editar-redacao');
+                    this.carregarRedacoes();
+                    AuthSystem.mostrarNotificacao('Redação atualizada com sucesso!', 'success');
+                } catch (error) {
+                    console.error('Erro ao salvar edição da redação:', error);
+                }
+            },
+            
+            excluirRedacao(redacaoId) {
+                try {
+                    if (confirm('Tem certeza que deseja excluir esta redação?')) {
+                        this.usuario.dados.redacoes = this.usuario.dados.redacoes.filter(r => r.id !== redacaoId);
+                        this.salvarDadosUsuario();
+                        this.carregarRedacoes();
+                        AuthSystem.mostrarNotificacao('Redação excluída!', 'success');
+                    }
+                } catch (error) {
+                    console.error('Erro ao excluir redação:', error);
                 }
             },
             
