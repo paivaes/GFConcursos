@@ -1411,13 +1411,10 @@
                 this.inicializarGraficoProgresso();
             },
             
-            // 📋 EDITAL
+            // 📋 EDITAL - FUNCIONALIDADES COMPLETAS IMPLEMENTADAS
             carregarAbaEdital() {
                 const mainContent = document.getElementById('main-content');
-                const totalAssuntos = this.dados.editalVerticalizado.disciplinas.reduce((total, disciplina) => total + disciplina.assuntos.length, 0);
-                const assuntosConcluidos = this.dados.editalVerticalizado.disciplinas.reduce((total, disciplina) => 
-                    total + disciplina.assuntos.filter(a => a.concluido).length, 0);
-                const percentual = totalAssuntos > 0 ? Math.round((assuntosConcluidos / totalAssuntos) * 100) : 0;
+                const { totalAssuntos, assuntosConcluidos, percentual } = this.calcularProgressoEdital();
                 
                 mainContent.innerHTML = `
                     <div class="fade-in">
@@ -1439,14 +1436,26 @@
                                     </div>
                                     <div>
                                         <label class="block text-sm font-semibold mb-2">Novo Assunto:</label>
-                                        <input type="text" id="edital-novo-assunto" class="w-full p-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Ex: Direitos Humanos">
+                                        <div class="flex gap-2">
+                                            <input type="text" id="edital-novo-assunto" class="flex-1 p-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Ex: Direitos Humanos">
+                                            <button onclick="GFConcursosApp.adicionarAssuntoRapido()" class="bg-blue-500 text-white p-3 rounded-xl hover:bg-blue-600 transition-all" title="Adicionar rapidamente">
+                                                ➕
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-semibold mb-2">Peso da Disciplina:</label>
+                                        <input type="number" id="edital-peso-disciplina" class="w-full p-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Ex: 2" min="1" max="10">
                                     </div>
                                 </div>
-                                <button id="btn-adicionar-assunto" class="w-full mt-6 bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 rounded-xl font-semibold hover:shadow-lg transition-all">
+                                <button id="btn-adicionar-assunto" class="w-full mt-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 rounded-xl font-semibold hover:shadow-lg transition-all">
                                     ➕ Adicionar Assunto
                                 </button>
-                                <button id="btn-nova-disciplina-edital" class="w-full mt-4 bg-gradient-to-r from-green-600 to-blue-600 text-white py-3 rounded-xl font-semibold hover:shadow-lg transition-all">
+                                <button id="btn-nova-disciplina-edital" class="w-full mt-3 bg-gradient-to-r from-green-600 to-blue-600 text-white py-3 rounded-xl font-semibold hover:shadow-lg transition-all">
                                     📚 Nova Disciplina
+                                </button>
+                                <button onclick="GFConcursosApp.importarEdital()" class="w-full mt-3 bg-gradient-to-r from-orange-600 to-red-600 text-white py-3 rounded-xl font-semibold hover:shadow-lg transition-all">
+                                    📥 Importar Edital
                                 </button>
                             </div>
 
@@ -1469,10 +1478,21 @@
                                             <div class="text-2xl font-bold text-green-600">${assuntosConcluidos}</div>
                                             <div class="text-sm text-gray-600">Concluídos</div>
                                         </div>
+                                        <div class="bg-white p-4 rounded-xl text-center shadow">
+                                            <div class="text-2xl font-bold text-yellow-600">${totalAssuntos - assuntosConcluidos}</div>
+                                            <div class="text-sm text-gray-600">Pendentes</div>
+                                        </div>
+                                        <div class="bg-white p-4 rounded-xl text-center shadow">
+                                            <div class="text-2xl font-bold text-purple-600">${this.dados.editalVerticalizado.disciplinas.length}</div>
+                                            <div class="text-sm text-gray-600">Disciplinas</div>
+                                        </div>
                                     </div>
                                 </div>
                                 <button id="btn-exportar-edital" class="w-full mt-6 bg-gradient-to-r from-green-600 to-blue-600 text-white py-3 rounded-xl font-semibold hover:shadow-lg transition-all">
                                     📥 Exportar Progresso
+                                </button>
+                                <button onclick="GFConcursosApp.gerarRelatorioEdital()" class="w-full mt-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white py-3 rounded-xl font-semibold hover:shadow-lg transition-all">
+                                    📊 Gerar Relatório
                                 </button>
                             </div>
 
@@ -1490,16 +1510,26 @@
                                                 <div class="priority-item bg-white p-4 rounded-xl shadow border-l-4" style="border-left-color: ${disciplinaBase.cor}">
                                                     <div class="flex justify-between items-center mb-2">
                                                         <div class="font-semibold">${disciplinaBase.nome}</div>
-                                                        <div class="text-sm text-gray-600">${assuntosConcluidos}/${totalAssuntos}</div>
+                                                        <div class="flex items-center gap-2">
+                                                            <div class="text-sm text-gray-600">${assuntosConcluidos}/${totalAssuntos}</div>
+                                                            <span class="text-xs px-2 py-1 rounded-full ${disciplina.peso ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-600'}">
+                                                                Peso: ${disciplina.peso || 'N/A'}
+                                                            </span>
+                                                        </div>
                                                     </div>
                                                     <div class="w-full bg-gray-200 rounded-full h-2">
                                                         <div class="h-2 rounded-full progresso-disciplina" style="width: ${percentual}%; background-color: ${disciplinaBase.cor}"></div>
                                                     </div>
                                                     <div class="flex justify-between mt-2">
                                                         <span class="text-xs text-gray-500">${percentual}% concluído</span>
-                                                        <button class="btn-acao text-red-500 hover:text-red-700 text-xs" onclick="GFConcursosApp.removerDisciplinaEdital('${disciplina.id}')">
-                                                            Remover
-                                                        </button>
+                                                        <div class="flex gap-1">
+                                                            <button class="btn-acao text-blue-500 hover:text-blue-700 text-xs" onclick="GFConcursosApp.editarDisciplinaEdital('${disciplina.id}')" title="Editar">
+                                                                ✏️
+                                                            </button>
+                                                            <button class="btn-acao text-red-500 hover:text-red-700 text-xs" onclick="GFConcursosApp.removerDisciplinaEdital('${disciplina.id}')" title="Remover">
+                                                                🗑️
+                                                            </button>
+                                                        </div>
                                                     </div>
                                                 </div>
                                             `;
@@ -1507,37 +1537,78 @@
                                         '<div class="text-center text-gray-500 py-8"><p>Nenhuma disciplina adicionada ao edital.</p><p class="text-sm">Adicione disciplinas para começar!</p></div>'
                                     }
                                 </div>
+                                <button onclick="GFConcursosApp.organizarDisciplinas()" class="w-full mt-4 bg-gradient-to-r from-gray-600 to-gray-800 text-white py-3 rounded-xl font-semibold hover:shadow-lg transition-all">
+                                    🔄 Organizar Disciplinas
+                                </button>
                             </div>
                         </div>
 
+                        <!-- Assuntos por Disciplina -->
                         <div class="glass-card rounded-2xl p-6 shadow-xl mt-8">
-                            <h3 class="text-2xl font-bold gradient-text mb-6">📖 Assuntos por Disciplina</h3>
+                            <div class="flex justify-between items-center mb-6">
+                                <h3 class="text-2xl font-bold gradient-text">📖 Assuntos por Disciplina</h3>
+                                <div class="flex gap-2">
+                                    <button onclick="GFConcursosApp.marcarTodosAssuntos(true)" class="bg-green-500 text-white px-4 py-2 rounded-xl text-sm hover:bg-green-600 transition-all">
+                                        ✅ Marcar Todos
+                                    </button>
+                                    <button onclick="GFConcursosApp.marcarTodosAssuntos(false)" class="bg-gray-500 text-white px-4 py-2 rounded-xl text-sm hover:bg-gray-600 transition-all">
+                                        🔄 Desmarcar Todos
+                                    </button>
+                                </div>
+                            </div>
                             <div id="lista-assuntos-edital">
                                 ${this.dados.editalVerticalizado.disciplinas.length > 0 ? 
                                     this.dados.editalVerticalizado.disciplinas.map(disciplinaEdital => {
                                         const disciplinaBase = this.dados.disciplinas.find(d => d.id === disciplinaEdital.id);
                                         if (!disciplinaBase) return '';
+                                        const totalAssuntos = disciplinaEdital.assuntos.length;
+                                        const assuntosConcluidos = disciplinaEdital.assuntos.filter(a => a.concluido).length;
+                                        const percentual = totalAssuntos > 0 ? Math.round((assuntosConcluidos / totalAssuntos) * 100) : 0;
+                                        
                                         return `
                                             <div class="disciplina-edital mb-8" style="border-left-color: ${disciplinaBase.cor}">
-                                                <div class="bg-white p-4 rounded-t-xl shadow">
-                                                    <h4 class="text-xl font-bold" style="color: ${disciplinaBase.cor}">${disciplinaBase.nome}</h4>
-                                                    <div class="text-sm text-gray-600 mt-1">
-                                                        ${disciplinaEdital.assuntos.filter(a => a.concluido).length}/${disciplinaEdital.assuntos.length} assuntos concluídos
+                                                <div class="bg-white p-4 rounded-t-xl shadow flex justify-between items-center">
+                                                    <div>
+                                                        <h4 class="text-xl font-bold" style="color: ${disciplinaBase.cor}">${disciplinaBase.nome}</h4>
+                                                        <div class="text-sm text-gray-600 mt-1">
+                                                            ${assuntosConcluidos}/${totalAssuntos} assuntos concluídos • ${percentual}% completo
+                                                            ${disciplinaEdital.peso ? `• Peso: ${disciplinaEdital.peso}` : ''}
+                                                        </div>
+                                                    </div>
+                                                    <div class="flex gap-2">
+                                                        <button class="btn-acao text-blue-500 hover:text-blue-700" onclick="GFConcursosApp.expandirDisciplina('${disciplinaEdital.id}')" title="Expandir/Recolher">
+                                                            📖
+                                                        </button>
+                                                        <button class="btn-acao text-green-500 hover:text-green-700" onclick="GFConcursosApp.adicionarAssuntoMultiplo('${disciplinaEdital.id}')" title="Adicionar Múltiplos Assuntos">
+                                                            ➕
+                                                        </button>
                                                     </div>
                                                 </div>
-                                                <div class="space-y-2">
+                                                <div class="space-y-2 disciplina-conteudo" id="conteudo-${disciplinaEdital.id}">
                                                     ${disciplinaEdital.assuntos.length > 0 ? 
                                                         disciplinaEdital.assuntos.map((assunto, index) => `
                                                             <div class="assunto-item bg-white p-4 rounded-b-xl shadow flex items-center justify-between ${assunto.concluido ? 'assunto-concluido' : ''}">
-                                                                <div class="flex items-center gap-3">
+                                                                <div class="flex items-center gap-3 flex-1">
                                                                     <div class="checkbox-custom ${assunto.concluido ? 'checked' : ''}" 
                                                                          onclick="GFConcursosApp.marcarAssuntoConcluido('${disciplinaEdital.id}', ${index})">
                                                                     </div>
-                                                                    <span class="${assunto.concluido ? 'line-through text-gray-500' : ''}">${assunto.nome}</span>
+                                                                    <div class="flex-1">
+                                                                        <span class="${assunto.concluido ? 'line-through text-gray-500' : 'text-gray-800'}">${assunto.nome}</span>
+                                                                        ${assunto.dataConclusao ? `
+                                                                            <div class="text-xs text-gray-500 mt-1">
+                                                                                Concluído em: ${new Date(assunto.dataConclusao).toLocaleDateString('pt-BR')}
+                                                                            </div>
+                                                                        ` : ''}
+                                                                    </div>
                                                                 </div>
-                                                                <button class="btn-acao text-red-500 hover:text-red-700" onclick="GFConcursosApp.removerAssunto('${disciplinaEdital.id}', ${index})">
-                                                                    🗑️
-                                                                </button>
+                                                                <div class="flex gap-2">
+                                                                    <button class="btn-acao text-blue-500 hover:text-blue-700" onclick="GFConcursosApp.editarAssunto('${disciplinaEdital.id}', ${index})" title="Editar">
+                                                                        ✏️
+                                                                    </button>
+                                                                    <button class="btn-acao text-red-500 hover:text-red-700" onclick="GFConcursosApp.removerAssunto('${disciplinaEdital.id}', ${index})" title="Remover">
+                                                                        🗑️
+                                                                    </button>
+                                                                </div>
                                                             </div>
                                                         `).join('') : 
                                                         '<div class="bg-gray-50 p-4 rounded-b-xl text-center text-gray-500">Nenhum assunto cadastrado para esta disciplina.</div>'
@@ -1553,7 +1624,7 @@
                     </div>
                 `;
             },
-            
+
             // 📝 MEUS RESUMOS
             carregarAbaResumos() {
                 const mainContent = document.getElementById('main-content');
@@ -2084,11 +2155,22 @@
                 }
             },
             
-            // 📋 EDITAL
+            // 📋 EDITAL - FUNCIONALIDADES COMPLETAS
+            calcularProgressoEdital() {
+                const totalAssuntos = this.dados.editalVerticalizado.disciplinas.reduce((total, disciplina) => 
+                    total + disciplina.assuntos.length, 0);
+                const assuntosConcluidos = this.dados.editalVerticalizado.disciplinas.reduce((total, disciplina) => 
+                    total + disciplina.assuntos.filter(a => a.concluido).length, 0);
+                const percentual = totalAssuntos > 0 ? Math.round((assuntosConcluidos / totalAssuntos) * 100) : 0;
+                
+                return { totalAssuntos, assuntosConcluidos, percentual };
+            },
+
             adicionarAssuntoEdital() {
                 const nomeConcurso = document.getElementById('edital-nome-concurso')?.value.trim();
                 const disciplinaId = document.getElementById('edital-disciplina')?.value;
                 const nomeAssunto = document.getElementById('edital-novo-assunto')?.value.trim();
+                const peso = document.getElementById('edital-peso-disciplina')?.value;
                 
                 if (!nomeConcurso) {
                     AuthSystem.mostrarNotificacao('Por favor, informe o nome do concurso', 'error');
@@ -2112,15 +2194,25 @@
                 if (!disciplinaEdital) {
                     disciplinaEdital = {
                         id: disciplinaId,
-                        assuntos: []
+                        assuntos: [],
+                        peso: peso ? parseInt(peso) : null
                     };
                     this.dados.editalVerticalizado.disciplinas.push(disciplinaEdital);
+                } else if (peso) {
+                    disciplinaEdital.peso = parseInt(peso);
+                }
+                
+                // Verificar se o assunto já existe
+                if (disciplinaEdital.assuntos.some(a => a.nome.toLowerCase() === nomeAssunto.toLowerCase())) {
+                    AuthSystem.mostrarNotificacao('Este assunto já existe na disciplina', 'error');
+                    return;
                 }
                 
                 disciplinaEdital.assuntos.push({
                     nome: nomeAssunto,
                     concluido: false,
-                    dataAdicao: new Date().toISOString()
+                    dataAdicao: new Date().toISOString(),
+                    dataConclusao: null
                 });
                 
                 document.getElementById('edital-novo-assunto').value = '';
@@ -2129,7 +2221,225 @@
                 
                 AuthSystem.mostrarNotificacao('Assunto adicionado com sucesso!', 'success');
             },
-            
+
+            adicionarAssuntoRapido() {
+                const nomeAssunto = document.getElementById('edital-novo-assunto')?.value.trim();
+                if (!nomeAssunto) return;
+                
+                this.adicionarAssuntoEdital();
+            },
+
+            editarDisciplinaEdital(disciplinaId) {
+                const disciplinaEdital = this.dados.editalVerticalizado.disciplinas.find(d => d.id === disciplinaId);
+                const disciplinaBase = this.dados.disciplinas.find(d => d.id === disciplinaId);
+                
+                if (!disciplinaEdital || !disciplinaBase) return;
+                
+                const novoPeso = prompt(`Editar peso para ${disciplinaBase.nome}:`, disciplinaEdital.peso || '');
+                if (novoPeso !== null) {
+                    disciplinaEdital.peso = novoPeso ? parseInt(novoPeso) : null;
+                    this.salvarDadosUsuario();
+                    this.carregarAbaEdital();
+                    AuthSystem.mostrarNotificacao('Peso da disciplina atualizado!', 'success');
+                }
+            },
+
+            editarAssunto(disciplinaId, assuntoIndex) {
+                const disciplina = this.dados.editalVerticalizado.disciplinas.find(d => d.id === disciplinaId);
+                if (!disciplina || !disciplina.assuntos[assuntoIndex]) return;
+                
+                const assunto = disciplina.assuntos[assuntoIndex];
+                const novoNome = prompt('Editar nome do assunto:', assunto.nome);
+                
+                if (novoNome && novoNome.trim() !== '') {
+                    assunto.nome = novoNome.trim();
+                    this.salvarDadosUsuario();
+                    this.carregarAbaEdital();
+                    AuthSystem.mostrarNotificacao('Assunto atualizado!', 'success');
+                }
+            },
+
+            marcarTodosAssuntos(concluir) {
+                this.dados.editalVerticalizado.disciplinas.forEach(disciplina => {
+                    disciplina.assuntos.forEach(assunto => {
+                        assunto.concluido = concluir;
+                        if (concluir && !assunto.dataConclusao) {
+                            assunto.dataConclusao = new Date().toISOString();
+                        } else if (!concluir) {
+                            assunto.dataConclusao = null;
+                        }
+                    });
+                });
+                
+                this.salvarDadosUsuario();
+                this.carregarAbaEdital();
+                
+                const acao = concluir ? 'concluídos' : 'marcados como pendentes';
+                AuthSystem.mostrarNotificacao(`Todos os assuntos foram ${acao}!`, 'success');
+            },
+
+            expandirDisciplina(disciplinaId) {
+                const conteudo = document.getElementById(`conteudo-${disciplinaId}`);
+                if (conteudo) {
+                    conteudo.classList.toggle('hidden');
+                }
+            },
+
+            organizarDisciplinas() {
+                // Ordenar disciplinas por percentual de conclusão (menos concluídas primeiro)
+                this.dados.editalVerticalizado.disciplinas.sort((a, b) => {
+                    const percentualA = a.assuntos.length > 0 ? 
+                        (a.assuntos.filter(assunto => assunto.concluido).length / a.assuntos.length) : 0;
+                    const percentualB = b.assuntos.length > 0 ? 
+                        (b.assuntos.filter(assunto => assunto.concluido).length / b.assuntos.length) : 0;
+                    
+                    return percentualA - percentualB;
+                });
+                
+                this.salvarDadosUsuario();
+                this.carregarAbaEdital();
+                AuthSystem.mostrarNotificacao('Disciplinas organizadas por progresso!', 'success');
+            },
+
+            gerarRelatorioEdital() {
+                const { totalAssuntos, assuntosConcluidos, percentual } = this.calcularProgressoEdital();
+                
+                const relatorio = `
+RELATÓRIO DO EDITAL - ${this.dados.editalVerticalizado.nomeConcurso || 'Concurso'}
+Data: ${new Date().toLocaleDateString('pt-BR')}
+    
+PROGRESSO GERAL:
+• Total de Assuntos: ${totalAssuntos}
+• Assuntos Concluídos: ${assuntosConcluidos}
+• Assuntos Pendentes: ${totalAssuntos - assuntosConcluidos}
+• Percentual de Conclusão: ${percentual}%
+    
+DETALHES POR DISCIPLINA:
+${this.dados.editalVerticalizado.disciplinas.map(disciplina => {
+    const disciplinaBase = this.dados.disciplinas.find(d => d.id === disciplina.id);
+    if (!disciplinaBase) return '';
+    const total = disciplina.assuntos.length;
+    const concluidos = disciplina.assuntos.filter(a => a.concluido).length;
+    const percentualDisc = total > 0 ? Math.round((concluidos / total) * 100) : 0;
+    return `• ${disciplinaBase.nome}: ${concluidos}/${total} (${percentualDisc}%) ${disciplina.peso ? `- Peso: ${disciplina.peso}` : ''}`;
+}).join('\n')}
+    
+PRÓXIMOS PASSOS SUGERIDOS:
+${this.dados.editalVerticalizado.disciplinas
+    .filter(disciplina => {
+        const total = disciplina.assuntos.length;
+        const concluidos = disciplina.assuntos.filter(a => a.concluido).length;
+        return concluidos < total;
+    })
+    .map(disciplina => {
+        const disciplinaBase = this.dados.disciplinas.find(d => d.id === disciplina.id);
+        const pendentes = disciplina.assuntos.filter(a => !a.concluido).length;
+        return `• Focar em ${disciplinaBase.nome} (${pendentes} assuntos pendentes)`;
+    }).join('\n') || '• Todas as disciplinas estão concluídas! Parabéns!'}
+    `;
+                
+                const blob = new Blob([relatorio], { type: 'text/plain' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `relatorio-edital-${new Date().toISOString().split('T')[0]}.txt`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                
+                AuthSystem.mostrarNotificacao('Relatório gerado com sucesso!', 'success');
+            },
+
+            importarEdital() {
+                const input = document.createElement('input');
+                input.type = 'file';
+                input.accept = '.json';
+                
+                input.onchange = (e) => {
+                    const file = e.target.files[0];
+                    if (!file) return;
+                    
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                        try {
+                            const dadosImportados = JSON.parse(event.target.result);
+                            
+                            if (dadosImportados.nomeConcurso) {
+                                this.dados.editalVerticalizado.nomeConcurso = dadosImportados.nomeConcurso;
+                            }
+                            
+                            if (dadosImportados.disciplinas && Array.isArray(dadosImportados.disciplinas)) {
+                                // Mesclar disciplinas importadas com as existentes
+                                dadosImportados.disciplinas.forEach(disciplinaImportada => {
+                                    const disciplinaExistente = this.dados.editalVerticalizado.disciplinas.find(
+                                        d => d.id === disciplinaImportada.id
+                                    );
+                                    
+                                    if (disciplinaExistente) {
+                                        // Mesclar assuntos
+                                        disciplinaImportada.assuntos.forEach(assuntoImportado => {
+                                            if (!disciplinaExistente.assuntos.some(a => 
+                                                a.nome.toLowerCase() === assuntoImportado.nome.toLowerCase())) {
+                                                disciplinaExistente.assuntos.push(assuntoImportado);
+                                            }
+                                        });
+                                    } else {
+                                        this.dados.editalVerticalizado.disciplinas.push(disciplinaImportada);
+                                    }
+                                });
+                            }
+                            
+                            this.salvarDadosUsuario();
+                            this.carregarAbaEdital();
+                            AuthSystem.mostrarNotificacao('Edital importado com sucesso!', 'success');
+                            
+                        } catch (error) {
+                            AuthSystem.mostrarNotificacao('Erro ao importar edital. Verifique o formato do arquivo.', 'error');
+                            console.error('Erro na importação:', error);
+                        }
+                    };
+                    
+                    reader.readAsText(file);
+                };
+                
+                input.click();
+            },
+
+            adicionarAssuntoMultiplo(disciplinaId) {
+                const disciplina = this.dados.editalVerticalizado.disciplinas.find(d => d.id === disciplinaId);
+                if (!disciplina) return;
+                
+                const assuntosTexto = prompt('Digite os assuntos (um por linha):');
+                if (!assuntosTexto) return;
+                
+                const assuntos = assuntosTexto.split('\n')
+                    .map(linha => linha.trim())
+                    .filter(linha => linha.length > 0);
+                
+                let adicionados = 0;
+                assuntos.forEach(assunto => {
+                    if (!disciplina.assuntos.some(a => a.nome.toLowerCase() === assunto.toLowerCase())) {
+                        disciplina.assuntos.push({
+                            nome: assunto,
+                            concluido: false,
+                            dataAdicao: new Date().toISOString(),
+                            dataConclusao: null
+                        });
+                        adicionados++;
+                    }
+                });
+                
+                if (adicionados > 0) {
+                    this.salvarDadosUsuario();
+                    this.carregarAbaEdital();
+                    AuthSystem.mostrarNotificacao(`${adicionados} assuntos adicionados!`, 'success');
+                } else {
+                    AuthSystem.mostrarNotificacao('Nenhum assunto novo foi adicionado.', 'info');
+                }
+            },
+
+            // Funções existentes do Edital (mantidas para compatibilidade)
             abrirModalNovaDisciplinaEdital() {
                 document.getElementById('nova-disciplina-edital-nome').value = '';
                 document.getElementById('nova-disciplina-edital-cor').value = '#3B82F6';
@@ -2191,12 +2501,20 @@
             marcarAssuntoConcluido(disciplinaId, assuntoIndex) {
                 const disciplina = this.dados.editalVerticalizado.disciplinas.find(d => d.id === disciplinaId);
                 if (disciplina && disciplina.assuntos[assuntoIndex]) {
-                    disciplina.assuntos[assuntoIndex].concluido = !disciplina.assuntos[assuntoIndex].concluido;
+                    const assunto = disciplina.assuntos[assuntoIndex];
+                    assunto.concluido = !assunto.concluido;
+                    
+                    if (assunto.concluido && !assunto.dataConclusao) {
+                        assunto.dataConclusao = new Date().toISOString();
+                    } else if (!assunto.concluido) {
+                        assunto.dataConclusao = null;
+                    }
+                    
                     this.salvarDadosUsuario();
                     this.carregarAbaEdital();
                     
-                    const status = disciplina.assuntos[assuntoIndex].concluido ? 'concluído' : 'pendente';
-                    AuthSystem.mostrarNotificacao(`Assunto marcado como ${status}`, 'success');
+                    const status = assunto.concluido ? 'concluído' : 'pendente';
+                    AuthSystem.mostrarNotificacao(`Assunto "${assunto.nome}" marcado como ${status}`, 'success');
                 }
             },
             
