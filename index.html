@@ -201,6 +201,56 @@
         .progresso-disciplina {
             transition: width 0.5s ease-in-out;
         }
+
+        .resumo-card {
+            border-left: 4px solid;
+            transition: all 0.3s ease;
+        }
+        
+        .resumo-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        }
+
+        .editor-resumo {
+            min-height: 200px;
+            border: 1px solid #d1d5db;
+            border-radius: 0.75rem;
+            padding: 1rem;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .editor-resumo:focus {
+            outline: none;
+            ring: 2px;
+            ring-color: #3B82F6;
+            border-color: #3B82F6;
+        }
+
+        .tag-resumo {
+            display: inline-block;
+            background: #e5e7eb;
+            padding: 0.25rem 0.75rem;
+            border-radius: 1rem;
+            font-size: 0.875rem;
+            margin: 0.25rem;
+        }
+
+        .resumo-preview {
+            max-height: 120px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .resumo-preview::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 40px;
+            background: linear-gradient(transparent, white);
+        }
     </style>
 </head>
 <body class="min-h-screen">
@@ -263,18 +313,16 @@
                     <div>
                         <label class="block text-sm font-semibold mb-2">Senha:</label>
                         <input type="password" id="cadastro-password" class="w-full p-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Mínimo 6 caracteres" minlength="6" required>
-                        <div class="text-xs text-gray-500 mt-1" id="password-strength"></div>
                     </div>
                     
                     <div>
                         <label class="block text-sm font-semibold mb-2">Confirmar senha:</label>
                         <input type="password" id="cadastro-confirm-password" class="w-full p-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Digite novamente" required>
-                        <div class="text-xs text-red-500 mt-1 hidden" id="password-match-error">As senhas não coincidem</div>
                     </div>
                     
                     <div class="flex items-center">
                         <input type="checkbox" id="aceitar-termos" class="mr-2" required>
-                        <label class="text-sm">Aceito os <a href="#" class="text-blue-600 hover:text-blue-800" onclick="mostrarModal('modal-termos')">termos de uso</a> e <a href="#" class="text-blue-600 hover:text-blue-800" onclick="mostrarModal('modal-privacidade')">política de privacidade</a></label>
+                        <label class="text-sm">Aceito os termos de uso e política de privacidade</label>
                     </div>
                     
                     <button id="btn-cadastrar" class="w-full bg-gradient-to-r from-green-600 to-blue-600 text-white py-3 rounded-xl font-semibold hover:shadow-lg transition-all">
@@ -293,502 +341,7 @@
 
     <!-- Aplicação Principal (inicialmente oculta) -->
     <div id="app-wrapper" class="hidden">
-        <div class="container mx-auto px-4 py-8">
-            <!-- Header -->
-            <header class="text-center mb-12 fade-in">
-                <h1 class="text-5xl font-bold text-white mb-4">GFConcursos</h1>
-                <p class="text-xl text-white/90">Sua plataforma completa de estudos para concursos públicos</p>
-            </header>
-
-            <!-- Main App -->
-            <div>
-                <!-- User Info Bar -->
-                <div class="glass-card rounded-2xl p-6 mb-8 shadow-2xl">
-                    <div class="flex justify-between items-center">
-                        <div>
-                            <h2 id="user-info" class="text-2xl font-bold gradient-text">Bem-vindo ao GFConcursos!</h2>
-                            <p class="text-gray-600" id="user-stats">Prepare-se para sua aprovação</p>
-                        </div>
-                        <div class="flex gap-4">
-                            <button id="btn-dashboard" class="bg-blue-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-blue-700 transition-all">
-                                📊 Meu Dashboard
-                            </button>
-                            <button id="btn-config" class="bg-gray-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-gray-700 transition-all">
-                                ⚙️ Configurações
-                            </button>
-                            <button id="btn-logout" class="bg-red-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-red-700 transition-all">
-                                🚪 Sair
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Navigation Tabs -->
-                <div class="glass-card rounded-2xl p-6 mb-8 shadow-2xl">
-                    <div class="flex flex-wrap gap-2 justify-center">
-                        <button class="tab-button active px-6 py-3 rounded-xl font-semibold transition-all" data-tab="estudo">
-                            📚 Área de Estudo
-                        </button>
-                        <button class="tab-button px-6 py-3 rounded-xl font-semibold transition-all" data-tab="cronograma">
-                            🗓️ Cronograma
-                        </button>
-                        <button class="tab-button px-6 py-3 rounded-xl font-semibold transition-all" data-tab="simulados">
-                            🧪 Simulados
-                        </button>
-                        <button class="tab-button px-6 py-3 rounded-xl font-semibold transition-all" data-tab="redacao">
-                            ✍️ Redação
-                        </button>
-                        <button class="tab-button px-6 py-3 rounded-xl font-semibold transition-all" data-tab="progresso">
-                            📈 Progresso
-                        </button>
-                        <button class="tab-button px-6 py-3 rounded-xl font-semibold transition-all" data-tab="edital">
-                            📋 Edital
-                        </button>
-                        <button class="tab-button px-6 py-3 rounded-xl font-semibold transition-all" data-tab="comunidade">
-                            👥 Comunidade
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Tab Content -->
-                <div id="main-content">
-                    <!-- Área de Estudo -->
-                    <div id="tab-content-estudo" class="tab-content fade-in">
-                        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                            <!-- Card 1: Disciplinas -->
-                            <div class="glass-card rounded-2xl p-6 shadow-xl">
-                                <h3 class="text-2xl font-bold gradient-text mb-6">📖 Minhas Disciplinas</h3>
-                                <div class="space-y-4" id="disciplinas-list">
-                                    <!-- Disciplinas serão carregadas aqui -->
-                                </div>
-                                <button id="btn-add-disciplina" class="w-full mt-6 bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 rounded-xl font-semibold hover:shadow-lg transition-all">
-                                    + Adicionar Disciplina
-                                </button>
-                            </div>
-
-                            <!-- Card 2: Prática Rápida -->
-                            <div class="glass-card rounded-2xl p-6 shadow-xl">
-                                <h3 class="text-2xl font-bold gradient-text mb-6">⚡ Prática Rápida</h3>
-                                <div class="space-y-4">
-                                    <button class="btn-pratica-rapida w-full bg-blue-100 hover:bg-blue-200 p-4 rounded-xl text-left transition-all" data-questoes="10" data-disciplina="portugues">
-                                        <div class="font-semibold">10 Questões de Português</div>
-                                        <div class="text-sm text-gray-600">Nível: Intermediário</div>
-                                    </button>
-                                    <button class="btn-pratica-rapida w-full bg-green-100 hover:bg-green-200 p-4 rounded-xl text-left transition-all" data-questoes="5" data-disciplina="matematica">
-                                        <div class="font-semibold">5 Questões de Matemática</div>
-                                        <div class="text-sm text-gray-600">Nível: Básico</div>
-                                    </button>
-                                    <button class="btn-pratica-rapida w-full bg-purple-100 hover:bg-purple-200 p-4 rounded-xl text-left transition-all" data-questoes="15" data-disciplina="revisao">
-                                        <div class="font-semibold">Revisão Inteligente</div>
-                                        <div class="text-sm text-gray-600">Questões que você errou</div>
-                                    </button>
-                                </div>
-                                <button id="btn-iniciar-sessao" class="w-full mt-6 bg-gradient-to-r from-green-600 to-blue-600 text-white py-3 rounded-xl font-semibold hover:shadow-lg transition-all">
-                                    🎯 Iniciar Sessão de Estudo
-                                </button>
-                            </div>
-
-                            <!-- Card 3: Métricas -->
-                            <div class="glass-card rounded-2xl p-6 shadow-xl">
-                                <h3 class="text-2xl font-bold gradient-text mb-6">📊 Métricas do Dia</h3>
-                                <div class="grid grid-cols-2 gap-4">
-                                    <div class="bg-white p-4 rounded-xl text-center shadow">
-                                        <div class="text-3xl font-bold text-blue-600" id="metric-tempo">0h</div>
-                                        <div class="text-sm text-gray-600">Tempo Estudado</div>
-                                    </div>
-                                    <div class="bg-white p-4 rounded-xl text-center shadow">
-                                        <div class="text-3xl font-bold text-green-600" id="metric-questoes">0</div>
-                                        <div class="text-sm text-gray-600">Questões Feitas</div>
-                                    </div>
-                                    <div class="bg-white p-4 rounded-xl text-center shadow">
-                                        <div class="text-3xl font-bold text-purple-600" id="metric-acerto">0%</div>
-                                        <div class="text-sm text-gray-600">Taxa de Acerto</div>
-                                    </div>
-                                    <div class="bg-white p-4 rounded-xl text-center shadow">
-                                        <div class="text-3xl font-bold text-yellow-600" id="metric-dias">0</div>
-                                        <div class="text-sm text-gray-600">Dias Consecutivos</div>
-                                    </div>
-                                </div>
-                                <div class="mt-6 p-4 bg-gradient-to-r from-blue-500 to-purple-500 rounded-xl text-white">
-                                    <div class="font-semibold">🎯 Meta Diária</div>
-                                    <div class="text-sm">3h de estudo | 30 questões</div>
-                                    <div class="w-full bg-white/20 rounded-full h-2 mt-2">
-                                        <div class="bg-white h-2 rounded-full progress-bar" id="meta-progresso" style="width: 0%"></div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Cronograma -->
-                    <div id="tab-content-cronograma" class="tab-content hidden fade-in">
-                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                            <!-- Card 1: Cronograma Semanal -->
-                            <div class="glass-card rounded-2xl p-6 shadow-xl">
-                                <h3 class="text-2xl font-bold gradient-text mb-6">🗓️ Cronograma Semanal</h3>
-                                <div class="grid grid-cols-7 gap-2 mb-6" id="cronograma-dias">
-                                    <!-- Dias da semana serão gerados aqui -->
-                                </div>
-                                <div class="space-y-3 max-h-96 overflow-y-auto" id="lista-tarefas">
-                                    <!-- Tarefas serão carregadas aqui -->
-                                </div>
-                                <button id="btn-nova-tarefa" class="w-full mt-6 bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 rounded-xl font-semibold hover:shadow-lg transition-all">
-                                    + Nova Tarefa
-                                </button>
-                            </div>
-
-                            <!-- Card 2: Estatísticas do Cronograma -->
-                            <div class="glass-card rounded-2xl p-6 shadow-xl">
-                                <h3 class="text-2xl font-bold gradient-text mb-6">📊 Estatísticas</h3>
-                                <div class="grid grid-cols-2 gap-4 mb-6">
-                                    <div class="bg-white p-4 rounded-xl text-center shadow">
-                                        <div class="text-2xl font-bold text-blue-600" id="tarefas-totais">0</div>
-                                        <div class="text-sm text-gray-600">Tarefas Totais</div>
-                                    </div>
-                                    <div class="bg-white p-4 rounded-xl text-center shadow">
-                                        <div class="text-2xl font-bold text-green-600" id="tarefas-concluidas">0</div>
-                                        <div class="text-sm text-gray-600">Concluídas</div>
-                                    </div>
-                                </div>
-                                <div class="p-4 bg-gradient-to-r from-green-500 to-blue-500 rounded-xl text-white">
-                                    <div class="font-semibold">📈 Progresso Semanal</div>
-                                    <div class="text-sm mt-1" id="progresso-cronograma">0% concluído</div>
-                                    <div class="w-full bg-white/20 rounded-full h-2 mt-2">
-                                        <div class="bg-white h-2 rounded-full progress-bar" id="barra-progresso-cronograma" style="width: 0%"></div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Simulados -->
-                    <div id="tab-content-simulados" class="tab-content hidden fade-in">
-                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                            <!-- Card 1: Simulados Disponíveis -->
-                            <div class="glass-card rounded-2xl p-6 shadow-xl">
-                                <h3 class="text-2xl font-bold gradient-text mb-6">🧪 Simulados Disponíveis</h3>
-                                <div class="space-y-4" id="lista-simulados">
-                                    <!-- Simulados serão carregados aqui -->
-                                </div>
-                                <button id="btn-novo-simulado" class="w-full mt-6 bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 rounded-xl font-semibold hover:shadow-lg transition-all">
-                                    🎯 Criar Simulado Personalizado
-                                </button>
-                            </div>
-
-                            <!-- Card 2: Resultados -->
-                            <div class="glass-card rounded-2xl p-6 shadow-xl">
-                                <h3 class="text-2xl font-bold gradient-text mb-6">📊 Meus Resultados</h3>
-                                <div class="space-y-4" id="resultados-simulados">
-                                    <!-- Resultados serão carregados aqui -->
-                                </div>
-                                <button id="btn-exportar-resultados" class="w-full mt-6 bg-gradient-to-r from-green-600 to-blue-600 text-white py-3 rounded-xl font-semibold hover:shadow-lg transition-all">
-                                    📥 Exportar Resultados
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- Card 3: Questões -->
-                        <div class="glass-card rounded-2xl p-6 shadow-xl mt-8">
-                            <h3 class="text-2xl font-bold gradient-text mb-6">❓ Banco de Questões</h3>
-                            <div class="space-y-4" id="banco-questoes">
-                                <!-- Questões serão carregadas aqui -->
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Redação -->
-                    <div id="tab-content-redacao" class="tab-content hidden fade-in">
-                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                            <!-- Card 1: Nova Redação -->
-                            <div class="glass-card rounded-2xl p-6 shadow-xl">
-                                <h3 class="text-2xl font-bold gradient-text mb-6">✍️ Nova Redação</h3>
-                                <div class="space-y-4">
-                                    <div>
-                                        <label class="block text-sm font-semibold mb-2">Tema:</label>
-                                        <input type="text" id="redacao-tema" class="w-full p-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Digite o tema da redação">
-                                    </div>
-                                    <div>
-                                        <label class="block text-sm font-semibold mb-2">Tipo:</label>
-                                        <select id="redacao-tipo" class="w-full p-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                                            <option value="dissertativa">Dissertativa</option>
-                                            <option value="narracao">Narração</option>
-                                            <option value="descricao">Descrição</option>
-                                        </select>
-                                    </div>
-                                    <div>
-                                        <label class="block text-sm font-semibold mb-2">Texto:</label>
-                                        <textarea id="redacao-texto" rows="10" class="w-full p-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Escreva sua redação aqui..."></textarea>
-                                    </div>
-                                </div>
-                                <button id="btn-salvar-redacao" class="w-full mt-6 bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 rounded-xl font-semibold hover:shadow-lg transition-all">
-                                    💾 Salvar Redação
-                                </button>
-                            </div>
-
-                            <!-- Card 2: Minhas Redações -->
-                            <div class="glass-card rounded-2xl p-6 shadow-xl">
-                                <h3 class="text-2xl font-bold gradient-text mb-6">📚 Minhas Redações</h3>
-                                <div class="space-y-4 max-h-96 overflow-y-auto" id="lista-redacoes">
-                                    <!-- Redações serão carregadas aqui -->
-                                </div>
-                                <button id="btn-corrigir-redacao" class="w-full mt-6 bg-gradient-to-r from-green-600 to-blue-600 text-white py-3 rounded-xl font-semibold hover:shadow-lg transition-all">
-                                    🔍 Solicitar Correção
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Progresso -->
-                    <div id="tab-content-progresso" class="tab-content hidden fade-in">
-                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                            <!-- Card 1: Gráficos -->
-                            <div class="glass-card rounded-2xl p-6 shadow-xl">
-                                <h3 class="text-2xl font-bold gradient-text mb-6">📈 Estatísticas de Progresso</h3>
-                                <div class="h-64">
-                                    <canvas id="progresso-chart"></canvas>
-                                </div>
-                                <div class="grid grid-cols-2 gap-4 mt-6">
-                                    <div class="bg-white p-4 rounded-xl text-center shadow">
-                                        <div class="text-2xl font-bold text-blue-600" id="total-horas">0h</div>
-                                        <div class="text-sm text-gray-600">Total de Horas</div>
-                                    </div>
-                                    <div class="bg-white p-4 rounded-xl text-center shadow">
-                                        <div class="text-2xl font-bold text-green-600" id="total-questoes">0</div>
-                                        <div class="text-sm text-gray-600">Questões Resolvidas</div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Card 2: Metas -->
-                            <div class="glass-card rounded-2xl p-6 shadow-xl">
-                                <h3 class="text-2xl font-bold gradient-text mb-6">🎯 Metas e Conquistas</h3>
-                                <div class="space-y-4" id="lista-conquistas">
-                                    <!-- Conquistas serão carregadas aqui -->
-                                </div>
-                                <button id="btn-definir-meta" class="w-full mt-6 bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 rounded-xl font-semibold hover:shadow-lg transition-all">
-                                    🎯 Definir Nova Meta
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Edital -->
-                    <div id="tab-content-edital" class="tab-content hidden fade-in">
-                        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                            <!-- Card 1: Gerenciar Edital -->
-                            <div class="glass-card rounded-2xl p-6 shadow-xl">
-                                <h3 class="text-2xl font-bold gradient-text mb-6">📋 Gerenciar Edital</h3>
-                                <div class="space-y-4">
-                                    <div>
-                                        <label class="block text-sm font-semibold mb-2">Nome do Concurso:</label>
-                                        <input type="text" id="edital-nome-concurso" class="w-full p-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Ex: Concurso PM-SP 2025">
-                                    </div>
-                                    <div>
-                                        <label class="block text-sm font-semibold mb-2">Disciplina:</label>
-                                        <select id="edital-disciplina" class="w-full p-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                                            <option value="">Selecione uma disciplina</option>
-                                        </select>
-                                    </div>
-                                    <div>
-                                        <label class="block text-sm font-semibold mb-2">Novo Assunto:</label>
-                                        <input type="text" id="edital-novo-assunto" class="w-full p-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Ex: Direitos Humanos">
-                                    </div>
-                                </div>
-                                <button id="btn-adicionar-assunto" class="w-full mt-6 bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 rounded-xl font-semibold hover:shadow-lg transition-all">
-                                    ➕ Adicionar Assunto
-                                </button>
-                                <button id="btn-nova-disciplina-edital" class="w-full mt-4 bg-gradient-to-r from-green-600 to-blue-600 text-white py-3 rounded-xl font-semibold hover:shadow-lg transition-all">
-                                    📚 Nova Disciplina
-                                </button>
-                            </div>
-
-                            <!-- Card 2: Progresso do Edital -->
-                            <div class="glass-card rounded-2xl p-6 shadow-xl">
-                                <h3 class="text-2xl font-bold gradient-text mb-6">📊 Progresso do Edital</h3>
-                                <div class="space-y-6">
-                                    <div class="bg-gradient-to-r from-blue-500 to-purple-500 rounded-xl p-4 text-white">
-                                        <div class="font-semibold">Progresso Geral</div>
-                                        <div class="text-sm mt-1" id="progresso-geral-edital">0% concluído</div>
-                                        <div class="w-full bg-white/20 rounded-full h-3 mt-2">
-                                            <div class="bg-white h-3 rounded-full progresso-disciplina" id="barra-progresso-geral" style="width: 0%"></div>
-                                        </div>
-                                    </div>
-                                    <div class="grid grid-cols-2 gap-4">
-                                        <div class="bg-white p-4 rounded-xl text-center shadow">
-                                            <div class="text-2xl font-bold text-blue-600" id="total-assuntos">0</div>
-                                            <div class="text-sm text-gray-600">Total de Assuntos</div>
-                                        </div>
-                                        <div class="bg-white p-4 rounded-xl text-center shadow">
-                                            <div class="text-2xl font-bold text-green-600" id="assuntos-concluidos">0</div>
-                                            <div class="text-sm text-gray-600">Concluídos</div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <button id="btn-exportar-edital" class="w-full mt-6 bg-gradient-to-r from-green-600 to-blue-600 text-white py-3 rounded-xl font-semibold hover:shadow-lg transition-all">
-                                    📥 Exportar Progresso
-                                </button>
-                            </div>
-
-                            <!-- Card 3: Disciplinas do Edital -->
-                            <div class="glass-card rounded-2xl p-6 shadow-xl">
-                                <h3 class="text-2xl font-bold gradient-text mb-6">📚 Disciplinas do Edital</h3>
-                                <div class="space-y-4 max-h-96 overflow-y-auto" id="lista-disciplinas-edital">
-                                    <!-- Disciplinas do edital serão carregadas aqui -->
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Lista de Assuntos -->
-                        <div class="glass-card rounded-2xl p-6 shadow-xl mt-8">
-                            <h3 class="text-2xl font-bold gradient-text mb-6">📖 Assuntos por Disciplina</h3>
-                            <div id="lista-assuntos-edital">
-                                <!-- Assuntos serão carregados aqui -->
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Comunidade -->
-                    <div id="tab-content-comunidade" class="tab-content hidden fade-in">
-                        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                            <!-- Card 1: Ranking -->
-                            <div class="glass-card rounded-2xl p-6 shadow-xl">
-                                <h3 class="text-2xl font-bold gradient-text mb-6">👥 Ranking da Comunidade</h3>
-                                <div class="space-y-4" id="ranking-comunidade">
-                                    <!-- Ranking será carregado aqui -->
-                                </div>
-                                <button id="btn-atualizar-ranking" class="w-full mt-6 bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 rounded-xl font-semibold hover:shadow-lg transition-all">
-                                    🔄 Atualizar Ranking
-                                </button>
-                            </div>
-
-                            <!-- Card 2: Fórum -->
-                            <div class="glass-card rounded-2xl p-6 shadow-xl">
-                                <h3 class="text-2xl font-bold gradient-text mb-6">💬 Fórum de Discussão</h3>
-                                <div class="space-y-4 max-h-96 overflow-y-auto" id="forum-discussao">
-                                    <!-- Discussões serão carregadas aqui -->
-                                </div>
-                                <button id="btn-nova-discussao" class="w-full mt-6 bg-gradient-to-r from-green-600 to-blue-600 text-white py-3 rounded-xl font-semibold hover:shadow-lg transition-all">
-                                    💬 Nova Discussão
-                                </button>
-                            </div>
-
-                            <!-- Card 3: Grupos -->
-                            <div class="glass-card rounded-2xl p-6 shadow-xl">
-                                <h3 class="text-2xl font-bold gradient-text mb-6">🤝 Grupos de Estudo</h3>
-                                <div class="space-y-4 max-h-96 overflow-y-auto" id="grupos-estudo">
-                                    <!-- Grupos serão carregados aqui -->
-                                </div>
-                                <button id="btn-criar-grupo" class="w-full mt-6 bg-gradient-to-r from-purple-600 to-pink-600 text-white py-3 rounded-xl font-semibold hover:shadow-lg transition-all">
-                                    👥 Criar Grupo
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Footer -->
-            <footer class="text-center mt-12 text-white/70">
-                <p>GFConcursos © 2025 - Edinho S. Paiva</p>
-                <p class="text-sm mt-2">Desenvolvido com 💙 para ajudar na sua aprovação</p>
-            </footer>
-        </div>
-    </div>
-
-    <!-- Modal de Nova Disciplina -->
-    <div id="modal-nova-disciplina" class="fixed inset-0 flex items-center justify-center z-50 hidden">
-        <div class="modal-overlay absolute inset-0"></div>
-        <div class="glass-card rounded-2xl p-8 shadow-2xl w-full max-w-md mx-4 z-10">
-            <h3 class="text-2xl font-bold gradient-text mb-4">Nova Disciplina</h3>
-            <div class="space-y-4">
-                <div>
-                    <label class="block text-sm font-semibold mb-2">Nome da Disciplina:</label>
-                    <input type="text" id="nova-disciplina-nome" class="w-full p-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Ex: Matemática">
-                </div>
-                <div>
-                    <label class="block text-sm font-semibold mb-2">Cor:</label>
-                    <input type="color" id="nova-disciplina-cor" class="w-full p-1 border rounded-xl" value="#3B82F6">
-                </div>
-                <div class="flex gap-4">
-                    <button onclick="fecharModal('modal-nova-disciplina')" class="flex-1 bg-gray-500 text-white py-3 rounded-xl font-semibold hover:bg-gray-600 transition-all">
-                        Cancelar
-                    </button>
-                    <button id="btn-confirmar-disciplina" class="flex-1 bg-blue-600 text-white py-3 rounded-xl font-semibold hover:bg-blue-700 transition-all">
-                        Adicionar
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Modal Nova Tarefa -->
-    <div id="modal-nova-tarefa" class="fixed inset-0 flex items-center justify-center z-50 hidden">
-        <div class="modal-overlay absolute inset-0"></div>
-        <div class="glass-card rounded-2xl p-8 shadow-2xl w-full max-w-md mx-4 z-10">
-            <h3 class="text-2xl font-bold gradient-text mb-4">Nova Tarefa</h3>
-            <div class="space-y-4">
-                <div>
-                    <label class="block text-sm font-semibold mb-2">Título:</label>
-                    <input type="text" id="tarefa-titulo" class="w-full p-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Ex: Estudar Direito Constitucional">
-                </div>
-                <div>
-                    <label class="block text-sm font-semibold mb-2">Disciplina:</label>
-                    <select id="tarefa-disciplina" class="w-full p-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                        <option value="">Selecione uma disciplina</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-sm font-semibold mb-2">Dia da Semana:</label>
-                    <select id="tarefa-dia" class="w-full p-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                        <option value="0">Segunda-feira</option>
-                        <option value="1">Terça-feira</option>
-                        <option value="2">Quarta-feira</option>
-                        <option value="3">Quinta-feira</option>
-                        <option value="4">Sexta-feira</option>
-                        <option value="5">Sábado</option>
-                        <option value="6">Domingo</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-sm font-semibold mb-2">Horário:</label>
-                    <input type="time" id="tarefa-horario" class="w-full p-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                </div>
-                <div class="flex gap-4">
-                    <button onclick="fecharModal('modal-nova-tarefa')" class="flex-1 bg-gray-500 text-white py-3 rounded-xl font-semibold hover:bg-gray-600 transition-all">
-                        Cancelar
-                    </button>
-                    <button id="btn-confirmar-tarefa" class="flex-1 bg-blue-600 text-white py-3 rounded-xl font-semibold hover:bg-blue-700 transition-all">
-                        Adicionar
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Modal Nova Disciplina para Edital -->
-    <div id="modal-nova-disciplina-edital" class="fixed inset-0 flex items-center justify-center z-50 hidden">
-        <div class="modal-overlay absolute inset-0"></div>
-        <div class="glass-card rounded-2xl p-8 shadow-2xl w-full max-w-md mx-4 z-10">
-            <h3 class="text-2xl font-bold gradient-text mb-4">Nova Disciplina para Edital</h3>
-            <div class="space-y-4">
-                <div>
-                    <label class="block text-sm font-semibold mb-2">Nome da Disciplina:</label>
-                    <input type="text" id="nova-disciplina-edital-nome" class="w-full p-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Ex: Direito Constitucional">
-                </div>
-                <div>
-                    <label class="block text-sm font-semibold mb-2">Cor:</label>
-                    <input type="color" id="nova-disciplina-edital-cor" class="w-full p-1 border rounded-xl" value="#3B82F6">
-                </div>
-                <div class="flex gap-4">
-                    <button onclick="fecharModal('modal-nova-disciplina-edital')" class="flex-1 bg-gray-500 text-white py-3 rounded-xl font-semibold hover:bg-gray-600 transition-all">
-                        Cancelar
-                    </button>
-                    <button id="btn-confirmar-disciplina-edital" class="flex-1 bg-blue-600 text-white py-3 rounded-xl font-semibold hover:bg-blue-700 transition-all">
-                        Adicionar
-                    </button>
-                </div>
-            </div>
-        </div>
+        <!-- Conteúdo da aplicação principal será carregado aqui -->
     </div>
 
     <script>
@@ -830,29 +383,13 @@
             
             init() {
                 this.configurarEventListeners();
-                this.configurarModais();
-                
-                setTimeout(() => {
-                    this.verificarLoginAuto();
-                }, 100);
-            },
-            
-            configurarModais() {
-                document.querySelectorAll('[id^="modal-"]').forEach(modal => {
-                    modal.addEventListener('click', (e) => {
-                        if (e.target === modal) {
-                            modal.classList.add('hidden');
-                        }
-                    });
-                });
+                this.verificarLoginAuto();
             },
             
             verificarLoginAuto() {
                 if (this.usuarioLogado) {
                     console.log('Usuário logado encontrado:', this.usuarioLogado.nome);
                     this.entrarNaAplicacao(this.usuarioLogado);
-                } else {
-                    console.log('Nenhum usuário logado encontrado');
                 }
             },
             
@@ -1035,6 +572,7 @@
                         nomeConcurso: '',
                         disciplinas: []
                     },
+                    resumos: [],
                     progresso: {
                         totalHoras: 0,
                         totalQuestoes: 0,
@@ -1057,13 +595,100 @@
                 
                 setTimeout(() => {
                     if (loginSystem) loginSystem.classList.add('hidden');
-                    if (appWrapper) appWrapper.classList.remove('hidden');
-                    
-                    // Inicializar aplicação principal
-                    if (window.GFConcursosApp) {
-                        window.GFConcursosApp.init(usuario);
+                    if (appWrapper) {
+                        appWrapper.classList.remove('hidden');
+                        this.carregarAplicacaoPrincipal(usuario);
                     }
                 }, 500);
+            },
+            
+            carregarAplicacaoPrincipal(usuario) {
+                // Carrega o conteúdo principal da aplicação
+                const appWrapper = document.getElementById('app-wrapper');
+                appWrapper.innerHTML = `
+                    <div class="container mx-auto px-4 py-8">
+                        <!-- Header -->
+                        <header class="text-center mb-12 fade-in">
+                            <h1 class="text-5xl font-bold text-white mb-4">GFConcursos</h1>
+                            <p class="text-xl text-white/90">Sua plataforma completa de estudos para concursos públicos</p>
+                        </header>
+
+                        <!-- Main App -->
+                        <div>
+                            <!-- User Info Bar -->
+                            <div class="glass-card rounded-2xl p-6 mb-8 shadow-2xl">
+                                <div class="flex justify-between items-center">
+                                    <div>
+                                        <h2 class="text-2xl font-bold gradient-text">Olá, ${usuario.nome}!</h2>
+                                        <p class="text-gray-600">Prepare-se para sua aprovação</p>
+                                    </div>
+                                    <div class="flex gap-4">
+                                        <button id="btn-dashboard" class="bg-blue-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-blue-700 transition-all">
+                                            📊 Meu Dashboard
+                                        </button>
+                                        <button id="btn-config" class="bg-gray-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-gray-700 transition-all">
+                                            ⚙️ Configurações
+                                        </button>
+                                        <button id="btn-logout" class="bg-red-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-red-700 transition-all">
+                                            🚪 Sair
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Navigation Tabs -->
+                            <div class="glass-card rounded-2xl p-6 mb-8 shadow-2xl">
+                                <div class="flex flex-wrap gap-2 justify-center">
+                                    <button class="tab-button active px-6 py-3 rounded-xl font-semibold transition-all" data-tab="estudo">
+                                        📚 Área de Estudo
+                                    </button>
+                                    <button class="tab-button px-6 py-3 rounded-xl font-semibold transition-all" data-tab="cronograma">
+                                        🗓️ Cronograma
+                                    </button>
+                                    <button class="tab-button px-6 py-3 rounded-xl font-semibold transition-all" data-tab="simulados">
+                                        🧪 Simulados
+                                    </button>
+                                    <button class="tab-button px-6 py-3 rounded-xl font-semibold transition-all" data-tab="redacao">
+                                        ✍️ Redação
+                                    </button>
+                                    <button class="tab-button px-6 py-3 rounded-xl font-semibold transition-all" data-tab="progresso">
+                                        📈 Progresso
+                                    </button>
+                                    <button class="tab-button px-6 py-3 rounded-xl font-semibold transition-all" data-tab="edital">
+                                        📋 Edital
+                                    </button>
+                                    <button class="tab-button px-6 py-3 rounded-xl font-semibold transition-all" data-tab="resumos">
+                                        📝 Meus Resumos
+                                    </button>
+                                    <button class="tab-button px-6 py-3 rounded-xl font-semibold transition-all" data-tab="comunidade">
+                                        👥 Comunidade
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Tab Content -->
+                            <div id="main-content">
+                                <!-- Conteúdo das abas será carregado aqui -->
+                                <div class="text-center py-12">
+                                    <div class="text-6xl mb-4">🎯</div>
+                                    <h3 class="text-2xl font-bold gradient-text mb-2">Bem-vindo ao GFConcursos!</h3>
+                                    <p class="text-gray-600">Selecione uma aba para começar</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Footer -->
+                        <footer class="text-center mt-12 text-white/70">
+                            <p>GFConcursos © 2025 - Edinho S. Paiva</p>
+                            <p class="text-sm mt-2">Desenvolvido com 💙 para ajudar na sua aprovação</p>
+                        </footer>
+                    </div>
+                `;
+
+                // Inicializar a aplicação principal
+                if (window.GFConcursosApp) {
+                    window.GFConcursosApp.init(usuario);
+                }
             },
             
             sair() {
@@ -1089,15 +714,28 @@
             },
             
             mostrarNotificacao(mensagem, tipo = 'info') {
-                console.log(`[${tipo.toUpperCase()}] ${mensagem}`);
+                // Criar notificação visual
+                const notification = document.createElement('div');
+                notification.className = `fixed top-4 right-4 p-4 rounded-xl shadow-lg z-50 transform transition-all duration-300 ${
+                    tipo === 'error' ? 'bg-red-500 text-white' :
+                    tipo === 'success' ? 'bg-green-500 text-white' :
+                    'bg-blue-500 text-white'
+                }`;
                 
-                if (tipo === 'error') {
-                    alert(`❌ ${mensagem}`);
-                } else if (tipo === 'success') {
-                    alert(`✅ ${mensagem}`);
-                } else {
-                    alert(`ℹ️ ${mensagem}`);
-                }
+                const icon = tipo === 'error' ? '❌' : tipo === 'success' ? '✅' : 'ℹ️';
+                notification.innerHTML = `
+                    <div class="flex items-center gap-2">
+                        <span class="text-lg">${icon}</span>
+                        <span>${mensagem}</span>
+                    </div>
+                `;
+                
+                document.body.appendChild(notification);
+                
+                // Remover após 3 segundos
+                setTimeout(() => {
+                    notification.remove();
+                }, 3000);
             }
         };
 
@@ -1107,28 +745,19 @@
         const GFConcursosApp = {
             usuario: null,
             dados: null,
-            editalAtual: null,
-            chart: null,
             
             init(usuario) {
                 this.usuario = usuario;
-                this.dados = usuario.dados || this.criarDadosPadrao();
+                this.dados = usuario.dados;
                 
                 this.configurarNavegacao();
                 this.configurarEventListeners();
-                this.carregarDadosUsuario();
-                this.atualizarInterface();
-                
                 console.log('Aplicação inicializada para:', usuario.nome);
-            },
-            
-            criarDadosPadrao() {
-                return AuthSystem.criarDadosUsuarioPadrao();
             },
             
             configurarNavegacao() {
                 const tabButtons = document.querySelectorAll('.tab-button');
-                const tabContents = document.querySelectorAll('.tab-content');
+                const mainContent = document.getElementById('main-content');
                 
                 tabButtons.forEach(button => {
                     button.addEventListener('click', () => {
@@ -1138,628 +767,434 @@
                         tabButtons.forEach(btn => btn.classList.remove('active'));
                         button.classList.add('active');
                         
-                        // Atualizar conteúdo visível
-                        tabContents.forEach(content => content.classList.add('hidden'));
-                        const targetContent = document.getElementById(`tab-content-${tabId}`);
-                        if (targetContent) {
-                            targetContent.classList.remove('hidden');
-                            
-                            // Carregar conteúdo específico da aba
-                            switch(tabId) {
-                                case 'cronograma':
-                                    this.carregarAbaCronograma();
-                                    break;
-                                case 'simulados':
-                                    this.carregarAbaSimulados();
-                                    break;
-                                case 'redacao':
-                                    this.carregarAbaRedacao();
-                                    break;
-                                case 'progresso':
-                                    this.carregarAbaProgresso();
-                                    break;
-                                case 'edital':
-                                    this.carregarAbaEdital();
-                                    break;
-                                case 'comunidade':
-                                    this.carregarAbaComunidade();
-                                    break;
-                            }
-                        }
+                        // Carregar conteúdo da aba
+                        this.carregarAba(tabId);
                     });
                 });
             },
             
             configurarEventListeners() {
-                // Botões principais
+                // Botão de logout
                 document.getElementById('btn-logout')?.addEventListener('click', () => AuthSystem.sair());
-                document.getElementById('btn-dashboard')?.addEventListener('click', () => this.mostrarDashboard());
-                document.getElementById('btn-config')?.addEventListener('click', () => this.mostrarConfiguracoes());
                 
-                // Botões da área de estudo
-                document.getElementById('btn-add-disciplina')?.addEventListener('click', () => this.abrirModalNovaDisciplina());
-                document.getElementById('btn-confirmar-disciplina')?.addEventListener('click', () => this.adicionarDisciplina());
-                document.getElementById('btn-iniciar-sessao')?.addEventListener('click', () => this.iniciarSessaoEstudo());
-                
-                // Botões de prática rápida
-                document.querySelectorAll('.btn-pratica-rapida').forEach(btn => {
-                    btn.addEventListener('click', (e) => {
-                        const questoes = e.currentTarget.getAttribute('data-questoes');
-                        const disciplina = e.currentTarget.getAttribute('data-disciplina');
-                        this.iniciarPraticaRapida(questoes, disciplina);
-                    });
-                });
-                
-                // Botões do cronograma
-                document.getElementById('btn-nova-tarefa')?.addEventListener('click', () => this.abrirModalNovaTarefa());
-                document.getElementById('btn-confirmar-tarefa')?.addEventListener('click', () => this.adicionarTarefa());
-                
-                // Botões de simulados
-                document.getElementById('btn-novo-simulado')?.addEventListener('click', () => this.criarSimulado());
-                document.getElementById('btn-exportar-resultados')?.addEventListener('click', () => this.exportarResultados());
-                
-                // Botões de redação
-                document.getElementById('btn-salvar-redacao')?.addEventListener('click', () => this.salvarRedacao());
-                document.getElementById('btn-corrigir-redacao')?.addEventListener('click', () => this.solicitarCorrecaoRedacao());
-                
-                // Botões de progresso
-                document.getElementById('btn-definir-meta')?.addEventListener('click', () => this.definirNovaMeta());
-                
-                // Botões da comunidade
-                document.getElementById('btn-atualizar-ranking')?.addEventListener('click', () => this.atualizarRanking());
-                document.getElementById('btn-nova-discussao')?.addEventListener('click', () => this.novaDiscussao());
-                document.getElementById('btn-criar-grupo')?.addEventListener('click', () => this.criarGrupoEstudo());
-                
-                // Botões do edital
-                document.getElementById('btn-adicionar-assunto')?.addEventListener('click', () => this.adicionarAssuntoEdital());
-                document.getElementById('btn-nova-disciplina-edital')?.addEventListener('click', () => this.abrirModalNovaDisciplinaEdital());
-                document.getElementById('btn-confirmar-disciplina-edital')?.addEventListener('click', () => this.adicionarDisciplinaEdital());
-                document.getElementById('btn-exportar-edital')?.addEventListener('click', () => this.exportarProgressoEdital());
-            },
-            
-            carregarDadosUsuario() {
-                // Atualizar informações do usuário
-                const userInfo = document.getElementById('user-info');
-                if (userInfo) {
-                    userInfo.textContent = `Olá, ${this.usuario.nome}!`;
-                }
-                
-                // Garantir que disciplinas existem
-                if (!this.dados.disciplinas) {
-                    this.dados.disciplinas = this.criarDadosPadrao().disciplinas;
-                }
-                
-                // Garantir que edital verticalizado existe
-                if (!this.dados.editalVerticalizado) {
-                    this.dados.editalVerticalizado = {
-                        nomeConcurso: '',
-                        disciplinas: []
-                    };
-                }
-                
-                // Carregar disciplinas
-                this.carregarDisciplinas();
-                
-                // Carregar métricas
-                this.atualizarMetricas();
-            },
-            
-            carregarDisciplinas() {
-                const container = document.getElementById('disciplinas-list');
-                if (!container) return;
-                
-                container.innerHTML = '';
-                
-                if (!this.dados.disciplinas || this.dados.disciplinas.length === 0) {
-                    container.innerHTML = `
-                        <div class="text-center text-gray-500 py-4">
-                            <p>Nenhuma disciplina cadastrada.</p>
-                            <p class="text-sm">Adicione sua primeira disciplina!</p>
-                        </div>
-                    `;
-                    return;
-                }
-                
-                this.dados.disciplinas.forEach(disciplina => {
-                    const div = document.createElement('div');
-                    div.className = 'bg-white p-4 rounded-xl shadow-sm border border-gray-200 priority-item';
-                    div.innerHTML = `
-                        <div class="flex justify-between items-center">
-                            <div class="flex items-center">
-                                <div class="w-4 h-4 rounded-full mr-3" style="background-color: ${disciplina.cor}"></div>
-                                <span class="font-semibold">${disciplina.nome}</span>
-                            </div>
-                            <div class="flex items-center gap-2">
-                                <div class="text-sm text-gray-600">
-                                    ${disciplina.horasEstudadas || 0}h | ${disciplina.questoesResolvidas || 0} questões
-                                </div>
-                                <button class="btn-acao text-red-500 hover:text-red-700" onclick="GFConcursosApp.excluirDisciplina('${disciplina.id}')" title="Excluir disciplina">
-                                    🗑️
-                                </button>
-                            </div>
-                        </div>
-                        <div class="w-full bg-gray-200 rounded-full h-2 mt-2">
-                            <div class="h-2 rounded-full progress-bar" style="width: ${Math.min(((disciplina.horasEstudadas || 0) / 50) * 100, 100)}%; background-color: ${disciplina.cor}"></div>
-                        </div>
-                    `;
-                    container.appendChild(div);
+                // Botão de dashboard
+                document.getElementById('btn-dashboard')?.addEventListener('click', () => {
+                    const progressoTab = document.querySelector('[data-tab="progresso"]');
+                    if (progressoTab) progressoTab.click();
                 });
             },
             
-            // =========================
-            // EDITAL VERTICALIZADO
-            // =========================
-            carregarAbaEdital() {
-                this.carregarSelectDisciplinasEdital();
-                this.carregarDisciplinasEdital();
-                this.carregarAssuntosEdital();
-                this.atualizarEstatisticasEdital();
+            carregarAba(tabId) {
+                const mainContent = document.getElementById('main-content');
                 
-                // Preencher nome do concurso se existir
-                if (this.dados.editalVerticalizado.nomeConcurso) {
-                    document.getElementById('edital-nome-concurso').value = this.dados.editalVerticalizado.nomeConcurso;
-                }
-            },
-            
-            carregarSelectDisciplinasEdital() {
-                const select = document.getElementById('edital-disciplina');
-                if (!select) return;
-                
-                select.innerHTML = '<option value="">Selecione uma disciplina</option>';
-                
-                (this.dados.disciplinas || []).forEach(disciplina => {
-                    const option = document.createElement('option');
-                    option.value = disciplina.id;
-                    option.textContent = disciplina.nome;
-                    select.appendChild(option);
-                });
-            },
-            
-            carregarDisciplinasEdital() {
-                const container = document.getElementById('lista-disciplinas-edital');
-                if (!container) return;
-                
-                container.innerHTML = '';
-                
-                if (!this.dados.editalVerticalizado.disciplinas || this.dados.editalVerticalizado.disciplinas.length === 0) {
-                    container.innerHTML = `
-                        <div class="text-center text-gray-500 py-8">
-                            <p>Nenhuma disciplina adicionada ao edital.</p>
-                            <p class="text-sm">Adicione disciplinas para começar!</p>
-                        </div>
-                    `;
-                    return;
-                }
-                
-                this.dados.editalVerticalizado.disciplinas.forEach(disciplina => {
-                    const disciplinaBase = this.dados.disciplinas.find(d => d.id === disciplina.id);
-                    if (!disciplinaBase) return;
-                    
-                    const totalAssuntos = disciplina.assuntos.length;
-                    const assuntosConcluidos = disciplina.assuntos.filter(a => a.concluido).length;
-                    const percentual = totalAssuntos > 0 ? Math.round((assuntosConcluidos / totalAssuntos) * 100) : 0;
-                    
-                    const div = document.createElement('div');
-                    div.className = 'priority-item bg-white p-4 rounded-xl shadow border-l-4';
-                    div.style.borderLeftColor = disciplinaBase.cor;
-                    div.innerHTML = `
-                        <div class="flex justify-between items-center mb-2">
-                            <div class="font-semibold">${disciplinaBase.nome}</div>
-                            <div class="text-sm text-gray-600">${assuntosConcluidos}/${totalAssuntos}</div>
-                        </div>
-                        <div class="w-full bg-gray-200 rounded-full h-2">
-                            <div class="h-2 rounded-full progresso-disciplina" style="width: ${percentual}%; background-color: ${disciplinaBase.cor}"></div>
-                        </div>
-                        <div class="flex justify-between mt-2">
-                            <span class="text-xs text-gray-500">${percentual}% concluído</span>
-                            <button class="btn-acao text-red-500 hover:text-red-700 text-xs" onclick="GFConcursosApp.removerDisciplinaEdital('${disciplina.id}')">
-                                Remover
-                            </button>
-                        </div>
-                    `;
-                    container.appendChild(div);
-                });
-            },
-            
-            carregarAssuntosEdital() {
-                const container = document.getElementById('lista-assuntos-edital');
-                if (!container) return;
-                
-                container.innerHTML = '';
-                
-                if (!this.dados.editalVerticalizado.disciplinas || this.dados.editalVerticalizado.disciplinas.length === 0) {
-                    container.innerHTML = `
-                        <div class="text-center text-gray-500 py-12">
-                            <p>Nenhum assunto cadastrado no edital.</p>
-                            <p class="text-sm">Adicione disciplinas e assuntos para começar!</p>
-                        </div>
-                    `;
-                    return;
-                }
-                
-                this.dados.editalVerticalizado.disciplinas.forEach(disciplinaEdital => {
-                    const disciplinaBase = this.dados.disciplinas.find(d => d.id === disciplinaEdital.id);
-                    if (!disciplinaBase) return;
-                    
-                    const section = document.createElement('div');
-                    section.className = 'disciplina-edital mb-8';
-                    section.style.borderLeftColor = disciplinaBase.cor;
-                    
-                    const header = document.createElement('div');
-                    header.className = 'bg-white p-4 rounded-t-xl shadow';
-                    header.innerHTML = `
-                        <h4 class="text-xl font-bold" style="color: ${disciplinaBase.cor}">${disciplinaBase.nome}</h4>
-                        <div class="text-sm text-gray-600 mt-1">
-                            ${disciplinaEdital.assuntos.filter(a => a.concluido).length}/${disciplinaEdital.assuntos.length} assuntos concluídos
-                        </div>
-                    `;
-                    
-                    const assuntosContainer = document.createElement('div');
-                    assuntosContainer.className = 'space-y-2';
-                    
-                    if (disciplinaEdital.assuntos.length === 0) {
-                        assuntosContainer.innerHTML = `
-                            <div class="bg-gray-50 p-4 rounded-b-xl text-center text-gray-500">
-                                Nenhum assunto cadastrado para esta disciplina.
+                switch(tabId) {
+                    case 'estudo':
+                        this.carregarAbaEstudo();
+                        break;
+                    case 'edital':
+                        this.carregarAbaEdital();
+                        break;
+                    case 'resumos':
+                        this.carregarAbaResumos();
+                        break;
+                    default:
+                        mainContent.innerHTML = `
+                            <div class="text-center py-12">
+                                <div class="text-6xl mb-4">🚧</div>
+                                <h3 class="text-2xl font-bold gradient-text mb-2">Em Desenvolvimento</h3>
+                                <p class="text-gray-600">Esta funcionalidade está sendo implementada</p>
                             </div>
                         `;
-                    } else {
-                        disciplinaEdital.assuntos.forEach((assunto, index) => {
-                            const assuntoDiv = document.createElement('div');
-                            assuntoDiv.className = `assunto-item bg-white p-4 rounded-b-xl shadow flex items-center justify-between ${assunto.concluido ? 'assunto-concluido' : ''}`;
-                            assuntoDiv.innerHTML = `
-                                <div class="flex items-center gap-3">
-                                    <div class="checkbox-custom ${assunto.concluido ? 'checked' : ''}" 
-                                         onclick="GFConcursosApp.marcarAssuntoConcluido('${disciplinaEdital.id}', ${index})">
-                                    </div>
-                                    <span class="${assunto.concluido ? 'line-through text-gray-500' : ''}">${assunto.nome}</span>
+                }
+            },
+            
+            carregarAbaEstudo() {
+                const mainContent = document.getElementById('main-content');
+                mainContent.innerHTML = `
+                    <div class="fade-in">
+                        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                            <!-- Card 1: Disciplinas -->
+                            <div class="glass-card rounded-2xl p-6 shadow-xl">
+                                <h3 class="text-2xl font-bold gradient-text mb-6">📖 Minhas Disciplinas</h3>
+                                <div class="space-y-4" id="disciplinas-list">
+                                    ${this.dados.disciplinas.map(disciplina => `
+                                        <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-200 priority-item">
+                                            <div class="flex justify-between items-center">
+                                                <div class="flex items-center">
+                                                    <div class="w-4 h-4 rounded-full mr-3" style="background-color: ${disciplina.cor}"></div>
+                                                    <span class="font-semibold">${disciplina.nome}</span>
+                                                </div>
+                                                <div class="text-sm text-gray-600">
+                                                    ${disciplina.horasEstudadas || 0}h | ${disciplina.questoesResolvidas || 0} questões
+                                                </div>
+                                            </div>
+                                            <div class="w-full bg-gray-200 rounded-full h-2 mt-2">
+                                                <div class="h-2 rounded-full progress-bar" style="width: ${Math.min(((disciplina.horasEstudadas || 0) / 50) * 100, 100)}%; background-color: ${disciplina.cor}"></div>
+                                            </div>
+                                        </div>
+                                    `).join('')}
                                 </div>
-                                <button class="btn-acao text-red-500 hover:text-red-700" onclick="GFConcursosApp.removerAssunto('${disciplinaEdital.id}', ${index})">
-                                    🗑️
+                                <button class="w-full mt-6 bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 rounded-xl font-semibold hover:shadow-lg transition-all">
+                                    + Adicionar Disciplina
                                 </button>
-                            `;
-                            assuntosContainer.appendChild(assuntoDiv);
-                        });
-                    }
-                    
-                    section.appendChild(header);
-                    section.appendChild(assuntosContainer);
-                    container.appendChild(section);
-                });
+                            </div>
+
+                            <!-- Card 2: Prática Rápida -->
+                            <div class="glass-card rounded-2xl p-6 shadow-xl">
+                                <h3 class="text-2xl font-bold gradient-text mb-6">⚡ Prática Rápida</h3>
+                                <div class="space-y-4">
+                                    <button class="w-full bg-blue-100 hover:bg-blue-200 p-4 rounded-xl text-left transition-all">
+                                        <div class="font-semibold">10 Questões de Português</div>
+                                        <div class="text-sm text-gray-600">Nível: Intermediário</div>
+                                    </button>
+                                    <button class="w-full bg-green-100 hover:bg-green-200 p-4 rounded-xl text-left transition-all">
+                                        <div class="font-semibold">5 Questões de Matemática</div>
+                                        <div class="text-sm text-gray-600">Nível: Básico</div>
+                                    </button>
+                                    <button class="w-full bg-purple-100 hover:bg-purple-200 p-4 rounded-xl text-left transition-all">
+                                        <div class="font-semibold">Revisão Inteligente</div>
+                                        <div class="text-sm text-gray-600">Questões que você errou</div>
+                                    </button>
+                                </div>
+                                <button class="w-full mt-6 bg-gradient-to-r from-green-600 to-blue-600 text-white py-3 rounded-xl font-semibold hover:shadow-lg transition-all">
+                                    🎯 Iniciar Sessão de Estudo
+                                </button>
+                            </div>
+
+                            <!-- Card 3: Métricas -->
+                            <div class="glass-card rounded-2xl p-6 shadow-xl">
+                                <h3 class="text-2xl font-bold gradient-text mb-6">📊 Métricas do Dia</h3>
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div class="bg-white p-4 rounded-xl text-center shadow">
+                                        <div class="text-3xl font-bold text-blue-600">0h</div>
+                                        <div class="text-sm text-gray-600">Tempo Estudado</div>
+                                    </div>
+                                    <div class="bg-white p-4 rounded-xl text-center shadow">
+                                        <div class="text-3xl font-bold text-green-600">0</div>
+                                        <div class="text-sm text-gray-600">Questões Feitas</div>
+                                    </div>
+                                    <div class="bg-white p-4 rounded-xl text-center shadow">
+                                        <div class="text-3xl font-bold text-purple-600">0%</div>
+                                        <div class="text-sm text-gray-600">Taxa de Acerto</div>
+                                    </div>
+                                    <div class="bg-white p-4 rounded-xl text-center shadow">
+                                        <div class="text-3xl font-bold text-yellow-600">0</div>
+                                        <div class="text-sm text-gray-600">Dias Consecutivos</div>
+                                    </div>
+                                </div>
+                                <div class="mt-6 p-4 bg-gradient-to-r from-blue-500 to-purple-500 rounded-xl text-white">
+                                    <div class="font-semibold">🎯 Meta Diária</div>
+                                    <div class="text-sm">3h de estudo | 30 questões</div>
+                                    <div class="w-full bg-white/20 rounded-full h-2 mt-2">
+                                        <div class="bg-white h-2 rounded-full progress-bar" style="width: 0%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
             },
             
-            adicionarAssuntoEdital() {
-                const nomeConcurso = document.getElementById('edital-nome-concurso')?.value.trim();
-                const disciplinaId = document.getElementById('edital-disciplina')?.value;
-                const nomeAssunto = document.getElementById('edital-novo-assunto')?.value.trim();
-                
-                if (!nomeConcurso) {
-                    AuthSystem.mostrarNotificacao('Por favor, informe o nome do concurso', 'error');
-                    return;
-                }
-                
-                if (!disciplinaId) {
-                    AuthSystem.mostrarNotificacao('Por favor, selecione uma disciplina', 'error');
-                    return;
-                }
-                
-                if (!nomeAssunto) {
-                    AuthSystem.mostrarNotificacao('Por favor, digite o nome do assunto', 'error');
-                    return;
-                }
-                
-                // Salvar nome do concurso
-                this.dados.editalVerticalizado.nomeConcurso = nomeConcurso;
-                
-                // Verificar se a disciplina já existe no edital
-                let disciplinaEdital = this.dados.editalVerticalizado.disciplinas.find(d => d.id === disciplinaId);
-                
-                if (!disciplinaEdital) {
-                    // Adicionar disciplina ao edital
-                    disciplinaEdital = {
-                        id: disciplinaId,
-                        assuntos: []
-                    };
-                    this.dados.editalVerticalizado.disciplinas.push(disciplinaEdital);
-                }
-                
-                // Adicionar assunto
-                disciplinaEdital.assuntos.push({
-                    nome: nomeAssunto,
-                    concluido: false,
-                    dataAdicao: new Date().toISOString()
-                });
-                
-                // Limpar campo
-                document.getElementById('edital-novo-assunto').value = '';
-                
-                // Atualizar interface
-                this.carregarDisciplinasEdital();
-                this.carregarAssuntosEdital();
-                this.atualizarEstatisticasEdital();
-                this.salvarDadosUsuario();
-                
-                AuthSystem.mostrarNotificacao('Assunto adicionado com sucesso!', 'success');
+            carregarAbaEdital() {
+                const mainContent = document.getElementById('main-content');
+                mainContent.innerHTML = `
+                    <div class="fade-in">
+                        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                            <!-- Card 1: Gerenciar Edital -->
+                            <div class="glass-card rounded-2xl p-6 shadow-xl">
+                                <h3 class="text-2xl font-bold gradient-text mb-6">📋 Gerenciar Edital</h3>
+                                <div class="space-y-4">
+                                    <div>
+                                        <label class="block text-sm font-semibold mb-2">Nome do Concurso:</label>
+                                        <input type="text" value="${this.dados.editalVerticalizado.nomeConcurso || ''}" class="w-full p-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Ex: Concurso PM-SP 2025">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-semibold mb-2">Disciplina:</label>
+                                        <select class="w-full p-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                            <option value="">Selecione uma disciplina</option>
+                                            ${this.dados.disciplinas.map(d => `<option value="${d.id}">${d.nome}</option>`).join('')}
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-semibold mb-2">Novo Assunto:</label>
+                                        <input type="text" class="w-full p-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Ex: Direitos Humanos">
+                                    </div>
+                                </div>
+                                <button class="w-full mt-6 bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 rounded-xl font-semibold hover:shadow-lg transition-all">
+                                    ➕ Adicionar Assunto
+                                </button>
+                                <button class="w-full mt-4 bg-gradient-to-r from-green-600 to-blue-600 text-white py-3 rounded-xl font-semibold hover:shadow-lg transition-all">
+                                    📚 Nova Disciplina
+                                </button>
+                            </div>
+
+                            <!-- Card 2: Progresso do Edital -->
+                            <div class="glass-card rounded-2xl p-6 shadow-xl">
+                                <h3 class="text-2xl font-bold gradient-text mb-6">📊 Progresso do Edital</h3>
+                                <div class="space-y-6">
+                                    <div class="bg-gradient-to-r from-blue-500 to-purple-500 rounded-xl p-4 text-white">
+                                        <div class="font-semibold">Progresso Geral</div>
+                                        <div class="text-sm mt-1">0% concluído</div>
+                                        <div class="w-full bg-white/20 rounded-full h-3 mt-2">
+                                            <div class="bg-white h-3 rounded-full progresso-disciplina" style="width: 0%"></div>
+                                        </div>
+                                    </div>
+                                    <div class="grid grid-cols-2 gap-4">
+                                        <div class="bg-white p-4 rounded-xl text-center shadow">
+                                            <div class="text-2xl font-bold text-blue-600">0</div>
+                                            <div class="text-sm text-gray-600">Total de Assuntos</div>
+                                        </div>
+                                        <div class="bg-white p-4 rounded-xl text-center shadow">
+                                            <div class="text-2xl font-bold text-green-600">0</div>
+                                            <div class="text-sm text-gray-600">Concluídos</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <button class="w-full mt-6 bg-gradient-to-r from-green-600 to-blue-600 text-white py-3 rounded-xl font-semibold hover:shadow-lg transition-all">
+                                    📥 Exportar Progresso
+                                </button>
+                            </div>
+
+                            <!-- Card 3: Disciplinas do Edital -->
+                            <div class="glass-card rounded-2xl p-6 shadow-xl">
+                                <h3 class="text-2xl font-bold gradient-text mb-6">📚 Disciplinas do Edital</h3>
+                                <div class="space-y-4 max-h-96 overflow-y-auto">
+                                    ${this.dados.editalVerticalizado.disciplinas && this.dados.editalVerticalizado.disciplinas.length > 0 ? 
+                                        this.dados.editalVerticalizado.disciplinas.map(disciplina => {
+                                            const disciplinaBase = this.dados.disciplinas.find(d => d.id === disciplina.id);
+                                            if (!disciplinaBase) return '';
+                                            const totalAssuntos = disciplina.assuntos.length;
+                                            const assuntosConcluidos = disciplina.assuntos.filter(a => a.concluido).length;
+                                            const percentual = totalAssuntos > 0 ? Math.round((assuntosConcluidos / totalAssuntos) * 100) : 0;
+                                            return `
+                                                <div class="priority-item bg-white p-4 rounded-xl shadow border-l-4" style="border-left-color: ${disciplinaBase.cor}">
+                                                    <div class="flex justify-between items-center mb-2">
+                                                        <div class="font-semibold">${disciplinaBase.nome}</div>
+                                                        <div class="text-sm text-gray-600">${assuntosConcluidos}/${totalAssuntos}</div>
+                                                    </div>
+                                                    <div class="w-full bg-gray-200 rounded-full h-2">
+                                                        <div class="h-2 rounded-full progresso-disciplina" style="width: ${percentual}%; background-color: ${disciplinaBase.cor}"></div>
+                                                    </div>
+                                                    <div class="flex justify-between mt-2">
+                                                        <span class="text-xs text-gray-500">${percentual}% concluído</span>
+                                                        <button class="btn-acao text-red-500 hover:text-red-700 text-xs">
+                                                            Remover
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            `;
+                                        }).join('') : 
+                                        '<div class="text-center text-gray-500 py-8"><p>Nenhuma disciplina adicionada ao edital.</p></div>'
+                                    }
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Lista de Assuntos -->
+                        <div class="glass-card rounded-2xl p-6 shadow-xl mt-8">
+                            <h3 class="text-2xl font-bold gradient-text mb-6">📖 Assuntos por Disciplina</h3>
+                            <div>
+                                ${this.dados.editalVerticalizado.disciplinas && this.dados.editalVerticalizado.disciplinas.length > 0 ? 
+                                    this.dados.editalVerticalizado.disciplinas.map(disciplinaEdital => {
+                                        const disciplinaBase = this.dados.disciplinas.find(d => d.id === disciplinaEdital.id);
+                                        if (!disciplinaBase) return '';
+                                        return `
+                                            <div class="disciplina-edital mb-8" style="border-left-color: ${disciplinaBase.cor}">
+                                                <div class="bg-white p-4 rounded-t-xl shadow">
+                                                    <h4 class="text-xl font-bold" style="color: ${disciplinaBase.cor}">${disciplinaBase.nome}</h4>
+                                                    <div class="text-sm text-gray-600 mt-1">
+                                                        ${disciplinaEdital.assuntos.filter(a => a.concluido).length}/${disciplinaEdital.assuntos.length} assuntos concluídos
+                                                    </div>
+                                                </div>
+                                                <div class="space-y-2">
+                                                    ${disciplinaEdital.assuntos.length > 0 ? 
+                                                        disciplinaEdital.assuntos.map((assunto, index) => `
+                                                            <div class="assunto-item bg-white p-4 rounded-b-xl shadow flex items-center justify-between ${assunto.concluido ? 'assunto-concluido' : ''}">
+                                                                <div class="flex items-center gap-3">
+                                                                    <div class="checkbox-custom ${assunto.concluido ? 'checked' : ''}"></div>
+                                                                    <span class="${assunto.concluido ? 'line-through text-gray-500' : ''}">${assunto.nome}</span>
+                                                                </div>
+                                                                <button class="btn-acao text-red-500 hover:text-red-700">
+                                                                    🗑️
+                                                                </button>
+                                                            </div>
+                                                        `).join('') : 
+                                                        '<div class="bg-gray-50 p-4 rounded-b-xl text-center text-gray-500">Nenhum assunto cadastrado para esta disciplina.</div>'
+                                                    }
+                                                </div>
+                                            </div>
+                                        `;
+                                    }).join('') : 
+                                    '<div class="text-center text-gray-500 py-12"><p>Nenhum assunto cadastrado no edital.</p></div>'
+                                }
+                            </div>
+                        </div>
+                    </div>
+                `;
             },
             
-            abrirModalNovaDisciplinaEdital() {
-                document.getElementById('nova-disciplina-edital-nome').value = '';
-                document.getElementById('nova-disciplina-edital-cor').value = '#3B82F6';
-                mostrarModal('modal-nova-disciplina-edital');
-            },
-            
-            adicionarDisciplinaEdital() {
-                const nome = document.getElementById('nova-disciplina-edital-nome')?.value.trim();
-                const cor = document.getElementById('nova-disciplina-edital-cor')?.value;
-                
-                if (!nome) {
-                    AuthSystem.mostrarNotificacao('Por favor, digite o nome da disciplina', 'error');
-                    return;
-                }
-                
-                // Verificar se disciplina já existe
-                if (this.dados.disciplinas.some(d => d.nome.toLowerCase() === nome.toLowerCase())) {
-                    AuthSystem.mostrarNotificacao('Esta disciplina já existe', 'error');
-                    return;
-                }
-                
-                // Adicionar disciplina
-                const novaDisciplina = {
-                    id: Date.now().toString(),
-                    nome: nome,
-                    cor: cor,
-                    horasEstudadas: 0,
-                    questoesResolvidas: 0,
-                    progresso: 0
-                };
-                
-                this.dados.disciplinas.push(novaDisciplina);
-                
-                // Fechar modal e atualizar interface
-                fecharModal('modal-nova-disciplina-edital');
-                this.carregarSelectDisciplinasEdital();
-                this.carregarDisciplinas();
-                this.salvarDadosUsuario();
-                
-                AuthSystem.mostrarNotificacao('Disciplina adicionada com sucesso!', 'success');
-            },
-            
-            removerDisciplinaEdital(disciplinaId) {
-                if (confirm('Tem certeza que deseja remover esta disciplina do edital?')) {
-                    this.dados.editalVerticalizado.disciplinas = this.dados.editalVerticalizado.disciplinas.filter(d => d.id !== disciplinaId);
-                    this.carregarDisciplinasEdital();
-                    this.carregarAssuntosEdital();
-                    this.atualizarEstatisticasEdital();
-                    this.salvarDadosUsuario();
-                    
-                    AuthSystem.mostrarNotificacao('Disciplina removida do edital', 'success');
-                }
-            },
-            
-            removerAssunto(disciplinaId, assuntoIndex) {
-                if (confirm('Tem certeza que deseja remover este assunto?')) {
-                    const disciplina = this.dados.editalVerticalizado.disciplinas.find(d => d.id === disciplinaId);
-                    if (disciplina) {
-                        disciplina.assuntos.splice(assuntoIndex, 1);
-                        this.carregarAssuntosEdital();
-                        this.carregarDisciplinasEdital();
-                        this.atualizarEstatisticasEdital();
-                        this.salvarDadosUsuario();
-                        
-                        AuthSystem.mostrarNotificacao('Assunto removido', 'success');
-                    }
-                }
-            },
-            
-            marcarAssuntoConcluido(disciplinaId, assuntoIndex) {
-                const disciplina = this.dados.editalVerticalizado.disciplinas.find(d => d.id === disciplinaId);
-                if (disciplina && disciplina.assuntos[assuntoIndex]) {
-                    disciplina.assuntos[assuntoIndex].concluido = !disciplina.assuntos[assuntoIndex].concluido;
-                    this.carregarAssuntosEdital();
-                    this.carregarDisciplinasEdital();
-                    this.atualizarEstatisticasEdital();
-                    this.salvarDadosUsuario();
-                    
-                    const status = disciplina.assuntos[assuntoIndex].concluido ? 'concluído' : 'pendente';
-                    AuthSystem.mostrarNotificacao(`Assunto marcado como ${status}`, 'success');
-                }
-            },
-            
-            atualizarEstatisticasEdital() {
-                const totalAssuntos = this.dados.editalVerticalizado.disciplinas.reduce((total, disciplina) => total + disciplina.assuntos.length, 0);
-                const assuntosConcluidos = this.dados.editalVerticalizado.disciplinas.reduce((total, disciplina) => 
-                    total + disciplina.assuntos.filter(a => a.concluido).length, 0);
-                const percentual = totalAssuntos > 0 ? Math.round((assuntosConcluidos / totalAssuntos) * 100) : 0;
-                
-                document.getElementById('total-assuntos').textContent = totalAssuntos;
-                document.getElementById('assuntos-concluidos').textContent = assuntosConcluidos;
-                document.getElementById('progresso-geral-edital').textContent = `${percentual}% concluído`;
-                document.getElementById('barra-progresso-geral').style.width = `${percentual}%`;
-            },
-            
-            exportarProgressoEdital() {
-                if (!this.dados.editalVerticalizado.disciplinas || this.dados.editalVerticalizado.disciplinas.length === 0) {
-                    AuthSystem.mostrarNotificacao('Não há dados para exportar', 'error');
-                    return;
-                }
-                
-                const data = {
-                    nomeConcurso: this.dados.editalVerticalizado.nomeConcurso,
-                    dataExportacao: new Date().toISOString(),
-                    disciplinas: this.dados.editalVerticalizado.disciplinas.map(disciplina => {
-                        const disciplinaBase = this.dados.disciplinas.find(d => d.id === disciplina.id);
-                        return {
-                            nome: disciplinaBase?.nome || 'Desconhecida',
-                            cor: disciplinaBase?.cor || '#000000',
-                            assuntos: disciplina.assuntos.map(assunto => ({
-                                nome: assunto.nome,
-                                concluido: assunto.concluido,
-                                dataAdicao: assunto.dataAdicao
-                            }))
-                        };
-                    })
-                };
-                
-                const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `edital-${this.dados.editalVerticalizado.nomeConcurso || 'concurso'}-${new Date().toISOString().split('T')[0]}.json`;
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                URL.revokeObjectURL(url);
-                
-                AuthSystem.mostrarNotificacao('Progresso exportado com sucesso!', 'success');
-            },
-            
-            // =========================
-            // FUNÇÕES COMPARTILHADAS
-            // =========================
-            excluirDisciplina(disciplinaId) {
-                if (confirm('Tem certeza que deseja excluir esta disciplina? Esta ação não pode ser desfeita.')) {
-                    this.dados.disciplinas = this.dados.disciplinas.filter(d => d.id !== disciplinaId);
-                    
-                    if (this.dados.editalVerticalizado) {
-                        this.dados.editalVerticalizado.disciplinas = this.dados.editalVerticalizado.disciplinas.filter(edital => edital.id !== disciplinaId);
-                    }
-                    
-                    this.salvarDadosUsuario();
-                    this.carregarDisciplinas();
-                    this.carregarAbaEdital();
-                    
-                    AuthSystem.mostrarNotificacao('Disciplina excluída com sucesso!', 'success');
-                }
-            },
-            
-            abrirModalNovaDisciplina() {
-                mostrarModal('modal-nova-disciplina');
-            },
-            
-            adicionarDisciplina() {
-                const nome = document.getElementById('nova-disciplina-nome')?.value.trim();
-                const cor = document.getElementById('nova-disciplina-cor')?.value;
-                
-                if (!nome) {
-                    AuthSystem.mostrarNotificacao('Por favor, digite um nome para a disciplina', 'error');
-                    return;
-                }
-                
-                const disciplinaExistente = this.dados.disciplinas.find(d => d.nome.toLowerCase() === nome.toLowerCase());
-                if (disciplinaExistente) {
-                    AuthSystem.mostrarNotificacao('Já existe uma disciplina com este nome', 'error');
-                    return;
-                }
-                
-                if (!this.dados.disciplinas) {
-                    this.dados.disciplinas = [];
-                }
-                
-                const novaDisciplina = {
-                    id: Date.now().toString(),
-                    nome,
-                    cor: cor || '#3B82F6',
-                    horasEstudadas: 0,
-                    questoesResolvidas: 0,
-                    progresso: 0
-                };
-                
-                this.dados.disciplinas.push(novaDisciplina);
-                this.salvarDadosUsuario();
-                this.carregarDisciplinas();
-                fecharModal('modal-nova-disciplina');
-                
-                document.getElementById('nova-disciplina-nome').value = '';
-                
-                AuthSystem.mostrarNotificacao(`Disciplina "${nome}" adicionada com sucesso!`, 'success');
-            },
-            
-            iniciarSessaoEstudo() {
-                AuthSystem.mostrarNotificacao('Sessão de estudo iniciada!', 'success');
-            },
-            
-            iniciarPraticaRapida(questoes, disciplina) {
-                AuthSystem.mostrarNotificacao(`Iniciando ${questoes} questões de ${disciplina}`, 'info');
-            },
-            
-            mostrarDashboard() {
-                const progressoTab = document.querySelector('[data-tab="progresso"]');
-                if (progressoTab) {
-                    progressoTab.click();
-                }
-            },
-            
-            mostrarConfiguracoes() {
-                AuthSystem.mostrarNotificacao('Abrindo configurações...', 'info');
-            },
-            
-            atualizarMetricas() {
-                const totalHoras = (this.dados.disciplinas || []).reduce((sum, disc) => sum + (disc.horasEstudadas || 0), 0);
-                const totalQuestoes = (this.dados.disciplinas || []).reduce((sum, disc) => sum + (disc.questoesResolvidas || 0), 0);
-                
-                const metricTempo = document.getElementById('metric-tempo');
-                const metricQuestoes = document.getElementById('metric-questoes');
-                const totalHorasElem = document.getElementById('total-horas');
-                const totalQuestoesElem = document.getElementById('total-questoes');
-                
-                if (metricTempo) metricTempo.textContent = `${totalHoras}h`;
-                if (metricQuestoes) metricQuestoes.textContent = totalQuestoes;
-                if (totalHorasElem) totalHorasElem.textContent = `${totalHoras}h`;
-                if (totalQuestoesElem) totalQuestoesElem.textContent = totalQuestoes;
-            },
-            
-            atualizarInterface() {
-                this.atualizarMetricas();
-                this.carregarDisciplinas();
-            },
-            
-            salvarDadosUsuario() {
-                const usuarioIndex = AuthSystem.usuarios.findIndex(u => u.id === this.usuario.id);
-                if (usuarioIndex !== -1) {
-                    AuthSystem.usuarios[usuarioIndex].dados = this.dados;
-                    AuthSystem.salvarUsuarios();
-                    
-                    if (AuthSystem.usuarioLogado) {
-                        AuthSystem.usuarioLogado.dados = this.dados;
-                        localStorage.setItem('gfconcursos_usuario_logado', JSON.stringify(AuthSystem.usuarioLogado));
-                    }
-                }
-            },
-            
-            // =========================
-            // OUTRAS FUNÇÕES EXISTENTES
-            // =========================
-            carregarAbaCronograma() {
-                // Implementação existente do cronograma
-            },
-            
-            carregarAbaSimulados() {
-                // Implementação existente dos simulados
-            },
-            
-            carregarAbaRedacao() {
-                // Implementação existente da redação
-            },
-            
-            carregarAbaProgresso() {
-                // Implementação existente do progresso
-            },
-            
-            carregarAbaComunidade() {
-                // Implementação existente da comunidade
-            },
-            
-            // ... outras funções existentes
+            carregarAbaResumos() {
+                const mainContent = document.getElementById('main-content');
+                mainContent.innerHTML = `
+                    <div class="fade-in">
+                        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                            <!-- Card 1: Criar Novo Resumo -->
+                            <div class="glass-card rounded-2xl p-6 shadow-xl">
+                                <h3 class="text-2xl font-bold gradient-text mb-6">📝 Criar Novo Resumo</h3>
+                                <div class="space-y-4">
+                                    <div>
+                                        <label class="block text-sm font-semibold mb-2">Disciplina:</label>
+                                        <select class="w-full p-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                            <option value="">Selecione uma disciplina</option>
+                                            ${this.dados.disciplinas.map(d => `<option value="${d.id}">${d.nome}</option>`).join('')}
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-semibold mb-2">Assunto:</label>
+                                        <select class="w-full p-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                            <option value="">Selecione um assunto</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-semibold mb-2">Título do Resumo:</label>
+                                        <input type="text" class="w-full p-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Ex: Princípios Fundamentais da Constituição">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-semibold mb-2">Tags (separadas por vírgula):</label>
+                                        <input type="text" class="w-full p-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Ex: constituição, princípios, direitos">
+                                    </div>
+                                </div>
+                                <button class="w-full mt-6 bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 rounded-xl font-semibold hover:shadow-lg transition-all">
+                                    ✨ Criar Resumo
+                                </button>
+                            </div>
+
+                            <!-- Card 2: Estatísticas de Resumos -->
+                            <div class="glass-card rounded-2xl p-6 shadow-xl">
+                                <h3 class="text-2xl font-bold gradient-text mb-6">📊 Estatísticas</h3>
+                                <div class="space-y-6">
+                                    <div class="bg-gradient-to-r from-green-500 to-blue-500 rounded-xl p-4 text-white">
+                                        <div class="font-semibold">Resumos Criados</div>
+                                        <div class="text-3xl font-bold mt-2">${this.dados.resumos.length}</div>
+                                        <div class="text-sm opacity-90">Ao longo do tempo</div>
+                                    </div>
+                                    <div class="grid grid-cols-2 gap-4">
+                                        <div class="bg-white p-4 rounded-xl text-center shadow">
+                                            <div class="text-2xl font-bold text-blue-600">0</div>
+                                            <div class="text-sm text-gray-600">Hoje</div>
+                                        </div>
+                                        <div class="bg-white p-4 rounded-xl text-center shadow">
+                                            <div class="text-2xl font-bold text-purple-600">0</div>
+                                            <div class="text-sm text-gray-600">Esta Semana</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <button class="w-full mt-6 bg-gradient-to-r from-green-600 to-blue-600 text-white py-3 rounded-xl font-semibold hover:shadow-lg transition-all">
+                                    📥 Exportar Todos
+                                </button>
+                            </div>
+
+                            <!-- Card 3: Disciplinas com Resumos -->
+                            <div class="glass-card rounded-2xl p-6 shadow-xl">
+                                <h3 class="text-2xl font-bold gradient-text mb-6">📚 Disciplinas</h3>
+                                <div class="space-y-4 max-h-96 overflow-y-auto">
+                                    ${this.dados.resumos.length > 0 ? 
+                                        // Agrupar resumos por disciplina
+                                        Object.values(this.dados.resumos.reduce((acc, resumo) => {
+                                            if (!acc[resumo.disciplinaId]) {
+                                                acc[resumo.disciplinaId] = {
+                                                    disciplina: this.dados.disciplinas.find(d => d.id === resumo.disciplinaId),
+                                                    count: 0
+                                                };
+                                            }
+                                            acc[resumo.disciplinaId].count++;
+                                            return acc;
+                                        }, {})).map(({disciplina, count}) => `
+                                            <div class="priority-item bg-white p-4 rounded-xl shadow border-l-4 flex justify-between items-center" style="border-left-color: ${disciplina.cor}">
+                                                <div class="flex items-center">
+                                                    <div class="w-3 h-3 rounded-full mr-3" style="background-color: ${disciplina.cor}"></div>
+                                                    <span class="font-semibold">${disciplina.nome}</span>
+                                                </div>
+                                                <div class="text-sm text-gray-600">${count} resumo(s)</div>
+                                            </div>
+                                        `).join('') : 
+                                        '<div class="text-center text-gray-500 py-4"><p>Nenhum resumo criado.</p></div>'
+                                    }
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Lista de Resumos -->
+                        <div class="glass-card rounded-2xl p-6 shadow-xl mt-8">
+                            <div class="flex justify-between items-center mb-6">
+                                <h3 class="text-2xl font-bold gradient-text">📖 Meus Resumos</h3>
+                                <div class="flex gap-2">
+                                    <input type="text" class="p-2 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Buscar resumos...">
+                                    <select class="p-2 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                        <option value="">Todas as disciplinas</option>
+                                        ${this.dados.disciplinas.map(d => `<option value="${d.id}">${d.nome}</option>`).join('')}
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                ${this.dados.resumos.length > 0 ? 
+                                    this.dados.resumos.map(resumo => {
+                                        const dataFormatada = new Date(resumo.dataCriacao).toLocaleDateString('pt-BR');
+                                        const preview = resumo.conteudo ? resumo.conteudo.replace(/<[^>]*>/g, '').substring(0, 150) + '...' : 'Nenhum conteúdo adicionado ainda...';
+                                        return `
+                                            <div class="resumo-card bg-white rounded-xl shadow-lg p-6 priority-item" style="border-left-color: ${resumo.cor}">
+                                                <div class="flex justify-between items-start mb-3">
+                                                    <h4 class="font-bold text-lg text-gray-800 flex-1">${resumo.titulo}</h4>
+                                                    <div class="flex gap-1">
+                                                        <button class="btn-acao text-blue-500 hover:text-blue-700" title="Editar">
+                                                            ✏️
+                                                        </button>
+                                                        <button class="btn-acao text-green-500 hover:text-green-700" title="Visualizar">
+                                                            👁️
+                                                        </button>
+                                                        <button class="btn-acao text-red-500 hover:text-red-700" title="Excluir">
+                                                            🗑️
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                                <div class="text-sm text-gray-600 mb-2">
+                                                    <span class="font-semibold" style="color: ${resumo.cor}">${resumo.disciplinaNome}</span> • ${resumo.assunto}
+                                                </div>
+                                                <div class="resumo-preview text-gray-700 text-sm mb-3">
+                                                    ${preview}
+                                                </div>
+                                                <div class="flex flex-wrap gap-1 mb-3">
+                                                    ${resumo.tags.map(tag => `<span class="tag-resumo">${tag}</span>`).join('')}
+                                                </div>
+                                                <div class="text-xs text-gray-500 flex justify-between">
+                                                    <span>Criado: ${dataFormatada}</span>
+                                                    <span>${resumo.conteudo ? '💾' : '📝'}</span>
+                                                </div>
+                                            </div>
+                                        `;
+                                    }).join('') : 
+                                    '<div class="col-span-3 text-center text-gray-500 py-12"><div class="text-6xl mb-4">📝</div><p class="text-lg">Nenhum resumo criado ainda.</p></div>'
+                                }
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
         };
 
         // =========================
         // INICIALIZAÇÃO
         // =========================
         document.addEventListener('DOMContentLoaded', function() {
+            // Inicializar sistema de autenticação
             AuthSystem.init();
+            
+            // Tornar sistemas globais para debug
             window.AuthSystem = AuthSystem;
             window.GFConcursosApp = GFConcursosApp;
+            
             console.log('GFConcursos inicializado com sucesso!');
+            console.log('Usuários cadastrados:', AuthSystem.usuarios.length);
         });
     </script>
 </body>
