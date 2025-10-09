@@ -226,77 +226,6 @@
             color: #6c757d;
             font-style: italic;
         }
-
-        /* Estilos para o cronômetro */
-        .cronometro {
-            font-family: 'Courier New', monospace;
-            font-size: 3rem;
-            font-weight: bold;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            text-align: center;
-            margin: 1rem 0;
-        }
-
-        .btn-cronometro {
-            padding: 12px 24px;
-            font-size: 1.1rem;
-            font-weight: 600;
-            border-radius: 12px;
-            transition: all 0.3s ease;
-            margin: 0 8px;
-        }
-
-        .btn-iniciar {
-            background: linear-gradient(135deg, #10b981 0%, #34d399 100%);
-            color: white;
-        }
-
-        .btn-pausar {
-            background: linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%);
-            color: white;
-        }
-
-        .btn-parar {
-            background: linear-gradient(135deg, #ef4444 0%, #f87171 100%);
-            color: white;
-        }
-
-        .btn-reiniciar {
-            background: linear-gradient(135deg, #8b5cf6 0%, #a78bfa 100%);
-            color: white;
-        }
-
-        .assunto-concluido {
-            background-color: #f0fdf4 !important;
-            border-left: 4px solid #10b981 !important;
-        }
-
-        .assunto-pendente {
-            background-color: #fef2f2 !important;
-            border-left: 4px solid #ef4444 !important;
-        }
-
-        .assunto-andamento {
-            background-color: #fffbeb !important;
-            border-left: 4px solid #f59e0b !important;
-        }
-
-        .tempo-pendente {
-            color: #ef4444;
-            font-weight: bold;
-        }
-
-        .tempo-concluido {
-            color: #10b981;
-            font-weight: bold;
-        }
-
-        .cronometro-ativo {
-            border: 3px solid #10b981;
-            box-shadow: 0 0 20px rgba(16, 185, 129, 0.3);
-        }
     </style>
 </head>
 <body class="min-h-screen">
@@ -940,40 +869,6 @@
         </div>
     </div>
 
-    <!-- Modal Adicionar Assunto ao Cronograma -->
-    <div id="modal-adicionar-assunto-cronograma" class="fixed inset-0 flex items-center justify-center z-50 hidden">
-        <div class="modal-overlay absolute inset-0"></div>
-        <div class="glass-card rounded-2xl p-8 shadow-2xl w-full max-w-md mx-4 z-10">
-            <h3 class="text-2xl font-bold gradient-text mb-4">Adicionar Assunto ao Cronograma</h3>
-            <div class="space-y-4">
-                <div>
-                    <label class="block text-sm font-semibold mb-2">Disciplina:</label>
-                    <select id="select-disciplina-cronograma" class="w-full p-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                        <option value="">Selecione uma disciplina</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-sm font-semibold mb-2">Assunto:</label>
-                    <select id="select-assunto-cronograma" class="w-full p-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                        <option value="">Selecione um assunto</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-sm font-semibold mb-2">Tempo de Estudo (minutos):</label>
-                    <input type="number" id="input-tempo-estudo-cronograma" class="w-full p-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Ex: 60" min="15" step="15">
-                </div>
-                <div class="flex gap-4">
-                    <button onclick="fecharModal('modal-adicionar-assunto-cronograma')" class="flex-1 bg-gray-500 text-white py-3 rounded-xl font-semibold hover:bg-gray-600 transition-all">
-                        Cancelar
-                    </button>
-                    <button id="btn-confirmar-assunto-cronograma" class="flex-1 bg-blue-600 text-white py-3 rounded-xl font-semibold hover:bg-blue-700 transition-all">
-                        Adicionar
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <script>
         // =========================
         // SISTEMA DE AUTENTICAÇÃO
@@ -1133,11 +1028,6 @@
                         totalQuestoes: 0,
                         diasConsecutivos: 0,
                         ultimoAcesso: new Date().toISOString()
-                    },
-                    cronometro: {
-                        tempoTotal: 0,
-                        tempoHoje: 0,
-                        historico: {}
                     }
                 };
             },
@@ -1218,176 +1108,6 @@
         };
 
         // =========================
-        // SISTEMA DE CRONÔMETRO
-        // =========================
-        const CronometroSystem = {
-            tempo: 0,
-            rodando: false,
-            intervalo: null,
-            tempoInicio: null,
-            
-            init() {
-                this.carregarTempoSalvo();
-                this.atualizarDisplay();
-                this.configurarEventListeners();
-            },
-            
-            configurarEventListeners() {
-                document.addEventListener('click', (e) => {
-                    if (e.target.id === 'btn-iniciar-cronometro') {
-                        this.iniciar();
-                    } else if (e.target.id === 'btn-pausar-cronometro') {
-                        this.pausar();
-                    } else if (e.target.id === 'btn-parar-cronometro') {
-                        this.parar();
-                    } else if (e.target.id === 'btn-reiniciar-cronometro') {
-                        this.reiniciar();
-                    }
-                });
-            },
-            
-            iniciar() {
-                if (!this.rodando) {
-                    this.rodando = true;
-                    this.tempoInicio = Date.now() - this.tempo * 1000;
-                    this.intervalo = setInterval(() => {
-                        this.tempo = Math.floor((Date.now() - this.tempoInicio) / 1000);
-                        this.atualizarDisplay();
-                        this.salvarTempo();
-                    }, 1000);
-                    
-                    document.getElementById('cronometro-container').classList.add('cronometro-ativo');
-                    AuthSystem.mostrarNotificacao('Cronômetro iniciado!', 'success');
-                }
-            },
-            
-            pausar() {
-                if (this.rodando) {
-                    this.rodando = false;
-                    clearInterval(this.intervalo);
-                    this.salvarTempo();
-                    document.getElementById('cronometro-container').classList.remove('cronometro-ativo');
-                    AuthSystem.mostrarNotificacao('Cronômetro pausado!', 'info');
-                }
-            },
-            
-            parar() {
-                this.rodando = false;
-                clearInterval(this.intervalo);
-                this.registrarTempoEstudo();
-                this.tempo = 0;
-                this.atualizarDisplay();
-                this.salvarTempo();
-                document.getElementById('cronometro-container').classList.remove('cronometro-ativo');
-                AuthSystem.mostrarNotificacao('Tempo de estudo registrado!', 'success');
-            },
-            
-            reiniciar() {
-                this.parar();
-                this.tempo = 0;
-                this.atualizarDisplay();
-            },
-            
-            atualizarDisplay() {
-                const horas = Math.floor(this.tempo / 3600);
-                const minutos = Math.floor((this.tempo % 3600) / 60);
-                const segundos = this.tempo % 60;
-                
-                const display = document.getElementById('cronometro-display');
-                if (display) {
-                    display.textContent = 
-                        `${horas.toString().padStart(2, '0')}:${minutos.toString().padStart(2, '0')}:${segundos.toString().padStart(2, '0')}`;
-                }
-            },
-            
-            salvarTempo() {
-                if (AuthSystem.usuarioLogado) {
-                    const usuario = AuthSystem.usuarios.find(u => u.id === AuthSystem.usuarioLogado.id);
-                    if (usuario && usuario.dados) {
-                        usuario.dados.cronometro = usuario.dados.cronometro || {};
-                        usuario.dados.cronometro.tempoAtual = this.tempo;
-                        usuario.dados.cronometro.rodando = this.rodando;
-                        AuthSystem.salvarUsuarios();
-                    }
-                }
-            },
-            
-            carregarTempoSalvo() {
-                if (AuthSystem.usuarioLogado) {
-                    const usuario = AuthSystem.usuarios.find(u => u.id === AuthSystem.usuarioLogado.id);
-                    if (usuario && usuario.dados && usuario.dados.cronometro) {
-                        this.tempo = usuario.dados.cronometro.tempoAtual || 0;
-                        this.rodando = usuario.dados.cronometro.rodando || false;
-                        
-                        if (this.rodando) {
-                            this.iniciar();
-                        }
-                    }
-                }
-            },
-            
-            registrarTempoEstudo() {
-                if (AuthSystem.usuarioLogado && this.tempo > 0) {
-                    const usuario = AuthSystem.usuarios.find(u => u.id === AuthSystem.usuarioLogado.id);
-                    if (usuario && usuario.dados) {
-                        const hoje = new Date().toDateString();
-                        const horasEstudadas = this.tempo / 3600;
-                        
-                        // Atualizar tempo total
-                        usuario.dados.cronometro.tempoTotal = (usuario.dados.cronometro.tempoTotal || 0) + horasEstudadas;
-                        
-                        // Atualizar tempo de hoje
-                        usuario.dados.cronometro.historico = usuario.dados.cronometro.historico || {};
-                        usuario.dados.cronometro.historico[hoje] = (usuario.dados.cronometro.historico[hoje] || 0) + horasEstudadas;
-                        
-                        // Atualizar progresso geral
-                        usuario.dados.progresso.totalHoras = usuario.dados.cronometro.tempoTotal;
-                        
-                        AuthSystem.salvarUsuarios();
-                        
-                        // Atualizar display do tempo
-                        this.atualizarTempoDisplay();
-                    }
-                }
-            },
-            
-            atualizarTempoDisplay() {
-                if (AuthSystem.usuarioLogado) {
-                    const usuario = AuthSystem.usuarios.find(u => u.id === AuthSystem.usuarioLogado.id);
-                    if (usuario && usuario.dados && usuario.dados.cronometro) {
-                        const hoje = new Date().toDateString();
-                        const tempoHoje = usuario.dados.cronometro.historico[hoje] || 0;
-                        const tempoTotal = usuario.dados.cronometro.tempoTotal || 0;
-                        
-                        const horasHoje = Math.floor(tempoHoje);
-                        const minutosHoje = Math.floor((tempoHoje - horasHoje) * 60);
-                        
-                        const horasTotal = Math.floor(tempoTotal);
-                        const minutosTotal = Math.floor((tempoTotal - horasTotal) * 60);
-                        
-                        const tempoHojeElement = document.getElementById('tempo-hoje');
-                        const tempoTotalElement = document.getElementById('tempo-total');
-                        
-                        if (tempoHojeElement) {
-                            tempoHojeElement.textContent = `${horasHoje}h ${minutosHoje}min`;
-                        }
-                        if (tempoTotalElement) {
-                            tempoTotalElement.textContent = `${horasTotal}h ${minutosTotal}min`;
-                        }
-                    }
-                }
-            },
-            
-            formatarTempo(segundos) {
-                const horas = Math.floor(segundos / 3600);
-                const minutos = Math.floor((segundos % 3600) / 60);
-                const segs = segundos % 60;
-                
-                return `${horas.toString().padStart(2, '0')}:${minutos.toString().padStart(2, '0')}:${segs.toString().padStart(2, '0')}`;
-            }
-        };
-
-        // =========================
         // APLICAÇÃO PRINCIPAL
         // =========================
         const AplicacaoPrincipal = {
@@ -1401,7 +1121,6 @@
                 this.carregarInterface();
                 this.configurarNavegacao();
                 this.carregarDashboard();
-                CronometroSystem.init();
             },
             
             carregarInterface() {
@@ -1425,9 +1144,6 @@
                                 </div>
                                 <div class="flex items-center space-x-4">
                                     <span class="text-gray-700">Olá, ${this.usuario.nome.split(' ')[0]}!</span>
-                                    <button id="btn-configuracoes" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition-colors">
-                                        ⚙️ Configurações
-                                    </button>
                                     <button id="btn-logout" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition-colors">
                                         Sair
                                     </button>
@@ -1454,11 +1170,6 @@
                 // Configurar logout
                 document.getElementById('btn-logout').addEventListener('click', () => {
                     AuthSystem.fazerLogout();
-                });
-
-                // Configurar configurações
-                document.getElementById('btn-configuracoes').addEventListener('click', () => {
-                    this.abrirConfiguracoes();
                 });
             },
             
@@ -1524,31 +1235,6 @@
                             <p class="text-gray-600">Acompanhe seu progresso geral</p>
                         </div>
                         
-                        <!-- Cronômetro de Estudo -->
-                        <div id="cronometro-container" class="glass-card rounded-2xl p-6 mb-8">
-                            <div class="flex justify-between items-center mb-6">
-                                <h3 class="text-2xl font-bold gradient-text">⏱️ Cronômetro de Estudo</h3>
-                                <div class="flex items-center space-x-2">
-                                    <span class="text-sm text-gray-600">Tempo hoje:</span>
-                                    <span id="tempo-hoje" class="font-bold text-green-600">0h 0min</span>
-                                </div>
-                            </div>
-                            
-                            <div class="text-center">
-                                <div class="cronometro" id="cronometro-display">00:00:00</div>
-                                <div class="flex justify-center space-x-4 mt-6">
-                                    <button id="btn-iniciar-cronometro" class="btn-cronometro btn-iniciar">▶️ Iniciar</button>
-                                    <button id="btn-pausar-cronometro" class="btn-cronometro btn-pausar">⏸️ Pausar</button>
-                                    <button id="btn-parar-cronometro" class="btn-cronometro btn-parar">⏹️ Parar</button>
-                                    <button id="btn-reiniciar-cronometro" class="btn-cronometro btn-reiniciar">🔄 Reiniciar</button>
-                                </div>
-                            </div>
-                            
-                            <div class="mt-6 text-center text-gray-600">
-                                <p>Tempo total de estudo: <span id="tempo-total" class="font-semibold">0h 0min</span></p>
-                            </div>
-                        </div>
-                        
                         <!-- Métricas Gerais -->
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                             <div class="glass-card rounded-2xl p-6 text-center">
@@ -1587,9 +1273,6 @@
                         </div>
                     </div>
                 `;
-                
-                // Atualizar display do tempo
-                CronometroSystem.atualizarTempoDisplay();
             },
             
             renderizarDisciplinasDashboard() {
@@ -1670,14 +1353,9 @@
                         <div class="glass-card rounded-2xl p-6 mb-6">
                             <div class="flex justify-between items-center mb-6">
                                 <h3 class="text-xl font-semibold">Minha Semana</h3>
-                                <div class="flex gap-2">
-                                    <button onclick="abrirModalNovaTarefa()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors">
-                                        + Nova Tarefa
-                                    </button>
-                                    <button onclick="AplicacaoPrincipal.abrirModalAdicionarAssuntoCronograma()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors">
-                                        + Assunto com Tempo
-                                    </button>
-                                </div>
+                                <button onclick="abrirModalNovaTarefa()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors">
+                                    + Nova Tarefa
+                                </button>
                             </div>
                             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-7 gap-4" id="cronograma-semana">
                                 ${this.renderizarCronogramaSemana()}
@@ -1705,11 +1383,6 @@
                                                 <span class="text-xs text-gray-500">${tarefa.horario}</span>
                                             </div>
                                             <div class="text-xs text-gray-600 mt-1">${tarefa.disciplina}</div>
-                                            ${tarefa.tempoMeta ? `
-                                                <div class="text-xs text-gray-500 mt-1">
-                                                    ⏱️ ${this.formatarTempo(tarefa.tempoEstudado || 0)}/${this.formatarTempo(tarefa.tempoMeta)}
-                                                </div>
-                                            ` : ''}
                                         </div>
                                     `).join('') : 
                                     '<p class="text-gray-400 text-sm text-center">Nenhuma tarefa</p>'
@@ -1719,142 +1392,1122 @@
                     `;
                 }).join('');
             },
-
-            abrirModalAdicionarAssuntoCronograma() {
+            
+            // ========== EDITAL VERTICAL ==========
+            carregarEditalVertical() {
+                const conteudoPrincipal = document.getElementById('conteudo-principal');
+                const edital = this.dados.editalVerticalizado;
+                
+                conteudoPrincipal.innerHTML = `
+                    <div class="fade-in">
+                        <div class="mb-8">
+                            <h2 class="text-3xl font-bold gradient-text mb-2">Edital Verticalizado</h2>
+                            <p class="text-gray-600">Organize os conteúdos do seu edital</p>
+                        </div>
+                        
+                        <div class="glass-card rounded-2xl p-6 mb-6">
+                            <div class="flex justify-between items-center mb-6">
+                                <h3 class="text-xl font-semibold">${edital.nomeConcurso || 'Meu Concurso'}</h3>
+                                <div class="flex gap-2">
+                                    <button onclick="abrirModalNovaDisciplinaEdital()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors">
+                                        + Disciplina
+                                    </button>
+                                    <button onclick="AplicacaoPrincipal.editarNomeConcurso()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors">
+                                        📝 Editar
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div id="lista-disciplinas-edital">
+                                ${this.renderizarDisciplinasEdital()}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            },
+            
+            renderizarDisciplinasEdital() {
+                const disciplinas = this.dados.editalVerticalizado.disciplinas || [];
+                
+                if (disciplinas.length === 0) {
+                    return `
+                        <div class="text-center py-8">
+                            <p class="text-gray-500 mb-4">Nenhuma disciplina adicionada ao edital ainda.</p>
+                            <button onclick="abrirModalNovaDisciplinaEdital()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors">
+                                Adicionar Primeira Disciplina
+                            </button>
+                        </div>
+                    `;
+                }
+                
+                return disciplinas.map(disciplina => {
+                    const totalAssuntos = disciplina.assuntos?.length || 0;
+                    const assuntosConcluidos = disciplina.assuntos?.filter(a => a.concluido)?.length || 0;
+                    const progresso = totalAssuntos > 0 ? Math.round((assuntosConcluidos / totalAssuntos) * 100) : 0;
+                    
+                    return `
+                        <div class="disciplina-edital rounded-xl p-4 mb-4 ${assuntosConcluidos === totalAssuntos ? 'assunto-concluido' : ''}" 
+                             style="border-left-color: ${disciplina.cor}">
+                            <div class="flex justify-between items-start mb-3">
+                                <div>
+                                    <h4 class="font-semibold text-lg" style="color: ${disciplina.cor}">${disciplina.nome}</h4>
+                                    <p class="text-sm text-gray-600">${assuntosConcluidos}/${totalAssuntos} assuntos concluídos</p>
+                                </div>
+                                <span class="font-semibold">${progresso}%</span>
+                            </div>
+                            
+                            <div class="w-full bg-gray-200 rounded-full h-2 mb-3">
+                                <div class="progresso-disciplina h-2 rounded-full" 
+                                     style="width: ${progresso}%; background-color: ${disciplina.cor}"></div>
+                            </div>
+                            
+                            ${disciplina.assuntos && disciplina.assuntos.length > 0 ? `
+                                <div class="space-y-2">
+                                    ${disciplina.assuntos.map(assunto => `
+                                        <div class="flex items-center justify-between p-2 bg-gray-50 rounded">
+                                            <div class="flex items-center">
+                                                <div class="checkbox-custom mr-3 ${assunto.concluido ? 'checked' : ''}" 
+                                                     onclick="AplicacaoPrincipal.toggleAssunto('${disciplina.id}', '${assunto.id}')">
+                                                </div>
+                                                <span class="${assunto.concluido ? 'tarefa-concluida text-gray-500' : ''}">${assunto.nome}</span>
+                                            </div>
+                                            <button onclick="AplicacaoPrincipal.removerAssunto('${disciplina.id}', '${assunto.id}')" 
+                                                    class="text-red-500 hover:text-red-700 btn-acao">
+                                                🗑️
+                                            </button>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            ` : ''}
+                            
+                            <div class="flex gap-2 mt-3">
+                                <input type="text" id="novo-assunto-${disciplina.id}" 
+                                       class="flex-1 p-2 border rounded-lg text-sm" 
+                                       placeholder="Novo assunto...">
+                                <button onclick="AplicacaoPrincipal.adicionarAssunto('${disciplina.id}')" 
+                                        class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg text-sm transition-colors">
+                                    Adicionar
+                                </button>
+                                <button onclick="AplicacaoPrincipal.removerDisciplinaEdital('${disciplina.id}')" 
+                                        class="bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-lg text-sm transition-colors">
+                                    Remover
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            },
+            
+            editarNomeConcurso() {
+                const edital = this.dados.editalVerticalizado;
+                const novoNome = prompt('Digite o nome do concurso:', edital.nomeConcurso || '');
+                
+                if (novoNome !== null) {
+                    edital.nomeConcurso = novoNome.trim();
+                    this.salvarDadosUsuario();
+                    this.carregarEditalVertical();
+                    AuthSystem.mostrarNotificacao('Nome do concurso atualizado!', 'success');
+                }
+            },
+            
+            adicionarAssunto(disciplinaId) {
+                const input = document.getElementById(`novo-assunto-${disciplinaId}`);
+                const nomeAssunto = input.value.trim();
+                
+                if (!nomeAssunto) {
+                    AuthSystem.mostrarNotificacao('Digite o nome do assunto', 'error');
+                    return;
+                }
+                
+                const disciplina = this.dados.editalVerticalizado.disciplinas
+                    .find(d => d.id === disciplinaId);
+                
+                if (disciplina) {
+                    if (!disciplina.assuntos) {
+                        disciplina.assuntos = [];
+                    }
+                    
+                    const novoAssunto = {
+                        id: Date.now().toString(),
+                        nome: nomeAssunto,
+                        concluido: false
+                    };
+                    
+                    disciplina.assuntos.push(novoAssunto);
+                    this.salvarDadosUsuario();
+                    
+                    input.value = '';
+                    this.carregarEditalVertical();
+                    AuthSystem.mostrarNotificacao('Assunto adicionado!', 'success');
+                }
+            },
+            
+            toggleAssunto(disciplinaId, assuntoId) {
+                const disciplina = this.dados.editalVerticalizado.disciplinas
+                    .find(d => d.id === disciplinaId);
+                
+                if (disciplina && disciplina.assuntos) {
+                    const assunto = disciplina.assuntos.find(a => a.id === assuntoId);
+                    if (assunto) {
+                        assunto.concluido = !assunto.concluido;
+                        this.salvarDadosUsuario();
+                        this.carregarEditalVertical();
+                    }
+                }
+            },
+            
+            removerAssunto(disciplinaId, assuntoId) {
+                const disciplina = this.dados.editalVerticalizado.disciplinas
+                    .find(d => d.id === disciplinaId);
+                
+                if (disciplina && disciplina.assuntos) {
+                    disciplina.assuntos = disciplina.assuntos.filter(a => a.id !== assuntoId);
+                    this.salvarDadosUsuario();
+                    this.carregarEditalVertical();
+                    AuthSystem.mostrarNotificacao('Assunto removido!', 'success');
+                }
+            },
+            
+            removerDisciplinaEdital(disciplinaId) {
+                if (confirm('Tem certeza que deseja remover esta disciplina do edital?')) {
+                    this.dados.editalVerticalizado.disciplinas = 
+                        this.dados.editalVerticalizado.disciplinas.filter(d => d.id !== disciplinaId);
+                    this.salvarDadosUsuario();
+                    this.carregarEditalVertical();
+                    AuthSystem.mostrarNotificacao('Disciplina removida!', 'success');
+                }
+            },
+            
+            // ========== RESUMOS ==========
+            carregarResumos() {
+                const conteudoPrincipal = document.getElementById('conteudo-principal');
+                const resumos = this.dados.resumos || [];
+                
+                conteudoPrincipal.innerHTML = `
+                    <div class="fade-in">
+                        <div class="mb-8">
+                            <h2 class="text-3xl font-bold gradient-text mb-2">Meus Resumos</h2>
+                            <p class="text-gray-600">Organize e revise seus resumos</p>
+                        </div>
+                        
+                        <div class="glass-card rounded-2xl p-6 mb-6">
+                            <div class="flex justify-between items-center mb-6">
+                                <h3 class="text-xl font-semibold">Todos os Resumos</h3>
+                                <button onclick="AplicacaoPrincipal.novoResumo()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors">
+                                    + Novo Resumo
+                                </button>
+                            </div>
+                            
+                            <!-- Filtros -->
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                                <div>
+                                    <label class="block text-sm font-semibold mb-2">Disciplina:</label>
+                                    <select id="filtro-disciplina-resumo" class="w-full p-3 border rounded-xl">
+                                        <option value="">Todas as disciplinas</option>
+                                        ${this.dados.disciplinas.map(d => `<option value="${d.id}">${d.nome}</option>`).join('')}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-semibold mb-2">Ordenar por:</label>
+                                    <select id="ordenar-resumo" class="w-full p-3 border rounded-xl">
+                                        <option value="data">Data de Criação</option>
+                                        <option value="titulo">Título</option>
+                                        <option value="disciplina">Disciplina</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-semibold mb-2">Buscar:</label>
+                                    <input type="text" id="buscar-resumo" class="w-full p-3 border rounded-xl" placeholder="Digite para buscar...">
+                                </div>
+                            </div>
+                            
+                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="lista-resumos">
+                                ${this.renderizarResumos()}
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                // Configurar event listeners para filtros
+                document.getElementById('filtro-disciplina-resumo').addEventListener('change', () => this.filtrarResumos());
+                document.getElementById('ordenar-resumo').addEventListener('change', () => this.filtrarResumos());
+                document.getElementById('buscar-resumo').addEventListener('input', () => this.filtrarResumos());
+            },
+            
+            renderizarResumos() {
+                const resumos = this.dados.resumos || [];
+                
+                if (resumos.length === 0) {
+                    return `
+                        <div class="col-span-full text-center py-8">
+                            <p class="text-gray-500 mb-4">Nenhum resumo criado ainda.</p>
+                            <button onclick="AplicacaoPrincipal.novoResumo()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors">
+                                Criar Primeiro Resumo
+                            </button>
+                        </div>
+                    `;
+                }
+                
+                return resumos.map(resumo => {
+                    const data = new Date(resumo.dataCriacao).toLocaleDateString('pt-BR');
+                    const preview = resumo.conteudo.length > 150 ? 
+                        resumo.conteudo.substring(0, 150) + '...' : resumo.conteudo;
+                    
+                    return `
+                        <div class="resumo-card border rounded-xl p-4 bg-white">
+                            <h4 class="font-semibold text-lg mb-2">${resumo.titulo}</h4>
+                            <div class="flex gap-2 mb-3 flex-wrap">
+                                ${resumo.tags.map(tag => `
+                                    <span class="tag-resumo">${tag}</span>
+                                `).join('')}
+                            </div>
+                            <div class="resumo-preview text-sm text-gray-600 mb-3">
+                                ${preview}
+                            </div>
+                            <div class="flex justify-between items-center text-xs text-gray-500">
+                                <span>${data}</span>
+                                <span>${resumo.disciplina}</span>
+                            </div>
+                            <div class="flex gap-2 mt-3">
+                                <button onclick="AplicacaoPrincipal.verResumo('${resumo.id}')" 
+                                        class="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg text-sm transition-colors">
+                                    👀 Ver
+                                </button>
+                                <button onclick="AplicacaoPrincipal.editarResumo('${resumo.id}')" 
+                                        class="flex-1 bg-green-600 hover:bg-green-700 text-white py-2 rounded-lg text-sm transition-colors">
+                                    ✏️ Editar
+                                </button>
+                                <button onclick="AplicacaoPrincipal.excluirResumo('${resumo.id}')" 
+                                        class="flex-1 bg-red-600 hover:bg-red-700 text-white py-2 rounded-lg text-sm transition-colors">
+                                    🗑️ Excluir
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            },
+            
+            novoResumo() {
+                // Limpar campos do modal
+                document.getElementById('editar-resumo-titulo').value = '';
+                document.getElementById('editar-resumo-disciplina').value = '';
+                document.getElementById('editar-resumo-assunto').innerHTML = '<option value="">Selecione um assunto</option>';
+                document.getElementById('editar-resumo-tags').value = '';
+                document.getElementById('editar-resumo-conteudo').innerHTML = '';
+                document.getElementById('charCount').textContent = '0 caracteres';
+                
                 // Preencher disciplinas
-                const selectDisciplina = document.getElementById('select-disciplina-cronograma');
+                const selectDisciplina = document.getElementById('editar-resumo-disciplina');
                 selectDisciplina.innerHTML = '<option value="">Selecione uma disciplina</option>';
                 this.dados.disciplinas.forEach(disciplina => {
                     selectDisciplina.innerHTML += `<option value="${disciplina.id}">${disciplina.nome}</option>`;
                 });
-
-                // Limpar assuntos
-                document.getElementById('select-assunto-cronograma').innerHTML = '<option value="">Selecione um assunto</option>';
-                document.getElementById('input-tempo-estudo-cronograma').value = '';
-
+                
                 // Configurar evento para carregar assuntos
-                selectDisciplina.onchange = () => {
+                selectDisciplina.addEventListener('change', () => {
                     const disciplinaId = selectDisciplina.value;
-                    this.carregarAssuntosDisciplinaCronograma(disciplinaId);
-                };
-
-                // Configurar botão de confirmação
-                document.getElementById('btn-confirmar-assunto-cronograma').onclick = () => this.adicionarAssuntoCronograma();
-
-                mostrarModal('modal-adicionar-assunto-cronograma');
+                    this.carregarAssuntosParaResumo(disciplinaId);
+                });
+                
+                // Configurar botão de salvar
+                document.getElementById('btn-salvar-resumo').onclick = () => this.salvarNovoResumo();
+                
+                mostrarModal('modal-editar-resumo');
             },
-
-            carregarAssuntosDisciplinaCronograma(disciplinaId) {
-                const selectAssunto = document.getElementById('select-assunto-cronograma');
+            
+            carregarAssuntosParaResumo(disciplinaId) {
+                const selectAssunto = document.getElementById('editar-resumo-assunto');
                 selectAssunto.innerHTML = '<option value="">Selecione um assunto</option>';
-
+                
                 if (!disciplinaId) return;
-
-                const disciplina = this.dados.disciplinas.find(d => d.id === disciplinaId);
+                
+                const disciplina = this.dados.disciplinas.find(d => d.id == disciplinaId);
                 if (disciplina && disciplina.assuntos) {
                     disciplina.assuntos.forEach(assunto => {
                         selectAssunto.innerHTML += `<option value="${assunto.id}">${assunto.nome}</option>`;
                     });
                 }
             },
-
-            adicionarAssuntoCronograma() {
-                const disciplinaId = document.getElementById('select-disciplina-cronograma').value;
-                const assuntoId = document.getElementById('select-assunto-cronograma').value;
-                const tempoEstudo = parseInt(document.getElementById('input-tempo-estudo-cronograma').value);
-
-                if (!disciplinaId || !assuntoId || !tempoEstudo) {
-                    AuthSystem.mostrarNotificacao('Por favor, preencha todos os campos.', 'error');
-                    return;
-                }
-
-                if (tempoEstudo < 15) {
-                    AuthSystem.mostrarNotificacao('O tempo mínimo de estudo é 15 minutos.', 'error');
-                    return;
-                }
-
-                const disciplina = this.dados.disciplinas.find(d => d.id === disciplinaId);
-                const assunto = disciplina.assuntos.find(a => a.id === assuntoId);
-
-                const novaTarefa = {
-                    id: Date.now().toString(),
-                    titulo: `Estudar ${assunto.nome}`,
-                    disciplina: disciplina.nome,
-                    disciplinaId: disciplinaId,
-                    assuntoId: assuntoId,
-                    dia: new Date().getDay(),
-                    horario: '00:00',
-                    tempoMeta: tempoEstudo * 60, // Converter para segundos
-                    tempoEstudado: 0,
-                    cor: disciplina.cor,
-                    concluida: false,
-                    tipo: 'assunto_tempo'
-                };
-
-                if (!this.dados.cronograma) {
-                    this.dados.cronograma = [];
-                }
-
-                this.dados.cronograma.push(novaTarefa);
-                this.salvarDadosUsuario();
-
-                fecharModal('modal-adicionar-assunto-cronograma');
-                this.carregarCronograma();
-                AuthSystem.mostrarNotificacao('Assunto adicionado ao cronograma!', 'success');
-            },
-
-            formatarTempo(segundos) {
-                const horas = Math.floor(segundos / 3600);
-                const minutos = Math.floor((segundos % 3600) / 60);
+            
+            salvarNovoResumo() {
+                const titulo = document.getElementById('editar-resumo-titulo').value.trim();
+                const disciplinaId = document.getElementById('editar-resumo-disciplina').value;
+                const assuntoId = document.getElementById('editar-resumo-assunto').value;
+                const tags = document.getElementById('editar-resumo-tags').value;
+                const conteudo = document.getElementById('editar-resumo-conteudo').innerHTML;
                 
-                if (horas > 0) {
-                    return `${horas}h ${minutos.toString().padStart(2, '0')}min`;
-                } else {
-                    return `${minutos}min`;
+                if (!titulo || !disciplinaId || !conteudo) {
+                    AuthSystem.mostrarNotificacao('Preencha título, disciplina e conteúdo', 'error');
+                    return;
                 }
+                
+                const disciplina = this.dados.disciplinas.find(d => d.id == disciplinaId);
+                const assunto = assuntoId ? (disciplina.assuntos.find(a => a.id == assuntoId) || { nome: 'Geral' }) : { nome: 'Geral' };
+                
+                const tagsArray = tags.split(',').map(tag => tag.trim()).filter(tag => tag !== '');
+                
+                const novoResumo = {
+                    id: Date.now().toString(),
+                    titulo,
+                    disciplina: disciplina.nome,
+                    disciplinaId: disciplina.id,
+                    assunto: assunto.nome,
+                    assuntoId: assunto.id || 'geral',
+                    tags: tagsArray,
+                    conteudo,
+                    dataCriacao: new Date().toISOString(),
+                    dataAtualizacao: new Date().toISOString()
+                };
+                
+                this.dados.resumos.push(novoResumo);
+                this.salvarDadosUsuario();
+                
+                fecharModal('modal-editar-resumo');
+                this.carregarResumos();
+                AuthSystem.mostrarNotificacao('Resumo salvo com sucesso!', 'success');
             },
             
-            // ========== CONFIGURAÇÕES ==========
-            abrirConfiguracoes() {
-                // Preencher dados atuais
-                document.getElementById('config-nome').value = this.usuario.nome;
-                document.getElementById('config-email').value = this.usuario.email;
-                document.getElementById('config-meta').value = this.dados.configuracoes?.metaHoras || 4;
+            verResumo(resumoId) {
+                const resumo = this.dados.resumos.find(r => r.id === resumoId);
+                if (!resumo) return;
+                
+                document.getElementById('ver-resumo-titulo').textContent = resumo.titulo;
+                document.getElementById('ver-resumo-disciplina').textContent = resumo.disciplina;
+                document.getElementById('ver-resumo-assunto').textContent = resumo.assunto;
+                document.getElementById('ver-resumo-data').textContent = new Date(resumo.dataCriacao).toLocaleDateString('pt-BR');
+                document.getElementById('ver-resumo-conteudo').innerHTML = resumo.conteudo;
+                
+                const tagsContainer = document.getElementById('ver-resumo-tags');
+                tagsContainer.innerHTML = '';
+                resumo.tags.forEach(tag => {
+                    const tagElement = document.createElement('span');
+                    tagElement.className = 'tag-resumo';
+                    tagElement.textContent = tag;
+                    tagsContainer.appendChild(tagElement);
+                });
+                
+                // Configurar impressão
+                document.getElementById('btn-imprimir-resumo').onclick = () => this.imprimirResumo(resumo);
+                
+                mostrarModal('modal-ver-resumo');
+            },
+            
+            editarResumo(resumoId) {
+                const resumo = this.dados.resumos.find(r => r.id === resumoId);
+                if (!resumo) return;
+                
+                // Preencher campos
+                document.getElementById('editar-resumo-titulo').value = resumo.titulo;
+                document.getElementById('editar-resumo-disciplina').value = resumo.disciplinaId;
+                document.getElementById('editar-resumo-tags').value = resumo.tags.join(', ');
+                document.getElementById('editar-resumo-conteudo').innerHTML = resumo.conteudo;
+                
+                // Atualizar contador de caracteres
+                this.atualizarContadorCaracteres();
+                
+                // Preencher disciplinas
+                const selectDisciplina = document.getElementById('editar-resumo-disciplina');
+                selectDisciplina.innerHTML = '<option value="">Selecione uma disciplina</option>';
+                this.dados.disciplinas.forEach(disciplina => {
+                    selectDisciplina.innerHTML += `<option value="${disciplina.id}">${disciplina.nome}</option>`;
+                });
+                selectDisciplina.value = resumo.disciplinaId;
+                
+                // Carregar assuntos
+                this.carregarAssuntosParaResumo(resumo.disciplinaId);
+                
+                // Selecionar assunto
+                setTimeout(() => {
+                    document.getElementById('editar-resumo-assunto').value = resumo.assuntoId;
+                }, 100);
                 
                 // Configurar botão de salvar
-                document.getElementById('btn-salvar-configuracoes').onclick = () => this.salvarConfiguracoes();
+                document.getElementById('btn-salvar-resumo').onclick = () => this.salvarEdicaoResumo(resumoId);
                 
-                mostrarModal('modal-configuracoes');
+                mostrarModal('modal-editar-resumo');
             },
             
-            salvarConfiguracoes() {
-                const nome = document.getElementById('config-nome').value.trim();
-                const email = document.getElementById('config-email').value.trim();
-                const meta = parseInt(document.getElementById('config-meta').value);
+            salvarEdicaoResumo(resumoId) {
+                const resumo = this.dados.resumos.find(r => r.id === resumoId);
+                if (!resumo) return;
                 
-                if (!nome || !email) {
-                    AuthSystem.mostrarNotificacao('Preencha nome e email', 'error');
+                resumo.titulo = document.getElementById('editar-resumo-titulo').value.trim();
+                resumo.disciplinaId = document.getElementById('editar-resumo-disciplina').value;
+                resumo.assuntoId = document.getElementById('editar-resumo-assunto').value;
+                resumo.tags = document.getElementById('editar-resumo-tags').value.split(',').map(tag => tag.trim()).filter(tag => tag);
+                resumo.conteudo = document.getElementById('editar-resumo-conteudo').innerHTML;
+                resumo.dataAtualizacao = new Date().toISOString();
+                
+                // Atualizar nome da disciplina e assunto
+                const disciplina = this.dados.disciplinas.find(d => d.id == resumo.disciplinaId);
+                const assunto = resumo.assuntoId ? (disciplina.assuntos.find(a => a.id == resumo.assuntoId) || { nome: 'Geral' }) : { nome: 'Geral' };
+                
+                resumo.disciplina = disciplina.nome;
+                resumo.assunto = assunto.nome;
+                
+                this.salvarDadosUsuario();
+                
+                fecharModal('modal-editar-resumo');
+                this.carregarResumos();
+                AuthSystem.mostrarNotificacao('Resumo atualizado com sucesso!', 'success');
+            },
+            
+            excluirResumo(resumoId) {
+                if (confirm('Tem certeza que deseja excluir este resumo?')) {
+                    this.dados.resumos = this.dados.resumos.filter(r => r.id !== resumoId);
+                    this.salvarDadosUsuario();
+                    this.carregarResumos();
+                    AuthSystem.mostrarNotificacao('Resumo excluído!', 'success');
+                }
+            },
+            
+            filtrarResumos() {
+                const filtroDisciplina = document.getElementById('filtro-disciplina-resumo').value;
+                const ordenarPor = document.getElementById('ordenar-resumo').value;
+                const busca = document.getElementById('buscar-resumo').value.toLowerCase();
+                
+                let resumosFiltrados = [...this.dados.resumos];
+                
+                // Aplicar filtro de disciplina
+                if (filtroDisciplina) {
+                    resumosFiltrados = resumosFiltrados.filter(r => r.disciplinaId === filtroDisciplina);
+                }
+                
+                // Aplicar busca
+                if (busca) {
+                    resumosFiltrados = resumosFiltrados.filter(r => 
+                        r.titulo.toLowerCase().includes(busca) ||
+                        r.disciplina.toLowerCase().includes(busca) ||
+                        r.assunto.toLowerCase().includes(busca) ||
+                        r.tags.some(tag => tag.toLowerCase().includes(busca)) ||
+                        r.conteudo.toLowerCase().includes(busca)
+                    );
+                }
+                
+                // Aplicar ordenação
+                switch(ordenarPor) {
+                    case 'titulo':
+                        resumosFiltrados.sort((a, b) => a.titulo.localeCompare(b.titulo));
+                        break;
+                    case 'disciplina':
+                        resumosFiltrados.sort((a, b) => a.disciplina.localeCompare(b.disciplina));
+                        break;
+                    case 'data':
+                    default:
+                        resumosFiltrados.sort((a, b) => new Date(b.dataCriacao) - new Date(a.dataCriacao));
+                        break;
+                }
+                
+                // Atualizar lista
+                const listaResumos = document.getElementById('lista-resumos');
+                if (resumosFiltrados.length === 0) {
+                    listaResumos.innerHTML = `
+                        <div class="col-span-full text-center py-8">
+                            <p class="text-gray-500">Nenhum resumo encontrado com os filtros aplicados.</p>
+                        </div>
+                    `;
+                } else {
+                    listaResumos.innerHTML = resumosFiltrados.map(resumo => {
+                        const data = new Date(resumo.dataCriacao).toLocaleDateString('pt-BR');
+                        const preview = resumo.conteudo.length > 150 ? 
+                            resumo.conteudo.substring(0, 150) + '...' : resumo.conteudo;
+                        
+                        return `
+                            <div class="resumo-card border rounded-xl p-4 bg-white">
+                                <h4 class="font-semibold text-lg mb-2">${resumo.titulo}</h4>
+                                <div class="flex gap-2 mb-3 flex-wrap">
+                                    ${resumo.tags.map(tag => `
+                                        <span class="tag-resumo">${tag}</span>
+                                    `).join('')}
+                                </div>
+                                <div class="resumo-preview text-sm text-gray-600 mb-3">
+                                    ${preview}
+                                </div>
+                                <div class="flex justify-between items-center text-xs text-gray-500">
+                                    <span>${data}</span>
+                                    <span>${resumo.disciplina}</span>
+                                </div>
+                                <div class="flex gap-2 mt-3">
+                                    <button onclick="AplicacaoPrincipal.verResumo('${resumo.id}')" 
+                                            class="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg text-sm transition-colors">
+                                        👀 Ver
+                                    </button>
+                                    <button onclick="AplicacaoPrincipal.editarResumo('${resumo.id}')" 
+                                            class="flex-1 bg-green-600 hover:bg-green-700 text-white py-2 rounded-lg text-sm transition-colors">
+                                        ✏️ Editar
+                                    </button>
+                                    <button onclick="AplicacaoPrincipal.excluirResumo('${resumo.id}')" 
+                                            class="flex-1 bg-red-600 hover:bg-red-700 text-white py-2 rounded-lg text-sm transition-colors">
+                                        🗑️ Excluir
+                                    </button>
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+                }
+            },
+            
+            atualizarContadorCaracteres() {
+                const editor = document.getElementById('editar-resumo-conteudo');
+                const charCount = document.getElementById('charCount');
+                const count = editor.textContent.length;
+                
+                charCount.textContent = `${count} caracteres`;
+                
+                if (count > 5000) {
+                    charCount.classList.add('warning');
+                } else {
+                    charCount.classList.remove('warning');
+                }
+            },
+            
+            imprimirResumo(resumo) {
+                const janelaImpressao = window.open('', '_blank');
+                janelaImpressao.document.write(`
+                    <html>
+                        <head>
+                            <title>${resumo.titulo}</title>
+                            <style>
+                                body { font-family: Arial, sans-serif; margin: 20px; }
+                                h1 { color: #333; border-bottom: 2px solid #667eea; padding-bottom: 10px; }
+                                .tags { margin: 10px 0; }
+                                .tag { background: #e5e7eb; padding: 2px 8px; border-radius: 10px; font-size: 12px; margin-right: 5px; }
+                                .meta { color: #666; font-size: 14px; margin-bottom: 20px; }
+                            </style>
+                        </head>
+                        <body>
+                            <h1>${resumo.titulo}</h1>
+                            <div class="meta">
+                                <strong>Disciplina:</strong> ${resumo.disciplina} | 
+                                <strong>Assunto:</strong> ${resumo.assunto} |
+                                <strong>Data:</strong> ${new Date(resumo.dataCriacao).toLocaleDateString('pt-BR')}
+                            </div>
+                            <div class="tags">
+                                ${resumo.tags.map(tag => `<span class="tag">${tag}</span>`).join('')}
+                            </div>
+                            <div>${resumo.conteudo}</div>
+                        </body>
+                    </html>
+                `);
+                janelaImpressao.document.close();
+                janelaImpressao.print();
+            },
+            
+            // ========== QUESTÕES ==========
+            carregarQuestoes() {
+                const conteudoPrincipal = document.getElementById('conteudo-principal');
+                const questoes = this.dados.questoes || [];
+                
+                conteudoPrincipal.innerHTML = `
+                    <div class="fade-in">
+                        <div class="mb-8">
+                            <h2 class="text-3xl font-bold gradient-text mb-2">Banco de Questões</h2>
+                            <p class="text-gray-600">Pratique e revise questões</p>
+                        </div>
+                        
+                        <div class="glass-card rounded-2xl p-6 mb-6">
+                            <div class="flex justify-between items-center mb-6">
+                                <h3 class="text-xl font-semibold">Filtrar Questões</h3>
+                                <button onclick="AplicacaoPrincipal.novaQuestao()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors">
+                                    + Nova Questão
+                                </button>
+                            </div>
+                            
+                            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                                <select id="filtro-disciplina-questao" class="p-3 border rounded-xl">
+                                    <option value="">Todas as disciplinas</option>
+                                    ${this.dados.disciplinas.map(d => `<option value="${d.nome}">${d.nome}</option>`).join('')}
+                                </select>
+                                
+                                <select id="filtro-dificuldade-questao" class="p-3 border rounded-xl">
+                                    <option value="">Todas as dificuldades</option>
+                                    <option value="facil">Fácil</option>
+                                    <option value="medio">Médio</option>
+                                    <option value="dificil">Difícil</option>
+                                </select>
+                                
+                                <select id="filtro-status-questao" class="p-3 border rounded-xl">
+                                    <option value="">Todos os status</option>
+                                    <option value="pendente">Pendente</option>
+                                    <option value="acertou">Acertou</option>
+                                    <option value="errou">Errou</option>
+                                </select>
+                                
+                                <button onclick="AplicacaoPrincipal.filtrarQuestoes()" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-xl transition-colors">
+                                    🔍 Filtrar
+                                </button>
+                            </div>
+                            
+                            <div id="lista-questoes">
+                                ${this.renderizarQuestoes()}
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                // Configurar eventos dos filtros
+                document.getElementById('filtro-disciplina-questao').addEventListener('change', () => this.filtrarQuestoes());
+                document.getElementById('filtro-dificuldade-questao').addEventListener('change', () => this.filtrarQuestoes());
+                document.getElementById('filtro-status-questao').addEventListener('change', () => this.filtrarQuestoes());
+            },
+            
+            renderizarQuestoes(questoesFiltradas = null) {
+                const questoes = questoesFiltradas || this.dados.questoes || [];
+                
+                if (questoes.length === 0) {
+                    return `
+                        <div class="text-center py-8">
+                            <p class="text-gray-500 mb-4">Nenhuma questão encontrada.</p>
+                            <button onclick="AplicacaoPrincipal.novaQuestao()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors">
+                                Adicionar Primeira Questão
+                            </button>
+                        </div>
+                    `;
+                }
+                
+                return questoes.map(questao => {
+                    const statusClass = questao.status === 'acertou' ? 'questao-correta' :
+                                      questao.status === 'errou' ? 'questao-errada' : '';
+                    
+                    const statusText = questao.status === 'acertou' ? 'Acertou' :
+                                     questao.status === 'errou' ? 'Errou' : 'Pendente';
+                    
+                    return `
+                        <div class="questao-item border rounded-xl p-4 mb-4 ${statusClass}">
+                            <div class="flex justify-between items-start mb-3">
+                                <div class="flex-1">
+                                    <h4 class="font-semibold text-lg mb-2">${questao.enunciado}</h4>
+                                    <div class="flex flex-wrap gap-2 mb-3">
+                                        <span class="px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                            ${questao.disciplina}
+                                        </span>
+                                        <span class="px-2 py-1 rounded-full text-xs font-medium ${
+                                            questao.status === 'acertou' ? 'bg-green-100 text-green-800' :
+                                            questao.status === 'errou' ? 'bg-red-100 text-red-800' :
+                                            'bg-yellow-100 text-yellow-800'
+                                        }">
+                                            ${statusText}
+                                        </span>
+                                        <span class="px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                                            ${questao.dificuldade}
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="flex gap-2 ml-4">
+                                    <button onclick="AplicacaoPrincipal.verQuestao('${questao.id}')" 
+                                            class="bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-lg transition-colors">
+                                        👀
+                                    </button>
+                                    <button onclick="AplicacaoPrincipal.editarQuestao('${questao.id}')" 
+                                            class="bg-green-600 hover:bg-green-700 text-white p-2 rounded-lg transition-colors">
+                                        ✏️
+                                    </button>
+                                    <button onclick="AplicacaoPrincipal.excluirQuestao('${questao.id}')" 
+                                            class="bg-red-600 hover:bg-red-700 text-white p-2 rounded-lg transition-colors">
+                                        🗑️
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            ${questao.anotacao ? `
+                                <div class="bg-gray-50 p-3 rounded-lg mb-3">
+                                    <strong>Anotação:</strong> ${questao.anotacao}
+                                </div>
+                            ` : ''}
+                            
+                            <div class="text-sm text-gray-500">
+                                Adicionada em: ${new Date(questao.dataAdicao).toLocaleDateString('pt-BR')}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            },
+            
+            novaQuestao() {
+                // Limpar campos do modal
+                document.getElementById('questao-enunciado').value = '';
+                document.getElementById('questao-disciplina').value = '';
+                document.getElementById('questao-dificuldade').value = 'medio';
+                document.getElementById('questao-status').value = 'pendente';
+                document.getElementById('questao-anotacao').value = '';
+                
+                // Preencher disciplinas
+                const selectDisciplina = document.getElementById('questao-disciplina');
+                selectDisciplina.innerHTML = '<option value="">Selecione uma disciplina</option>';
+                this.dados.disciplinas.forEach(disciplina => {
+                    selectDisciplina.innerHTML += `<option value="${disciplina.nome}">${disciplina.nome}</option>`;
+                });
+                
+                // Configurar botão de salvar
+                document.getElementById('btn-salvar-questao').onclick = () => this.salvarNovaQuestao();
+                
+                mostrarModal('modal-nova-questao');
+            },
+            
+            salvarNovaQuestao() {
+                const enunciado = document.getElementById('questao-enunciado').value.trim();
+                const disciplina = document.getElementById('questao-disciplina').value;
+                const dificuldade = document.getElementById('questao-dificuldade').value;
+                const status = document.getElementById('questao-status').value;
+                const anotacao = document.getElementById('questao-anotacao').value.trim();
+                
+                if (!enunciado || !disciplina) {
+                    AuthSystem.mostrarNotificacao('Preencha o enunciado e a disciplina', 'error');
                     return;
                 }
                 
-                // Atualizar dados do usuário
-                this.usuario.nome = nome;
-                this.usuario.email = email;
+                const novaQuestao = {
+                    id: Date.now().toString(),
+                    enunciado,
+                    disciplina,
+                    dificuldade,
+                    status,
+                    anotacao,
+                    dataAdicao: new Date().toISOString()
+                };
                 
-                // Atualizar configurações
-                if (!this.dados.configuracoes) {
-                    this.dados.configuracoes = {};
-                }
-                this.dados.configuracoes.metaHoras = meta;
+                this.dados.questoes.push(novaQuestao);
+                this.salvarDadosUsuario();
+                
+                fecharModal('modal-nova-questao');
+                this.carregarQuestoes();
+                AuthSystem.mostrarNotificacao('Questão adicionada com sucesso!', 'success');
+            },
+            
+            verQuestao(questaoId) {
+                const questao = this.dados.questoes.find(q => q.id === questaoId);
+                if (!questao) return;
+                
+                document.getElementById('ver-questao-enunciado').textContent = questao.enunciado;
+                document.getElementById('ver-questao-disciplina').textContent = questao.disciplina;
+                document.getElementById('ver-questao-dificuldade').textContent = questao.dificuldade;
+                document.getElementById('ver-questao-status').textContent = questao.status === 'acertou' ? 'Acertou' :
+                                                                           questao.status === 'errou' ? 'Errou' : 'Pendente';
+                document.getElementById('ver-questao-anotacao').textContent = questao.anotacao || 'Nenhuma anotação';
+                document.getElementById('ver-questao-data').textContent = new Date(questao.dataAdicao).toLocaleDateString('pt-BR');
+                
+                mostrarModal('modal-ver-questao');
+            },
+            
+            editarQuestao(questaoId) {
+                const questao = this.dados.questoes.find(q => q.id === questaoId);
+                if (!questao) return;
+                
+                // Preencher campos do modal
+                document.getElementById('editar-questao-enunciado').value = questao.enunciado;
+                document.getElementById('editar-questao-disciplina').value = questao.disciplina;
+                document.getElementById('editar-questao-dificuldade').value = questao.dificuldade;
+                document.getElementById('editar-questao-status').value = questao.status;
+                document.getElementById('editar-questao-anotacao').value = questao.anotacao || '';
+                
+                // Preencher disciplinas
+                const selectDisciplina = document.getElementById('editar-questao-disciplina');
+                selectDisciplina.innerHTML = '<option value="">Selecione uma disciplina</option>';
+                this.dados.disciplinas.forEach(disciplina => {
+                    selectDisciplina.innerHTML += `<option value="${disciplina.nome}">${disciplina.nome}</option>`;
+                });
+                selectDisciplina.value = questao.disciplina;
+                
+                // Configurar botão de salvar
+                document.getElementById('btn-salvar-edicao-questao').onclick = () => this.salvarEdicaoQuestao(questaoId);
+                
+                mostrarModal('modal-editar-questao');
+            },
+            
+            salvarEdicaoQuestao(questaoId) {
+                const questao = this.dados.questoes.find(q => q.id === questaoId);
+                if (!questao) return;
+                
+                questao.enunciado = document.getElementById('editar-questao-enunciado').value.trim();
+                questao.disciplina = document.getElementById('editar-questao-disciplina').value;
+                questao.dificuldade = document.getElementById('editar-questao-dificuldade').value;
+                questao.status = document.getElementById('editar-questao-status').value;
+                questao.anotacao = document.getElementById('editar-questao-anotacao').value.trim();
                 
                 this.salvarDadosUsuario();
-                AuthSystem.salvarUsuarios();
                 
-                fecharModal('modal-configuracoes');
-                AuthSystem.mostrarNotificacao('Configurações salvas com sucesso!', 'success');
+                fecharModal('modal-editar-questao');
+                this.carregarQuestoes();
+                AuthSystem.mostrarNotificacao('Questão atualizada com sucesso!', 'success');
+            },
+            
+            excluirQuestao(questaoId) {
+                if (confirm('Tem certeza que deseja excluir esta questão?')) {
+                    this.dados.questoes = this.dados.questoes.filter(q => q.id !== questaoId);
+                    this.salvarDadosUsuario();
+                    this.carregarQuestoes();
+                    AuthSystem.mostrarNotificacao('Questão excluída!', 'success');
+                }
+            },
+            
+            filtrarQuestoes() {
+                const disciplina = document.getElementById('filtro-disciplina-questao').value;
+                const dificuldade = document.getElementById('filtro-dificuldade-questao').value;
+                const status = document.getElementById('filtro-status-questao').value;
                 
-                // Recarregar interface para refletir mudanças
-                this.carregarInterface();
+                let questoesFiltradas = this.dados.questoes || [];
+                
+                if (disciplina) {
+                    questoesFiltradas = questoesFiltradas.filter(q => q.disciplina === disciplina);
+                }
+                
+                if (dificuldade) {
+                    questoesFiltradas = questoesFiltradas.filter(q => q.dificuldade === dificuldade);
+                }
+                
+                if (status) {
+                    questoesFiltradas = questoesFiltradas.filter(q => q.status === status);
+                }
+                
+                document.getElementById('lista-questoes').innerHTML = this.renderizarQuestoes(questoesFiltradas);
+            },
+            
+            // ========== REDAÇÕES ==========
+            carregarRedacoes() {
+                const conteudoPrincipal = document.getElementById('conteudo-principal');
+                const redacoes = this.dados.redacoes || [];
+                
+                conteudoPrincipal.innerHTML = `
+                    <div class="fade-in">
+                        <div class="mb-8">
+                            <h2 class="text-3xl font-bold gradient-text mb-2">Produção de Redações</h2>
+                            <p class="text-gray-600">Pratique e melhore sua escrita</p>
+                        </div>
+                        
+                        <div class="glass-card rounded-2xl p-6 mb-6">
+                            <div class="flex justify-between items-center mb-6">
+                                <h3 class="text-xl font-semibold">Minhas Redações</h3>
+                                <button onclick="AplicacaoPrincipal.novaRedacao()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors">
+                                    + Nova Redação
+                                </button>
+                            </div>
+                            
+                            <div id="lista-redacoes">
+                                ${this.renderizarRedacoes()}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            },
+            
+            renderizarRedacoes() {
+                const redacoes = this.dados.redacoes || [];
+                
+                if (redacoes.length === 0) {
+                    return `
+                        <div class="text-center py-8">
+                            <p class="text-gray-500 mb-4">Nenhuma redação criada ainda.</p>
+                            <button onclick="AplicacaoPrincipal.novaRedacao()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors">
+                                Escrever Primeira Redação
+                            </button>
+                        </div>
+                    `;
+                }
+                
+                return redacoes.map(redacao => {
+                    const data = new Date(redacao.dataCriacao).toLocaleDateString('pt-BR');
+                    const preview = redacao.texto.length > 200 ? 
+                        redacao.texto.substring(0, 200) + '...' : redacao.texto;
+                    
+                    return `
+                        <div class="redacao-item border rounded-xl p-4 mb-4">
+                            <div class="flex justify-between items-start mb-3">
+                                <div class="flex-1">
+                                    <h4 class="font-semibold text-lg mb-2">${redacao.titulo}</h4>
+                                    <div class="flex flex-wrap gap-2 mb-3">
+                                        <span class="px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                            ${redacao.tema}
+                                        </span>
+                                        ${redacao.nota ? `
+                                            <span class="px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                                Nota: ${redacao.nota}
+                                            </span>
+                                        ` : `
+                                            <span class="px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                                                Sem nota
+                                            </span>
+                                        `}
+                                    </div>
+                                </div>
+                                <div class="flex gap-2 ml-4">
+                                    <button onclick="AplicacaoPrincipal.verRedacao('${redacao.id}')" 
+                                            class="bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-lg transition-colors">
+                                        👀
+                                    </button>
+                                    <button onclick="AplicacaoPrincipal.editarRedacao('${redacao.id}')" 
+                                            class="bg-green-600 hover:bg-green-700 text-white p-2 rounded-lg transition-colors">
+                                        ✏️
+                                    </button>
+                                    <button onclick="AplicacaoPrincipal.excluirRedacao('${redacao.id}')" 
+                                            class="bg-red-600 hover:bg-red-700 text-white p-2 rounded-lg transition-colors">
+                                        🗑️
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="redacao-preview text-sm text-gray-600 mb-3">
+                                ${preview}
+                            </div>
+                            
+                            <div class="text-sm text-gray-500">
+                                Criada em: ${data} | 
+                                ${redacao.palavras} palavras | 
+                                ${redacao.tempoGasto || 'N/A'} minutos
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            },
+            
+            novaRedacao() {
+                // Limpar campos do modal
+                document.getElementById('redacao-titulo').value = '';
+                document.getElementById('redacao-tema').value = '';
+                document.getElementById('redacao-texto').value = '';
+                document.getElementById('redacao-tempo').value = '';
+                document.getElementById('redacao-nota').value = '';
+                document.getElementById('redacao-comentarios').value = '';
+                
+                // Configurar botão de salvar
+                document.getElementById('btn-salvar-redacao').onclick = () => this.salvarNovaRedacao();
+                
+                mostrarModal('modal-nova-redacao');
+            },
+            
+            salvarNovaRedacao() {
+                const titulo = document.getElementById('redacao-titulo').value.trim();
+                const tema = document.getElementById('redacao-tema').value.trim();
+                const texto = document.getElementById('redacao-texto').value.trim();
+                const tempoGasto = document.getElementById('redacao-tempo').value;
+                const nota = document.getElementById('redacao-nota').value;
+                const comentarios = document.getElementById('redacao-comentarios').value.trim();
+                
+                if (!titulo || !tema || !texto) {
+                    AuthSystem.mostrarNotificacao('Preencha título, tema e texto', 'error');
+                    return;
+                }
+                
+                const novaRedacao = {
+                    id: Date.now().toString(),
+                    titulo,
+                    tema,
+                    texto,
+                    palavras: texto.split(/\s+/).length,
+                    tempoGasto: tempoGasto || null,
+                    nota: nota || null,
+                    comentarios: comentarios || '',
+                    dataCriacao: new Date().toISOString(),
+                    dataAtualizacao: new Date().toISOString()
+                };
+                
+                this.dados.redacoes.push(novaRedacao);
+                this.salvarDadosUsuario();
+                
+                fecharModal('modal-nova-redacao');
+                this.carregarRedacoes();
+                AuthSystem.mostrarNotificacao('Redação salva com sucesso!', 'success');
+            },
+            
+            verRedacao(redacaoId) {
+                const redacao = this.dados.redacoes.find(r => r.id === redacaoId);
+                if (!redacao) return;
+                
+                document.getElementById('ver-redacao-titulo').textContent = redacao.titulo;
+                document.getElementById('ver-redacao-tema').textContent = redacao.tema;
+                document.getElementById('ver-redacao-texto').textContent = redacao.texto;
+                document.getElementById('ver-redacao-tempo').textContent = redacao.tempoGasto || 'Não informado';
+                document.getElementById('ver-redacao-nota').textContent = redacao.nota || 'Sem nota';
+                document.getElementById('ver-redacao-comentarios').textContent = redacao.comentarios || 'Sem comentários';
+                document.getElementById('ver-redacao-data').textContent = new Date(redacao.dataCriacao).toLocaleDateString('pt-BR');
+                
+                // Configurar impressão
+                document.getElementById('btn-imprimir-redacao').onclick = () => this.imprimirRedacao(redacao);
+                
+                mostrarModal('modal-ver-redacao');
+            },
+            
+            editarRedacao(redacaoId) {
+                const redacao = this.dados.redacoes.find(r => r.id === redacaoId);
+                if (!redacao) return;
+                
+                // Preencher campos do modal
+                document.getElementById('editar-redacao-titulo').value = redacao.titulo;
+                document.getElementById('editar-redacao-tema').value = redacao.tema;
+                document.getElementById('editar-redacao-texto').value = redacao.texto;
+                document.getElementById('editar-redacao-tempo').value = redacao.tempoGasto || '';
+                document.getElementById('editar-redacao-nota').value = redacao.nota || '';
+                document.getElementById('editar-redacao-comentarios').value = redacao.comentarios || '';
+                
+                // Configurar botão de salvar
+                document.getElementById('btn-salvar-edicao-redacao').onclick = () => this.salvarEdicaoRedacao(redacaoId);
+                
+                mostrarModal('modal-editar-redacao');
+            },
+            
+            salvarEdicaoRedacao(redacaoId) {
+                const redacao = this.dados.redacoes.find(r => r.id === redacaoId);
+                if (!redacao) return;
+                
+                redacao.titulo = document.getElementById('editar-redacao-titulo').value.trim();
+                redacao.tema = document.getElementById('editar-redacao-tema').value.trim();
+                redacao.texto = document.getElementById('editar-redacao-texto').value.trim();
+                redacao.palavras = redacao.texto.split(/\s+/).length;
+                redacao.tempoGasto = document.getElementById('editar-redacao-tempo').value || null;
+                redacao.nota = document.getElementById('editar-redacao-nota').value || null;
+                redacao.comentarios = document.getElementById('editar-redacao-comentarios').value.trim();
+                redacao.dataAtualizacao = new Date().toISOString();
+                
+                this.salvarDadosUsuario();
+                
+                fecharModal('modal-editar-redacao');
+                this.carregarRedacoes();
+                AuthSystem.mostrarNotificacao('Redação atualizada com sucesso!', 'success');
+            },
+            
+            excluirRedacao(redacaoId) {
+                if (confirm('Tem certeza que deseja excluir esta redação?')) {
+                    this.dados.redacoes = this.dados.redacoes.filter(r => r.id !== redacaoId);
+                    this.salvarDadosUsuario();
+                    this.carregarRedacoes();
+                    AuthSystem.mostrarNotificacao('Redação excluída!', 'success');
+                }
+            },
+            
+            imprimirRedacao(redacao) {
+                const janelaImpressao = window.open('', '_blank');
+                janelaImpressao.document.write(`
+                    <html>
+                        <head>
+                            <title>${redacao.titulo}</title>
+                            <style>
+                                body { font-family: Arial, sans-serif; margin: 20px; }
+                                h1 { color: #333; border-bottom: 2px solid #667eea; padding-bottom: 10px; }
+                                .meta { color: #666; font-size: 14px; margin-bottom: 20px; }
+                                .texto { line-height: 1.6; margin-bottom: 20px; }
+                                .comentarios { background: #f5f5f5; padding: 15px; border-radius: 5px; }
+                            </style>
+                        </head>
+                        <body>
+                            <h1>${redacao.titulo}</h1>
+                            <div class="meta">
+                                <strong>Tema:</strong> ${redacao.tema} | 
+                                <strong>Data:</strong> ${new Date(redacao.dataCriacao).toLocaleDateString('pt-BR')} |
+                                <strong>Tempo:</strong> ${redacao.tempoGasto || 'N/A'} minutos |
+                                <strong>Nota:</strong> ${redacao.nota || 'N/A'} |
+                                <strong>Palavras:</strong> ${redacao.palavras}
+                            </div>
+                            <div class="texto">${redacao.texto.replace(/\n/g, '<br>')}</div>
+                            ${redacao.comentarios ? `
+                                <div class="comentarios">
+                                    <strong>Comentários/Avaliação:</strong><br>
+                                    ${redacao.comentarios.replace(/\n/g, '<br>')}
+                                </div>
+                            ` : ''}
+                        </body>
+                    </html>
+                `);
+                janelaImpressao.document.close();
+                janelaImpressao.print();
             },
             
             // ========== FUNÇÕES GERAIS ==========
@@ -2021,7 +2674,7 @@
             // Configurar event listener para o contador de caracteres
             document.addEventListener('input', function(e) {
                 if (e.target.id === 'editar-resumo-conteudo') {
-                    // Implementar contador de caracteres se necessário
+                    AplicacaoPrincipal.atualizarContadorCaracteres();
                 }
             });
         });
