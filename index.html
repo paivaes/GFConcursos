@@ -1084,6 +1084,7 @@
                         disciplinas: []
                     },
                     resumos: [],
+                    questoes: [],
                     progresso: {
                         totalHoras: 0,
                         totalQuestoes: 0,
@@ -1304,158 +1305,159 @@
             },
             
             carregarDashboard() {
-    try {
-        const conteudoPrincipal = document.getElementById('conteudo-principal');
-        const disciplinasEdital = this.usuario.dados.editalVerticalizado?.disciplinas || [];
-        
-        // CORREÇÃO: Calcular métricas baseadas nas disciplinas do edital
-        let totalAssuntos = 0;
-        let assuntosConcluidos = 0;
-        
-        disciplinasEdital.forEach(disciplina => {
-            const disciplinaAssuntos = disciplina.assuntos?.length || 0;
-            const disciplinaConcluidos = disciplina.assuntos?.filter(a => a.concluido)?.length || 0;
-            
-            totalAssuntos += disciplinaAssuntos;
-            assuntosConcluidos += disciplinaConcluidos;
-        });
-        
-        const progressoGeral = totalAssuntos > 0 ? Math.round((assuntosConcluidos / totalAssuntos) * 100) : 0;
-        
-        conteudoPrincipal.innerHTML = `
-            <div class="fade-in">
-                <div class="mb-8">
-                    <h2 class="text-3xl font-bold gradient-text mb-2">Dashboard de Estudos</h2>
-                    <p class="text-gray-600">Acompanhe seu progresso no edital</p>
-                </div>
-                
-                <!-- Métricas Gerais -->
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                    <div class="glass-card rounded-2xl p-6 text-center">
-                        <div class="text-3xl font-bold text-blue-600 mb-2">${disciplinasEdital.length}</div>
-                        <div class="text-gray-600">Disciplinas no Edital</div>
-                    </div>
-                    <div class="glass-card rounded-2xl p-6 text-center">
-                        <div class="text-3xl font-bold text-green-600 mb-2">${assuntosConcluidos}/${totalAssuntos}</div>
-                        <div class="text-gray-600">Assuntos Concluídos</div>
-                    </div>
-                    <div class="glass-card rounded-2xl p-6 text-center">
-                        <div class="text-3xl font-bold text-purple-600 mb-2">${progressoGeral}%</div>
-                        <div class="text-gray-600">Progresso Geral</div>
-                    </div>
-                </div>
-                
-                <!-- Disciplinas do Edital -->
-                <div class="glass-card rounded-2xl p-6 mb-8">
-                    <div class="flex justify-between items-center mb-6">
-                        <h3 class="text-xl font-semibold">Disciplinas do Edital</h3>
-                        <button onclick="carregarConteudo('edital')" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors">
-                            📑 Gerenciar Edital
-                        </button>
-                    </div>
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="lista-disciplinas">
-                        ${this.renderizarDisciplinas()}
-                    </div>
-                </div>
-                
-                <!-- Gráfico de Progresso -->
-                <div class="glass-card rounded-2xl p-6">
-                    <h3 class="text-xl font-semibold mb-6">Progresso por Disciplina</h3>
-                    <div class="h-64">
-                        <canvas id="progresso-chart"></canvas>
-                    </div>
-                </div>
-            </div>
-        `;
-        
-        // Inicializar gráfico com disciplinas do edital
-        this.inicializarGraficoProgresso();
-    } catch (error) {
-        console.error('Erro ao carregar dashboard:', error);
-    }
-}
+                try {
+                    const conteudoPrincipal = document.getElementById('conteudo-principal');
+                    const disciplinasEdital = this.usuario.dados.editalVerticalizado?.disciplinas || [];
+                    
+                    // CORREÇÃO: Calcular métricas baseadas nas disciplinas do edital
+                    let totalAssuntos = 0;
+                    let assuntosConcluidos = 0;
+                    
+                    disciplinasEdital.forEach(disciplina => {
+                        const disciplinaAssuntos = disciplina.assuntos?.length || 0;
+                        const disciplinaConcluidos = disciplina.assuntos?.filter(a => a.concluido)?.length || 0;
+                        
+                        totalAssuntos += disciplinaAssuntos;
+                        assuntosConcluidos += disciplinaConcluidos;
+                    });
+                    
+                    const progressoGeral = totalAssuntos > 0 ? Math.round((assuntosConcluidos / totalAssuntos) * 100) : 0;
+                    
+                    conteudoPrincipal.innerHTML = `
+                        <div class="fade-in">
+                            <div class="mb-8">
+                                <h2 class="text-3xl font-bold gradient-text mb-2">Dashboard de Estudos</h2>
+                                <p class="text-gray-600">Acompanhe seu progresso no edital</p>
+                            </div>
+                            
+                            <!-- Métricas Gerais -->
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                                <div class="glass-card rounded-2xl p-6 text-center">
+                                    <div class="text-3xl font-bold text-blue-600 mb-2">${disciplinasEdital.length}</div>
+                                    <div class="text-gray-600">Disciplinas no Edital</div>
+                                </div>
+                                <div class="glass-card rounded-2xl p-6 text-center">
+                                    <div class="text-3xl font-bold text-green-600 mb-2">${assuntosConcluidos}/${totalAssuntos}</div>
+                                    <div class="text-gray-600">Assuntos Concluídos</div>
+                                </div>
+                                <div class="glass-card rounded-2xl p-6 text-center">
+                                    <div class="text-3xl font-bold text-purple-600 mb-2">${progressoGeral}%</div>
+                                    <div class="text-gray-600">Progresso Geral</div>
+                                </div>
+                            </div>
+                            
+                            <!-- Disciplinas do Edital -->
+                            <div class="glass-card rounded-2xl p-6 mb-8">
+                                <div class="flex justify-between items-center mb-6">
+                                    <h3 class="text-xl font-semibold">Disciplinas do Edital</h3>
+                                    <button onclick="AplicacaoPrincipal.carregarConteudo('edital')" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors">
+                                        📑 Gerenciar Edital
+                                    </button>
+                                </div>
+                                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="lista-disciplinas">
+                                    ${this.renderizarDisciplinas()}
+                                </div>
+                            </div>
+                            
+                            <!-- Gráfico de Progresso -->
+                            <div class="glass-card rounded-2xl p-6">
+                                <h3 class="text-xl font-semibold mb-6">Progresso por Disciplina</h3>
+                                <div class="h-64">
+                                    <canvas id="progresso-chart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    
+                    // Inicializar gráfico com disciplinas do edital
+                    this.inicializarGraficoProgresso();
+                } catch (error) {
+                    console.error('Erro ao carregar dashboard:', error);
+                }
+            },
             
             renderizarDisciplinas() {
-    try {
-        // CORREÇÃO: Buscar disciplinas do edital vertical em vez das disciplinas gerais
-        const disciplinasEdital = this.usuario.dados.editalVerticalizado?.disciplinas || [];
-        
-        if (disciplinasEdital.length === 0) {
-            return `
-                <div class="col-span-full text-center py-8">
-                    <p class="text-gray-500 mb-4">Nenhuma disciplina cadastrada no edital ainda.</p>
-                    <button onclick="carregarConteudo('edital')" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors">
-                        Ir para Edital Vertical
-                    </button>
-                </div>
-            `;
-        }
-        return disciplinasEdital.map(disciplina => {
-            const totalAssuntos = disciplina.assuntos?.length || 0;
-            const assuntosConcluidos = disciplina.assuntos?.filter(a => a.concluido)?.length || 0;
-            const progresso = totalAssuntos > 0 ? Math.round((assuntosConcluidos / totalAssuntos) * 100) : 0;
-            
-            return `
-                <div class="priority-item border rounded-xl p-4" style="border-left-color: ${disciplina.cor}">
-                    <div class="flex justify-between items-start mb-2">
-                        <h4 class="font-semibold" style="color: ${disciplina.cor}">${disciplina.nome}</h4>
-                        <span class="text-sm font-medium">${progresso}%</span>
-                    </div>
-                    <div class="w-full bg-gray-200 rounded-full h-2 mb-3">
-                        <div class="progresso-disciplina h-2 rounded-full" 
-                             style="width: ${progresso}%; background-color: ${disciplina.cor}"></div>
-                    </div>
-                    <div class="flex justify-between text-sm text-gray-600">
-                        <span>${assuntosConcluidos}/${totalAssuntos} assuntos</span>
-                        <span>${progresso}% concluído</span>
-                    </div>
-                </div>
-            `;
-        }).join('');
-    } catch (error) {
-        console.error('Erro ao renderizar disciplinas:', error);
-        return '';
-    }
-}
+                try {
+                    // CORREÇÃO: Buscar disciplinas do edital vertical em vez das disciplinas gerais
+                    const disciplinasEdital = this.usuario.dados.editalVerticalizado?.disciplinas || [];
+                    
+                    if (disciplinasEdital.length === 0) {
+                        return `
+                            <div class="col-span-full text-center py-8">
+                                <p class="text-gray-500 mb-4">Nenhuma disciplina cadastrada no edital ainda.</p>
+                                <button onclick="AplicacaoPrincipal.carregarConteudo('edital')" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors">
+                                    Ir para Edital Vertical
+                                </button>
+                            </div>
+                        `;
+                    }
+
+                    return disciplinasEdital.map(disciplina => {
+                        const totalAssuntos = disciplina.assuntos?.length || 0;
+                        const assuntosConcluidos = disciplina.assuntos?.filter(a => a.concluido)?.length || 0;
+                        const progresso = totalAssuntos > 0 ? Math.round((assuntosConcluidos / totalAssuntos) * 100) : 0;
+                        
+                        return `
+                            <div class="priority-item border rounded-xl p-4" style="border-left-color: ${disciplina.cor}">
+                                <div class="flex justify-between items-start mb-2">
+                                    <h4 class="font-semibold" style="color: ${disciplina.cor}">${disciplina.nome}</h4>
+                                    <span class="text-sm font-medium">${progresso}%</span>
+                                </div>
+                                <div class="w-full bg-gray-200 rounded-full h-2 mb-3">
+                                    <div class="progresso-disciplina h-2 rounded-full" 
+                                         style="width: ${progresso}%; background-color: ${disciplina.cor}"></div>
+                                </div>
+                                <div class="flex justify-between text-sm text-gray-600">
+                                    <span>${assuntosConcluidos}/${totalAssuntos} assuntos</span>
+                                    <span>${progresso}% concluído</span>
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+                } catch (error) {
+                    console.error('Erro ao renderizar disciplinas:', error);
+                    return '';
+                }
+            },
             
             inicializarGraficoProgresso() {
-    try {
-        const ctx = document.getElementById('progresso-chart').getContext('2d');
-        const disciplinasEdital = this.usuario.dados.editalVerticalizado?.disciplinas || [];
-        
-        const dadosGrafico = disciplinasEdital.map(disciplina => {
-            const totalAssuntos = disciplina.assuntos?.length || 0;
-            const assuntosConcluidos = disciplina.assuntos?.filter(a => a.concluido)?.length || 0;
-            return totalAssuntos > 0 ? Math.round((assuntosConcluidos / totalAssuntos) * 100) : 0;
-        });
-        
-        new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: disciplinasEdital.map(d => d.nome),
-                datasets: [{
-                    label: 'Progresso (%)',
-                    data: dadosGrafico,
-                    backgroundColor: disciplinasEdital.map(d => d.cor),
-                    borderColor: disciplinasEdital.map(d => d.cor),
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        max: 100
-                    }
+                try {
+                    const ctx = document.getElementById('progresso-chart').getContext('2d');
+                    const disciplinasEdital = this.usuario.dados.editalVerticalizado?.disciplinas || [];
+                    
+                    const dadosGrafico = disciplinasEdital.map(disciplina => {
+                        const totalAssuntos = disciplina.assuntos?.length || 0;
+                        const assuntosConcluidos = disciplina.assuntos?.filter(a => a.concluido)?.length || 0;
+                        return totalAssuntos > 0 ? Math.round((assuntosConcluidos / totalAssuntos) * 100) : 0;
+                    });
+                    
+                    new Chart(ctx, {
+                        type: 'bar',
+                        data: {
+                            labels: disciplinasEdital.map(d => d.nome),
+                            datasets: [{
+                                label: 'Progresso (%)',
+                                data: dadosGrafico,
+                                backgroundColor: disciplinasEdital.map(d => d.cor),
+                                borderColor: disciplinasEdital.map(d => d.cor),
+                                borderWidth: 1
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    max: 100
+                                }
+                            }
+                        }
+                    });
+                } catch (error) {
+                    console.error('Erro ao inicializar gráfico:', error);
                 }
-            }
-        });
-    } catch (error) {
-        console.error('Erro ao inicializar gráfico:', error);
-    }
-}
+            },
             
             // FUNÇÕES PARA DISCIPLINAS (CORRIGIDAS)
             adicionarNovaDisciplina() {
