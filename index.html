@@ -791,6 +791,14 @@
                 const modal = document.getElementById(modalId);
                 if (modal) {
                     modal.classList.remove('hidden');
+                    
+                    // Preencher selects quando o modal for aberto
+                    if (modalId === 'modal-editar-resumo') {
+                        AplicacaoPrincipal.preencherSelectsResumo();
+                    }
+                    if (modalId === 'modal-nova-questao' || modalId === 'modal-editar-questao') {
+                        AplicacaoPrincipal.preencherSelectsQuestoes();
+                    }
                 }
             } catch (error) {
                 console.warn('Erro ao mostrar modal:', error);
@@ -1238,8 +1246,7 @@
                         <!-- Footer -->
                         <footer class="bg-white border-t py-4">
                             <div class="max-w-7xl mx-auto px-4 text-center text-gray-600">
-                                <p>GFConcursos &copy; 2025 - Edinho S. Paiva</p>
-								<p>EC 10:10 - "Se você deixa o machado perder o corte e não afia, terá de trabalhar muito mais. Agir com sabedoria assegura o sucesso."</p>
+                                <p>GFConcursos &copy; 2025 - Sua plataforma de estudos para concursos</p>
                             </div>
                         </footer>
                     `;
@@ -1457,6 +1464,84 @@
                     });
                 } catch (error) {
                     console.error('Erro ao inicializar gráfico:', error);
+                }
+            },
+            
+            // FUNÇÕES PARA PREENCHER SELECTS
+            preencherSelectsResumo() {
+                try {
+                    const selectDisciplina = document.getElementById('editar-resumo-disciplina');
+                    const selectAssunto = document.getElementById('editar-resumo-assunto');
+                    
+                    // Limpar selects
+                    selectDisciplina.innerHTML = '<option value="">Selecione uma disciplina</option>';
+                    selectAssunto.innerHTML = '<option value="">Selecione um assunto</option>';
+                    
+                    // Preencher disciplinas do edital vertical
+                    const disciplinas = this.usuario.dados.editalVerticalizado?.disciplinas || [];
+                    
+                    disciplinas.forEach(disciplina => {
+                        const option = document.createElement('option');
+                        option.value = disciplina.nome;
+                        option.textContent = disciplina.nome;
+                        selectDisciplina.appendChild(option);
+                    });
+                    
+                    // Configurar evento para carregar assuntos quando disciplina for selecionada
+                    selectDisciplina.addEventListener('change', () => {
+                        this.carregarAssuntosPorDisciplina(selectDisciplina.value, selectAssunto);
+                    });
+                } catch (error) {
+                    console.error('Erro ao preencher selects de resumo:', error);
+                }
+            },
+            
+            carregarAssuntosPorDisciplina(nomeDisciplina, selectAssunto) {
+                try {
+                    // Limpar select de assuntos
+                    selectAssunto.innerHTML = '<option value="">Selecione um assunto</option>';
+                    
+                    if (!nomeDisciplina) return;
+                    
+                    // Encontrar a disciplina selecionada
+                    const disciplina = this.usuario.dados.editalVerticalizado?.disciplinas
+                        .find(d => d.nome === nomeDisciplina);
+                    
+                    if (disciplina && disciplina.assuntos) {
+                        // Preencher assuntos da disciplina
+                        disciplina.assuntos.forEach(assunto => {
+                            const option = document.createElement('option');
+                            option.value = assunto.nome;
+                            option.textContent = assunto.nome;
+                            selectAssunto.appendChild(option);
+                        });
+                    }
+                } catch (error) {
+                    console.error('Erro ao carregar assuntos:', error);
+                }
+            },
+            
+            preencherSelectsQuestoes() {
+                try {
+                    const selectDisciplina = document.getElementById('questao-disciplina') || 
+                                           document.getElementById('editar-questao-disciplina');
+                    
+                    if (!selectDisciplina) return;
+                    
+                    // Limpar select
+                    selectDisciplina.innerHTML = '<option value="">Selecione uma disciplina</option>';
+                    
+                    // Preencher disciplinas do edital vertical
+                    const disciplinas = this.usuario.dados.editalVerticalizado?.disciplinas || [];
+                    
+                    disciplinas.forEach(disciplina => {
+                        const option = document.createElement('option');
+                        option.value = disciplina.nome;
+                        option.textContent = disciplina.nome;
+                        selectDisciplina.appendChild(option);
+                    });
+                } catch (error) {
+                    console.error('Erro ao preencher selects de questões:', error);
                 }
             },
             
@@ -2108,9 +2193,9 @@
                                 <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
                                     <select id="filtro-disciplina" class="p-3 border rounded-xl">
                                         <option value="">Todas as disciplinas</option>
-                                        ${this.usuario.dados.disciplinas.map(d => 
+                                        ${this.usuario.dados.editalVerticalizado?.disciplinas?.map(d => 
                                             `<option value="${d.nome}">${d.nome}</option>`
-                                        ).join('')}
+                                        ).join('') || ''}
                                     </select>
                                     
                                     <select id="filtro-dificuldade" class="p-3 border rounded-xl">
@@ -2693,4 +2778,3 @@
     </script>
 </body>
 </html>
-
