@@ -1375,7 +1375,7 @@
                                 <div class="text-sm text-gray-500 flex items-center mt-1">
                                     <i class="fas fa-book mr-1"></i>${tarefa.disciplina}
                                     <span class="mx-2">•</span>
-                                    <i class="fas fa-calendar mr-1"></i>${new Date(tarefa.data).toLocaleDateString('pt-BR')}
+                                    <i class="fas fa-calendar mr-1"></i>${this.formatarDiaSemana(tarefa.diaSemana)}
                                 </div>
                             </div>
                         </div>
@@ -2005,7 +2005,7 @@
             },
 
             // =========================
-            // CRONOGRAMA
+            // CRONOGRAMA (ATUALIZADO)
             // =========================
             carregarCronograma() {
                 const conteudo = document.getElementById('conteudo-principal');
@@ -2079,32 +2079,59 @@
             },
 
             renderizarItemTarefa(tarefa) {
-                const dataTarefa = new Date(tarefa.data);
                 const hoje = new Date();
-                const atrasada = !tarefa.concluida && dataTarefa < hoje;
+                const diasSemana = ['domingo', 'segunda', 'terca', 'quarta', 'quinta', 'sexta', 'sabado'];
+                const diaAtual = diasSemana[hoje.getDay()];
+                
+                // Verificar se a tarefa é para hoje
+                const ehHoje = tarefa.diaSemana === diaAtual;
+                const tempoFaltante = tarefa.duracao - (tarefa.tempoEstudado || 0);
+                const concluida = tarefa.concluida || tempoFaltante <= 0;
+                const emAndamento = !concluida && (tarefa.tempoEstudado || 0) > 0;
                 
                 return `
-                    <div class="flex items-center justify-between p-4 border rounded-xl hover:bg-gray-50 transition-colors ${tarefa.concluida ? 'bg-green-50 border-green-200' : atrasada ? 'bg-red-50 border-red-200' : ''}">
+                    <div class="flex items-center justify-between p-4 border rounded-xl hover:bg-gray-50 transition-colors ${
+                        concluida ? 'bg-green-50 border-green-200' : 
+                        emAndamento ? 'bg-yellow-50 border-yellow-200' :
+                        'bg-white border-gray-200'
+                    }">
                         <div class="flex items-center flex-1">
-                            <div class="checkbox-custom ${tarefa.concluida ? 'checked' : ''}" 
+                            <div class="checkbox-custom ${concluida ? 'checked' : ''}" 
                                  onclick="AplicacaoPrincipal.toggleTarefa('${tarefa.id}')"></div>
                             <div class="ml-4 flex-1">
                                 <div class="flex items-center flex-wrap">
-                                    <h4 class="font-medium ${tarefa.concluida ? 'tarefa-concluida text-gray-500' : ''}">${tarefa.titulo}</h4>
+                                    <h4 class="font-medium ${concluida ? 'tarefa-concluida text-gray-500' : ''}">${tarefa.titulo}</h4>
                                     ${tarefa.importante ? '<span class="badge badge-warning ml-2"><i class="fas fa-exclamation-circle mr-1"></i>Importante</span>' : ''}
-                                    ${atrasada ? '<span class="badge badge-danger ml-2"><i class="fas fa-exclamation-triangle mr-1"></i>Atrasada</span>' : ''}
+                                    ${concluida ? '<span class="badge badge-success ml-2"><i class="fas fa-check-circle mr-1"></i>Concluída</span>' : ''}
+                                    ${emAndamento ? '<span class="badge badge-warning ml-2"><i class="fas fa-clock mr-1"></i>Em Andamento</span>' : ''}
+                                    ${ehHoje && !concluida ? '<span class="badge badge-primary ml-2"><i class="fas fa-calendar-day mr-1"></i>Hoje</span>' : ''}
                                 </div>
                                 <div class="text-sm text-gray-600 mt-2">
                                     <div class="flex items-center flex-wrap gap-4">
                                         <span><i class="fas fa-book mr-1"></i>${tarefa.disciplina}</span>
-                                        <span><i class="fas fa-calendar mr-1"></i>${dataTarefa.toLocaleDateString('pt-BR')}</span>
-                                        <span><i class="fas fa-clock mr-1"></i>${tarefa.duracao || '1h'}</span>
+                                        <span><i class="fas fa-calendar mr-1"></i>${this.formatarDiaSemana(tarefa.diaSemana)}</span>
+                                        <span><i class="fas fa-clock mr-1"></i>${tarefa.duracao}h planejado</span>
+                                        ${!concluida && tempoFaltante > 0 ? `
+                                            <span class="tempo-pendente">
+                                                <i class="fas fa-hourglass-half mr-1"></i>Faltam ${tempoFaltante.toFixed(1)}h
+                                            </span>
+                                        ` : ''}
+                                        ${emAndamento ? `
+                                            <span class="tempo-concluido">
+                                                <i class="fas fa-check mr-1"></i>${tarefa.tempoEstudado.toFixed(1)}h estudadas
+                                            </span>
+                                        ` : ''}
                                     </div>
                                     ${tarefa.descricao ? `<p class="mt-1 text-gray-500">${tarefa.descricao}</p>` : ''}
                                 </div>
                             </div>
                         </div>
                         <div class="action-buttons">
+                            ${!concluida ? `
+                                <button onclick="AplicacaoPrincipal.registrarTempoEstudo('${tarefa.id}')" class="btn-acao bg-green-100 text-green-600" title="Registrar Estudo">
+                                    <i class="fas fa-play"></i>
+                                </button>
+                            ` : ''}
                             <button onclick="AplicacaoPrincipal.editarTarefa('${tarefa.id}')" class="btn-acao bg-blue-100 text-blue-600" title="Editar">
                                 <i class="fas fa-edit"></i>
                             </button>
@@ -2116,8 +2143,24 @@
                 `;
             },
 
+            formatarDiaSemana(dia) {
+                const dias = {
+                    'segunda': 'Segunda-feira',
+                    'terca': 'Terça-feira',
+                    'quarta': 'Quarta-feira',
+                    'quinta': 'Quinta-feira',
+                    'sexta': 'Sexta-feira',
+                    'sabado': 'Sábado',
+                    'domingo': 'Domingo'
+                };
+                return dias[dia] || dia;
+            },
+
             mostrarModalNovaTarefa(tarefaId = null) {
                 const tarefa = tarefaId ? this.dados.cronograma.find(t => t.id === tarefaId) : null;
+                
+                // Obter disciplinas e tópicos do edital verticalizado
+                const opcoesDisciplinas = this.gerarOpcoesDisciplinasETopicos();
                 
                 this.mostrarModal(`
                     <div class="p-6 max-w-md">
@@ -2134,23 +2177,29 @@
                             </div>
                             
                             <div>
-                                <label class="block text-sm font-semibold mb-2">Disciplina:</label>
+                                <label class="block text-sm font-semibold mb-2">Disciplina/Tópico:</label>
                                 <select id="tarefa-disciplina" class="w-full p-3 border rounded-xl" required>
-                                    <option value="">Selecione uma disciplina</option>
-                                    ${this.dados.disciplinas.map(d => 
-                                        `<option value="${d.nome}" ${tarefa && tarefa.disciplina === d.nome ? 'selected' : ''}>${d.nome}</option>`
-                                    ).join('')}
+                                    <option value="">Selecione uma disciplina ou tópico</option>
+                                    ${opcoesDisciplinas}
                                 </select>
                             </div>
                             
                             <div>
-                                <label class="block text-sm font-semibold mb-2">Data:</label>
-                                <input type="date" id="tarefa-data" class="w-full p-3 border rounded-xl" 
-                                       value="${tarefa ? tarefa.data.split('T')[0] : new Date().toISOString().split('T')[0]}" required>
+                                <label class="block text-sm font-semibold mb-2">Dia da Semana:</label>
+                                <select id="tarefa-dia-semana" class="w-full p-3 border rounded-xl" required>
+                                    <option value="">Selecione um dia</option>
+                                    <option value="segunda" ${tarefa && tarefa.diaSemana === 'segunda' ? 'selected' : ''}>Segunda-feira</option>
+                                    <option value="terca" ${tarefa && tarefa.diaSemana === 'terca' ? 'selected' : ''}>Terça-feira</option>
+                                    <option value="quarta" ${tarefa && tarefa.diaSemana === 'quarta' ? 'selected' : ''}>Quarta-feira</option>
+                                    <option value="quinta" ${tarefa && tarefa.diaSemana === 'quinta' ? 'selected' : ''}>Quinta-feira</option>
+                                    <option value="sexta" ${tarefa && tarefa.diaSemana === 'sexta' ? 'selected' : ''}>Sexta-feira</option>
+                                    <option value="sabado" ${tarefa && tarefa.diaSemana === 'sabado' ? 'selected' : ''}>Sábado</option>
+                                    <option value="domingo" ${tarefa && tarefa.diaSemana === 'domingo' ? 'selected' : ''}>Domingo</option>
+                                </select>
                             </div>
                             
                             <div>
-                                <label class="block text-sm font-semibold mb-2">Duração (horas):</label>
+                                <label class="block text-sm font-semibold mb-2">Tempo Planejado (horas):</label>
                                 <input type="number" id="tarefa-duracao" class="w-full p-3 border rounded-xl" 
                                        value="${tarefa ? tarefa.duracao || '1' : '1'}" min="0.5" max="8" step="0.5" required>
                             </div>
@@ -2177,19 +2226,82 @@
                         </div>
                     </div>
                 `);
+                
+                // Selecionar o valor correto se estiver editando
+                if (tarefa && tarefa.disciplina) {
+                    // Encontrar o valor correspondente no dropdown
+                    const select = document.getElementById('tarefa-disciplina');
+                    for (let i = 0; i < select.options.length; i++) {
+                        if (select.options[i].text === tarefa.disciplina) {
+                            select.value = select.options[i].value;
+                            break;
+                        }
+                    }
+                }
+            },
+
+            gerarOpcoesDisciplinasETopicos() {
+                let opcoes = '';
+                
+                // Disciplinas principais
+                opcoes += '<optgroup label="Disciplinas Principais">';
+                this.dados.disciplinas.forEach(disciplina => {
+                    opcoes += `<option value="disciplina:${disciplina.id}">${disciplina.nome}</option>`;
+                });
+                opcoes += '</optgroup>';
+                
+                // Disciplinas e tópicos do edital verticalizado
+                if (this.dados.editalVerticalizado.disciplinas.length > 0) {
+                    opcoes += '<optgroup label="Edital Verticalizado">';
+                    this.dados.editalVerticalizado.disciplinas.forEach(disciplina => {
+                        opcoes += `<option value="edital-disciplina:${disciplina.id}">${disciplina.nome}</option>`;
+                        
+                        // Tópicos da disciplina
+                        if (disciplina.topicos && disciplina.topicos.length > 0) {
+                            disciplina.topicos.forEach(topico => {
+                                opcoes += `<option value="edital-topico:${disciplina.id}:${topico.id}">&nbsp;&nbsp;📝 ${topico.nome}</option>`;
+                            });
+                        }
+                    });
+                    opcoes += '</optgroup>';
+                }
+                
+                return opcoes;
             },
 
             salvarTarefa(tarefaId = null) {
                 const titulo = document.getElementById('tarefa-titulo').value.trim();
-                const disciplina = document.getElementById('tarefa-disciplina').value;
-                const data = document.getElementById('tarefa-data').value;
-                const duracao = document.getElementById('tarefa-duracao').value;
+                const disciplinaValue = document.getElementById('tarefa-disciplina').value;
+                const diaSemana = document.getElementById('tarefa-dia-semana').value;
+                const duracao = parseFloat(document.getElementById('tarefa-duracao').value);
                 const descricao = document.getElementById('tarefa-descricao').value.trim();
                 const importante = document.getElementById('tarefa-importante').checked;
 
-                if (!titulo || !disciplina || !data || !duracao) {
+                if (!titulo || !disciplinaValue || !diaSemana || !duracao) {
                     this.mostrarNotificacao('Preencha todos os campos obrigatórios', 'error');
                     return;
+                }
+
+                // Processar o valor da disciplina/tópico
+                let disciplina, tipo, topicoId;
+                if (disciplinaValue.startsWith('edital-topico:')) {
+                    const partes = disciplinaValue.split(':');
+                    tipo = 'topico';
+                    const disciplinaId = partes[1];
+                    topicoId = partes[2];
+                    const disciplinaEdital = this.dados.editalVerticalizado.disciplinas.find(d => d.id === disciplinaId);
+                    const topico = disciplinaEdital?.topicos.find(t => t.id === topicoId);
+                    disciplina = topico ? `${disciplinaEdital.nome} - ${topico.nome}` : 'Tópico não encontrado';
+                } else if (disciplinaValue.startsWith('edital-disciplina:')) {
+                    const disciplinaId = disciplinaValue.split(':')[1];
+                    const disciplinaEdital = this.dados.editalVerticalizado.disciplinas.find(d => d.id === disciplinaId);
+                    disciplina = disciplinaEdital ? disciplinaEdital.nome : 'Disciplina não encontrada';
+                    tipo = 'disciplina_edital';
+                } else {
+                    const disciplinaId = disciplinaValue.split(':')[1];
+                    const disciplinaPrincipal = this.dados.disciplinas.find(d => d.id === disciplinaId);
+                    disciplina = disciplinaPrincipal ? disciplinaPrincipal.nome : 'Disciplina não encontrada';
+                    tipo = 'disciplina_principal';
                 }
 
                 if (tarefaId) {
@@ -2200,10 +2312,14 @@
                             ...this.dados.cronograma[tarefaIndex],
                             titulo,
                             disciplina,
-                            data: new Date(data + 'T12:00:00').toISOString(),
+                            tipo,
+                            topicoId,
+                            diaSemana,
                             duracao,
+                            tempoEstudado: this.dados.cronograma[tarefaIndex].tempoEstudado || 0,
                             descricao,
-                            importante
+                            importante,
+                            dataAtualizacao: new Date().toISOString()
                         };
                     }
                 } else {
@@ -2212,12 +2328,16 @@
                         id: Date.now().toString(),
                         titulo,
                         disciplina,
-                        data: new Date(data + 'T12:00:00').toISOString(),
+                        tipo,
+                        topicoId,
+                        diaSemana,
                         duracao,
+                        tempoEstudado: 0,
                         descricao,
                         importante,
                         concluida: false,
-                        dataCriacao: new Date().toISOString()
+                        dataCriacao: new Date().toISOString(),
+                        dataAtualizacao: new Date().toISOString()
                     };
                     this.dados.cronograma.push(novaTarefa);
                 }
@@ -2259,8 +2379,75 @@
                 }
             },
 
+            registrarTempoEstudo(tarefaId) {
+                const tarefa = this.dados.cronograma.find(t => t.id === tarefaId);
+                if (tarefa) {
+                    this.mostrarModal(`
+                        <div class="p-6 max-w-md">
+                            <h3 class="text-xl font-semibold mb-4">
+                                <i class="fas fa-clock mr-2"></i>Registrar Tempo de Estudo
+                            </h3>
+                            
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-sm font-semibold mb-2">Tempo Estudado (horas):</label>
+                                    <input type="number" id="tempo-estudado" class="w-full p-3 border rounded-xl" 
+                                           min="0.1" max="8" step="0.1" value="1" placeholder="Ex: 1.5">
+                                </div>
+                                
+                                <div class="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                                    <p class="text-sm text-blue-800">
+                                        <strong>${tarefa.titulo}</strong><br>
+                                        Tempo planejado: ${tarefa.duracao}h<br>
+                                        Já estudado: ${tarefa.tempoEstudado || 0}h<br>
+                                        Faltam: ${(tarefa.duracao - (tarefa.tempoEstudado || 0)).toFixed(1)}h
+                                    </p>
+                                </div>
+                            </div>
+                            
+                            <div class="flex gap-4 mt-6">
+                                <button onclick="AplicacaoPrincipal.fecharModal()" class="flex-1 btn-secondary">
+                                    <i class="fas fa-times mr-1"></i>Cancelar
+                                </button>
+                                <button onclick="AplicacaoPrincipal.salvarTempoEstudo('${tarefaId}')" class="flex-1 btn-success">
+                                    <i class="fas fa-save mr-1"></i>Registrar
+                                </button>
+                            </div>
+                        </div>
+                    `);
+                }
+            },
+
+            salvarTempoEstudo(tarefaId) {
+                const tempoEstudado = parseFloat(document.getElementById('tempo-estudado').value);
+                
+                if (!tempoEstudado || tempoEstudado <= 0) {
+                    this.mostrarNotificacao('Informe um tempo válido', 'error');
+                    return;
+                }
+
+                const tarefa = this.dados.cronograma.find(t => t.id === tarefaId);
+                if (tarefa) {
+                    tarefa.tempoEstudado = (tarefa.tempoEstudado || 0) + tempoEstudado;
+                    
+                    // Se o tempo estudado atingir ou ultrapassar o tempo planejado, marcar como concluída
+                    if (tarefa.tempoEstudado >= tarefa.duracao) {
+                        tarefa.concluida = true;
+                    }
+                    
+                    this.salvarDadosUsuario();
+                    this.fecharModal();
+                    this.carregarCronograma();
+                    
+                    this.mostrarNotificacao(
+                        `Tempo de estudo registrado: ${tempoEstudado}h`, 
+                        'success'
+                    );
+                }
+            },
+
             // =========================
-            // EDITAL VERTICAL
+            // EDITAL VERTICAL (ATUALIZADO)
             // =========================
             carregarEditalVertical() {
                 const conteudo = document.getElementById('conteudo-principal');
@@ -2268,9 +2455,14 @@
                     <div class="fade-in">
                         <div class="flex justify-between items-center mb-8">
                             <h2 class="text-3xl font-bold gradient-text">Edital Verticalizado</h2>
-                            <button onclick="AplicacaoPrincipal.mostrarModalConfigurarEdital()" class="btn-primary">
-                                <i class="fas fa-cog mr-2"></i>Configurar Edital
-                            </button>
+                            <div class="flex gap-2">
+                                <button onclick="AplicacaoPrincipal.mostrarModalConfigurarEdital()" class="btn-primary">
+                                    <i class="fas fa-cog mr-2"></i>Configurar Edital
+                                </button>
+                                <button onclick="AplicacaoPrincipal.mostrarModalAdicionarTopico()" class="btn-success">
+                                    <i class="fas fa-plus mr-2"></i>Adicionar Tópico
+                                </button>
+                            </div>
                         </div>
 
                         <div class="glass-card rounded-xl p-6">
@@ -2294,7 +2486,18 @@
                                         <div class="border rounded-xl p-4">
                                             <div class="flex justify-between items-center mb-3">
                                                 <h4 class="text-xl font-semibold">${disciplina.nome}</h4>
-                                                <span class="badge badge-primary">${disciplina.progresso || 0}%</span>
+                                                <div class="flex items-center gap-2">
+                                                    <span class="badge badge-primary">${disciplina.progresso || 0}%</span>
+                                                    <button onclick="AplicacaoPrincipal.mostrarModalAdicionarTopico('${disciplina.id}')" class="btn-acao bg-green-100 text-green-600" title="Adicionar Tópico">
+                                                        <i class="fas fa-plus"></i>
+                                                    </button>
+                                                    <button onclick="AplicacaoPrincipal.editarDisciplinaEdital('${disciplina.id}')" class="btn-acao bg-blue-100 text-blue-600" title="Editar">
+                                                        <i class="fas fa-edit"></i>
+                                                    </button>
+                                                    <button onclick="AplicacaoPrincipal.excluirDisciplinaEdital('${disciplina.id}')" class="btn-acao bg-red-100 text-red-600" title="Excluir">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                </div>
                                             </div>
                                             
                                             <div class="w-full bg-gray-200 rounded-full h-3 mb-3">
@@ -2302,15 +2505,37 @@
                                             </div>
                                             
                                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                ${disciplina.topicos.map(topico => `
+                                                ${disciplina.topicos && disciplina.topicos.length > 0 ? disciplina.topicos.map(topico => `
                                                     <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                                                        <span class="${topico.concluido ? 'line-through text-gray-500' : ''}">${topico.nome}</span>
-                                                        <button onclick="AplicacaoPrincipal.toggleTopicoEdital('${disciplina.id}', '${topico.id}')" 
-                                                                class="text-sm ${topico.concluido ? 'text-green-600' : 'text-gray-400'}">
-                                                            <i class="fas ${topico.concluido ? 'fa-check-circle' : 'fa-circle'}"></i>
-                                                        </button>
+                                                        <div class="flex-1">
+                                                            <span class="${topico.concluido ? 'line-through text-gray-500' : ''}">${topico.nome}</span>
+                                                            ${topico.tempoEstimado ? `
+                                                                <span class="text-xs text-gray-500 ml-2">
+                                                                    (${topico.tempoEstimado}h)
+                                                                </span>
+                                                            ` : ''}
+                                                        </div>
+                                                        <div class="action-buttons">
+                                                            <button onclick="AplicacaoPrincipal.editarTopicoEdital('${disciplina.id}', '${topico.id}')" 
+                                                                    class="btn-acao bg-blue-100 text-blue-600" title="Editar">
+                                                                <i class="fas fa-edit"></i>
+                                                            </button>
+                                                            <button onclick="AplicacaoPrincipal.toggleTopicoEdital('${disciplina.id}', '${topico.id}')" 
+                                                                    class="text-sm ${topico.concluido ? 'text-green-600' : 'text-gray-400'}" title="${topico.concluido ? 'Marcar como pendente' : 'Marcar como concluído'}">
+                                                                <i class="fas ${topico.concluido ? 'fa-check-circle' : 'fa-circle'}"></i>
+                                                            </button>
+                                                            <button onclick="AplicacaoPrincipal.excluirTopicoEdital('${disciplina.id}', '${topico.id}')" 
+                                                                    class="btn-acao bg-red-100 text-red-600" title="Excluir">
+                                                                <i class="fas fa-trash"></i>
+                                                            </button>
+                                                        </div>
                                                     </div>
-                                                `).join('')}
+                                                `).join('') : `
+                                                    <div class="col-span-2 text-center py-4 text-gray-500">
+                                                        <i class="fas fa-inbox text-2xl mb-2"></i>
+                                                        <p>Nenhum tópico cadastrado</p>
+                                                    </div>
+                                                `}
                                             </div>
                                         </div>
                                     `).join('')}
@@ -2319,6 +2544,259 @@
                         </div>
                     </div>
                 `;
+            },
+
+            mostrarModalAdicionarTopico(disciplinaId = null) {
+                const disciplinas = this.dados.editalVerticalizado.disciplinas;
+                
+                this.mostrarModal(`
+                    <div class="p-6 max-w-md">
+                        <h3 class="text-xl font-semibold mb-4">
+                            <i class="fas fa-plus-circle mr-2"></i>
+                            ${disciplinaId ? 'Adicionar Tópico' : 'Novo Tópico'}
+                        </h3>
+                        
+                        <div class="space-y-4">
+                            ${!disciplinaId ? `
+                                <div>
+                                    <label class="block text-sm font-semibold mb-2">Disciplina:</label>
+                                    <select id="topico-disciplina" class="w-full p-3 border rounded-xl" required>
+                                        <option value="">Selecione uma disciplina</option>
+                                        ${disciplinas.map(d => 
+                                            `<option value="${d.id}">${d.nome}</option>`
+                                        ).join('')}
+                                    </select>
+                                </div>
+                            ` : ''}
+                            
+                            <div>
+                                <label class="block text-sm font-semibold mb-2">Nome do Tópico:</label>
+                                <input type="text" id="topico-nome" class="w-full p-3 border rounded-xl" 
+                                       placeholder="Ex: Álgebra Linear" required>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-semibold mb-2">Tempo Estimado (horas):</label>
+                                <input type="number" id="topico-tempo" class="w-full p-3 border rounded-xl" 
+                                       min="0.5" max="20" step="0.5" value="1" placeholder="Ex: 2.5">
+                            </div>
+                        </div>
+                        
+                        <div class="flex gap-4 mt-6">
+                            <button onclick="AplicacaoPrincipal.fecharModal()" class="flex-1 btn-secondary">
+                                <i class="fas fa-times mr-1"></i>Cancelar
+                            </button>
+                            <button onclick="AplicacaoPrincipal.salvarTopicoEdital('${disciplinaId}')" class="flex-1 btn-success">
+                                <i class="fas fa-save mr-1"></i>Salvar
+                            </button>
+                        </div>
+                    </div>
+                `);
+                
+                if (disciplinaId) {
+                    // Criar um elemento hidden para armazenar o ID da disciplina
+                    setTimeout(() => {
+                        const select = document.getElementById('topico-disciplina');
+                        if (select) {
+                            const hiddenInput = document.createElement('input');
+                            hiddenInput.type = 'hidden';
+                            hiddenInput.id = 'topico-disciplina-hidden';
+                            hiddenInput.value = disciplinaId;
+                            select.parentNode.appendChild(hiddenInput);
+                        }
+                    }, 100);
+                }
+            },
+
+            salvarTopicoEdital(disciplinaId = null) {
+                const disciplinaSelect = document.getElementById('topico-disciplina');
+                const hiddenInput = document.getElementById('topico-disciplina-hidden');
+                const disciplinaIdFinal = disciplinaId || (hiddenInput ? hiddenInput.value : disciplinaSelect?.value);
+                const nome = document.getElementById('topico-nome').value.trim();
+                const tempoEstimado = parseFloat(document.getElementById('topico-tempo').value) || 1;
+
+                if (!disciplinaIdFinal || !nome) {
+                    this.mostrarNotificacao('Preencha todos os campos obrigatórios', 'error');
+                    return;
+                }
+
+                const disciplina = this.dados.editalVerticalizado.disciplinas.find(d => d.id === disciplinaIdFinal);
+                if (disciplina) {
+                    const novoTopicos = {
+                        id: Date.now().toString(),
+                        nome,
+                        tempoEstimado,
+                        concluido: false,
+                        tempoEstudado: 0
+                    };
+                    
+                    if (!disciplina.topicos) {
+                        disciplina.topicos = [];
+                    }
+                    
+                    disciplina.topicos.push(novoTopicos);
+                    
+                    // Recalcular progresso
+                    disciplina.progresso = this.calcularProgressoDisciplinaEdital(disciplina);
+                    
+                    this.salvarDadosUsuario();
+                    this.fecharModal();
+                    this.carregarEditalVertical();
+                    
+                    this.mostrarNotificacao('Tópico adicionado com sucesso!', 'success');
+                }
+            },
+
+            editarTopicoEdital(disciplinaId, topicoId) {
+                const disciplina = this.dados.editalVerticalizado.disciplinas.find(d => d.id === disciplinaId);
+                const topico = disciplina?.topicos.find(t => t.id === topicoId);
+                
+                if (topico) {
+                    this.mostrarModal(`
+                        <div class="p-6 max-w-md">
+                            <h3 class="text-xl font-semibold mb-4">
+                                <i class="fas fa-edit mr-2"></i>Editar Tópico
+                            </h3>
+                            
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-sm font-semibold mb-2">Nome do Tópico:</label>
+                                    <input type="text" id="topico-nome-edit" class="w-full p-3 border rounded-xl" 
+                                           value="${topico.nome}" required>
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-sm font-semibold mb-2">Tempo Estimado (horas):</label>
+                                    <input type="number" id="topico-tempo-edit" class="w-full p-3 border rounded-xl" 
+                                           value="${topico.tempoEstimado || 1}" min="0.5" max="20" step="0.5">
+                                </div>
+                                
+                                <div class="flex items-center">
+                                    <input type="checkbox" id="topico-concluido" class="mr-2" ${topico.concluido ? 'checked' : ''}>
+                                    <label class="text-sm">Marcar como concluído</label>
+                                </div>
+                            </div>
+                            
+                            <div class="flex gap-4 mt-6">
+                                <button onclick="AplicacaoPrincipal.fecharModal()" class="flex-1 btn-secondary">
+                                    <i class="fas fa-times mr-1"></i>Cancelar
+                                </button>
+                                <button onclick="AplicacaoPrincipal.atualizarTopicoEdital('${disciplinaId}', '${topicoId}')" class="flex-1 btn-success">
+                                    <i class="fas fa-save mr-1"></i>Atualizar
+                                </button>
+                            </div>
+                        </div>
+                    `);
+                }
+            },
+
+            atualizarTopicoEdital(disciplinaId, topicoId) {
+                const nome = document.getElementById('topico-nome-edit').value.trim();
+                const tempoEstimado = parseFloat(document.getElementById('topico-tempo-edit').value) || 1;
+                const concluido = document.getElementById('topico-concluido').checked;
+
+                if (!nome) {
+                    this.mostrarNotificacao('Preencha o nome do tópico', 'error');
+                    return;
+                }
+
+                const disciplina = this.dados.editalVerticalizado.disciplinas.find(d => d.id === disciplinaId);
+                const topico = disciplina?.topicos.find(t => t.id === topicoId);
+                
+                if (topico) {
+                    topico.nome = nome;
+                    topico.tempoEstimado = tempoEstimado;
+                    topico.concluido = concluido;
+                    
+                    // Recalcular progresso
+                    disciplina.progresso = this.calcularProgressoDisciplinaEdital(disciplina);
+                    
+                    this.salvarDadosUsuario();
+                    this.fecharModal();
+                    this.carregarEditalVertical();
+                    
+                    this.mostrarNotificacao('Tópico atualizado com sucesso!', 'success');
+                }
+            },
+
+            excluirTopicoEdital(disciplinaId, topicoId) {
+                if (confirm('Tem certeza que deseja excluir este tópico?')) {
+                    const disciplina = this.dados.editalVerticalizado.disciplinas.find(d => d.id === disciplinaId);
+                    if (disciplina && disciplina.topicos) {
+                        disciplina.topicos = disciplina.topicos.filter(t => t.id !== topicoId);
+                        
+                        // Recalcular progresso
+                        disciplina.progresso = this.calcularProgressoDisciplinaEdital(disciplina);
+                        
+                        this.salvarDadosUsuario();
+                        this.carregarEditalVertical();
+                        this.mostrarNotificacao('Tópico excluído com sucesso!', 'success');
+                    }
+                }
+            },
+
+            editarDisciplinaEdital(disciplinaId) {
+                const disciplina = this.dados.editalVerticalizado.disciplinas.find(d => d.id === disciplinaId);
+                
+                if (disciplina) {
+                    this.mostrarModal(`
+                        <div class="p-6 max-w-md">
+                            <h3 class="text-xl font-semibold mb-4">
+                                <i class="fas fa-edit mr-2"></i>Editar Disciplina
+                            </h3>
+                            
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-sm font-semibold mb-2">Nome da Disciplina:</label>
+                                    <input type="text" id="disciplina-edital-nome" class="w-full p-3 border rounded-xl" 
+                                           value="${disciplina.nome}" required>
+                                </div>
+                            </div>
+                            
+                            <div class="flex gap-4 mt-6">
+                                <button onclick="AplicacaoPrincipal.fecharModal()" class="flex-1 btn-secondary">
+                                    <i class="fas fa-times mr-1"></i>Cancelar
+                                </button>
+                                <button onclick="AplicacaoPrincipal.atualizarDisciplinaEdital('${disciplinaId}')" class="flex-1 btn-success">
+                                    <i class="fas fa-save mr-1"></i>Atualizar
+                                </button>
+                            </div>
+                        </div>
+                    `);
+                }
+            },
+
+            atualizarDisciplinaEdital(disciplinaId) {
+                const nome = document.getElementById('disciplina-edital-nome').value.trim();
+
+                if (!nome) {
+                    this.mostrarNotificacao('Preencha o nome da disciplina', 'error');
+                    return;
+                }
+
+                const disciplina = this.dados.editalVerticalizado.disciplinas.find(d => d.id === disciplinaId);
+                if (disciplina) {
+                    disciplina.nome = nome;
+                    this.salvarDadosUsuario();
+                    this.fecharModal();
+                    this.carregarEditalVertical();
+                    this.mostrarNotificacao('Disciplina atualizada com sucesso!', 'success');
+                }
+            },
+
+            excluirDisciplinaEdital(disciplinaId) {
+                if (confirm('Tem certeza que deseja excluir esta disciplina? Todos os tópicos serão perdidos.')) {
+                    this.dados.editalVerticalizado.disciplinas = this.dados.editalVerticalizado.disciplinas.filter(d => d.id !== disciplinaId);
+                    this.salvarDadosUsuario();
+                    this.carregarEditalVertical();
+                    this.mostrarNotificacao('Disciplina excluída com sucesso!', 'success');
+                }
+            },
+
+            calcularProgressoDisciplinaEdital(disciplina) {
+                if (!disciplina.topicos || disciplina.topicos.length === 0) return 0;
+                const topicosConcluidos = disciplina.topicos.filter(t => t.concluido).length;
+                return Math.round((topicosConcluidos / disciplina.topicos.length) * 100);
             },
 
             mostrarModalConfigurarEdital() {
@@ -2414,10 +2892,10 @@
                 if (this.dados.editalVerticalizado.disciplinas.length === 0) return 0;
                 
                 const totalTopicos = this.dados.editalVerticalizado.disciplinas.reduce(
-                    (total, disc) => total + disc.topicos.length, 0
+                    (total, disc) => total + (disc.topicos ? disc.topicos.length : 0), 0
                 );
                 const topicosConcluidos = this.dados.editalVerticalizado.disciplinas.reduce(
-                    (total, disc) => total + disc.topicos.filter(t => t.concluido).length, 0
+                    (total, disc) => total + (disc.topicos ? disc.topicos.filter(t => t.concluido).length : 0), 0
                 );
                 
                 return totalTopicos > 0 ? Math.round((topicosConcluidos / totalTopicos) * 100) : 0;
@@ -2425,7 +2903,7 @@
 
             toggleTopicoEdital(disciplinaId, topicoId) {
                 const disciplina = this.dados.editalVerticalizado.disciplinas.find(d => d.id === disciplinaId);
-                if (disciplina) {
+                if (disciplina && disciplina.topicos) {
                     const topico = disciplina.topicos.find(t => t.id === topicoId);
                     if (topico) {
                         topico.concluido = !topico.concluido;
