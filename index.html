@@ -254,6 +254,33 @@
             margin: 1rem 0;
         }
 
+        .cronometro-regressivo {
+            font-family: 'Courier New', monospace;
+            font-size: 3rem;
+            font-weight: bold;
+            text-align: center;
+            margin: 1rem 0;
+        }
+
+        .cronometro-normal {
+            color: #3B82F6;
+        }
+
+        .cronometro-alerta {
+            color: #F59E0B;
+        }
+
+        .cronometro-perigo {
+            color: #EF4444;
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
         .btn-cronometro {
             padding: 12px 24px;
             font-size: 1.1rem;
@@ -502,6 +529,12 @@
         .filter-btn:hover:not(.active) {
             border-color: #667eea;
             color: #667eea;
+        }
+
+        .input-tempo {
+            width: 80px;
+            text-align: center;
+            font-weight: bold;
         }
     </style>
 </head>
@@ -918,6 +951,13 @@
                 tempoInicio: null,
                 assuntoAtivo: null
             },
+            cronometroRegressivo: {
+                tempoRestante: 0,
+                tempoTotal: 0,
+                rodando: false,
+                intervalo: null,
+                assuntoAtivo: null
+            },
             
             init(usuario) {
                 this.usuario = usuario;
@@ -1021,6 +1061,14 @@
                 document.querySelector(`[data-tab="${tab}"]`).classList.add('active');
 
                 this.currentTab = tab;
+                
+                // Parar cronômetros se estiverem rodando ao mudar de aba
+                if (this.cronometro.rodando) {
+                    this.pausarCronometro();
+                }
+                if (this.cronometroRegressivo.rodando) {
+                    this.pausarCronometroRegressivo();
+                }
                 
                 switch(tab) {
                     case 'dashboard':
@@ -1182,7 +1230,7 @@
 
                         <!-- Cronômetro e Gráficos -->
                         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
-                            <!-- Cronômetro de Estudo -->
+                            <!-- Cronômetro de Estudo (Progressivo) -->
                             <div class="glass-card rounded-2xl p-6">
                                 <h3 class="text-xl font-semibold mb-4">
                                     <i class="fas fa-stopwatch mr-2"></i>Cronômetro de Estudo
@@ -1255,6 +1303,569 @@
                 this.atualizarTempoDisplay();
             },
 
+            // =========================
+            // CRONOGRAMA - COM CRONÔMETRO REGRESSIVO
+            // =========================
+            carregarCronograma() {
+                const conteudo = document.getElementById('conteudo-principal');
+                conteudo.innerHTML = `
+                    <div class="fade-in">
+                        <div class="mb-8">
+                            <h2 class="text-3xl font-bold gradient-text mb-2">
+                                <i class="fas fa-calendar-alt mr-2"></i>Cronograma de Estudos
+                            </h2>
+                            <p class="text-gray-600">Organize suas tarefas e prazos de estudo</p>
+                        </div>
+
+                        <!-- Cronômetro de Estudo Regressivo na Aba Cronograma -->
+                        <div class="glass-card rounded-2xl p-6 mb-8">
+                            <h3 class="text-xl font-semibold mb-4">
+                                <i class="fas fa-hourglass-half mr-2"></i>Cronômetro Regressivo
+                            </h3>
+                            <div class="text-center mb-4">
+                                <div class="cronometro-regressivo" id="display-cronometro-regressivo">
+                                    <span class="cronometro-normal">25:00</span>
+                                </div>
+                                <div class="text-sm text-gray-600 mb-4">
+                                    <span id="status-cronometro-regressivo">Pronto para iniciar</span>
+                                </div>
+                            </div>
+                            
+                            <div class="space-y-4">
+                                <div class="grid grid-cols-3 gap-4 mb-4">
+                                    <div class="text-center">
+                                        <label class="block text-sm font-semibold mb-2">Horas</label>
+                                        <input type="number" id="input-horas" class="input-tempo p-2 border rounded-lg" value="0" min="0" max="23">
+                                    </div>
+                                    <div class="text-center">
+                                        <label class="block text-sm font-semibold mb-2">Minutos</label>
+                                        <input type="number" id="input-minutos" class="input-tempo p-2 border rounded-lg" value="25" min="0" max="59">
+                                    </div>
+                                    <div class="text-center">
+                                        <label class="block text-sm font-semibold mb-2">Segundos</label>
+                                        <input type="number" id="input-segundos" class="input-tempo p-2 border rounded-lg" value="0" min="0" max="59">
+                                    </div>
+                                </div>
+
+                                <select id="select-assunto-cronometro-regressivo" class="w-full p-3 border rounded-xl">
+                                    <option value="">Selecione um assunto para estudar</option>
+                                    ${this.gerarOpcoesAssuntos()}
+                                </select>
+                                
+                                <div class="flex justify-center space-x-2 flex-wrap">
+                                    <button id="btn-definir-tempo" class="btn-primary">
+                                        <i class="fas fa-cog mr-1"></i>Definir Tempo
+                                    </button>
+                                    <button id="btn-iniciar-regressivo" class="btn-success">
+                                        <i class="fas fa-play mr-1"></i>Iniciar
+                                    </button>
+                                    <button id="btn-pausar-regressivo" class="btn-warning" disabled>
+                                        <i class="fas fa-pause mr-1"></i>Pausar
+                                    </button>
+                                    <button id="btn-parar-regressivo" class="btn-danger" disabled>
+                                        <i class="fas fa-stop mr-1"></i>Parar
+                                    </button>
+                                    <button id="btn-reiniciar-regressivo" class="btn-secondary">
+                                        <i class="fas fa-redo mr-1"></i>Reiniciar
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Conteúdo do cronograma -->
+                        <div class="glass-card rounded-2xl p-6">
+                            <div class="flex justify-between items-center mb-6">
+                                <h3 class="text-xl font-semibold">
+                                    <i class="fas fa-tasks mr-2"></i>Minhas Tarefas
+                                </h3>
+                                <button onclick="AplicacaoPrincipal.mostrarModalNovaTarefa()" class="btn-success">
+                                    <i class="fas fa-plus mr-1"></i>Nova Tarefa
+                                </button>
+                            </div>
+                            
+                            <div class="space-y-4">
+                                ${this.renderizarTodasTarefas()}
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                this.configurarCronometroRegressivo();
+                this.atualizarDisplayCronometroRegressivo();
+            },
+
+            // =========================
+            // FUNÇÕES DO CRONÔMETRO REGRESSIVO
+            // =========================
+            configurarCronometroRegressivo() {
+                const btnDefinir = document.getElementById('btn-definir-tempo');
+                const btnIniciar = document.getElementById('btn-iniciar-regressivo');
+                const btnPausar = document.getElementById('btn-pausar-regressivo');
+                const btnParar = document.getElementById('btn-parar-regressivo');
+                const btnReiniciar = document.getElementById('btn-reiniciar-regressivo');
+
+                if (btnDefinir) {
+                    btnDefinir.addEventListener('click', () => this.definirTempoRegressivo());
+                    btnIniciar.addEventListener('click', () => this.iniciarCronometroRegressivo());
+                    btnPausar.addEventListener('click', () => this.pausarCronometroRegressivo());
+                    btnParar.addEventListener('click', () => this.pararCronometroRegressivo());
+                    btnReiniciar.addEventListener('click', () => this.reiniciarCronometroRegressivo());
+                }
+            },
+
+            definirTempoRegressivo() {
+                const horas = parseInt(document.getElementById('input-horas').value) || 0;
+                const minutos = parseInt(document.getElementById('input-minutos').value) || 0;
+                const segundos = parseInt(document.getElementById('input-segundos').value) || 0;
+
+                const tempoTotal = horas * 3600 + minutos * 60 + segundos;
+                
+                if (tempoTotal <= 0) {
+                    AuthSystem.mostrarNotificacao('Defina um tempo válido maior que zero', 'error');
+                    return;
+                }
+
+                this.cronometroRegressivo.tempoTotal = tempoTotal;
+                this.cronometroRegressivo.tempoRestante = tempoTotal;
+                this.atualizarDisplayCronometroRegressivo();
+                
+                AuthSystem.mostrarNotificacao(`Tempo definido para ${this.formatarTempoRegressivo(tempoTotal)}`, 'success');
+            },
+
+            iniciarCronometroRegressivo() {
+                if (!this.cronometroRegressivo.rodando) {
+                    const assuntoSelect = document.getElementById('select-assunto-cronometro-regressivo');
+                    const assuntoId = assuntoSelect.value;
+                    
+                    if (!assuntoId) {
+                        AuthSystem.mostrarNotificacao('Selecione um assunto para começar a estudar', 'error');
+                        return;
+                    }
+
+                    if (this.cronometroRegressivo.tempoTotal <= 0) {
+                        AuthSystem.mostrarNotificacao('Defina um tempo primeiro', 'error');
+                        return;
+                    }
+
+                    this.cronometroRegressivo.rodando = true;
+                    this.cronometroRegressivo.assuntoAtivo = assuntoId;
+
+                    this.cronometroRegressivo.intervalo = setInterval(() => {
+                        this.cronometroRegressivo.tempoRestante--;
+                        this.atualizarDisplayCronometroRegressivo();
+
+                        if (this.cronometroRegressivo.tempoRestante <= 0) {
+                            this.finalizarCronometroRegressivo();
+                        }
+                    }, 1000);
+
+                    this.atualizarBotoesCronometroRegressivo();
+                    AuthSystem.mostrarNotificacao('Cronômetro regressivo iniciado! Foco nos estudos!', 'success');
+                }
+            },
+
+            pausarCronometroRegressivo() {
+                if (this.cronometroRegressivo.rodando) {
+                    this.cronometroRegressivo.rodando = false;
+                    clearInterval(this.cronometroRegressivo.intervalo);
+                    this.atualizarBotoesCronometroRegressivo();
+                    AuthSystem.mostrarNotificacao('Cronômetro pausado', 'info');
+                }
+            },
+
+            pararCronometroRegressivo() {
+                this.cronometroRegressivo.rodando = false;
+                this.cronometroRegressivo.tempoRestante = this.cronometroRegressivo.tempoTotal;
+                clearInterval(this.cronometroRegressivo.intervalo);
+                this.atualizarDisplayCronometroRegressivo();
+                this.atualizarBotoesCronometroRegressivo();
+                AuthSystem.mostrarNotificacao('Cronômetro parado', 'info');
+            },
+
+            reiniciarCronometroRegressivo() {
+                this.cronometroRegressivo.tempoRestante = this.cronometroRegressivo.tempoTotal;
+                this.atualizarDisplayCronometroRegressivo();
+                if (this.cronometroRegressivo.rodando) {
+                    clearInterval(this.cronometroRegressivo.intervalo);
+                    this.cronometroRegressivo.intervalo = setInterval(() => {
+                        this.cronometroRegressivo.tempoRestante--;
+                        this.atualizarDisplayCronometroRegressivo();
+
+                        if (this.cronometroRegressivo.tempoRestante <= 0) {
+                            this.finalizarCronometroRegressivo();
+                        }
+                    }, 1000);
+                }
+            },
+
+            finalizarCronometroRegressivo() {
+                this.cronometroRegressivo.rodando = false;
+                clearInterval(this.cronometroRegressivo.intervalo);
+                
+                // Salvar tempo estudado
+                this.salvarTempoEstudoRegressivo();
+                
+                this.atualizarBotoesCronometroRegressivo();
+                
+                // Tocar som de notificação (simulado)
+                this.tocarAlarme();
+                
+                AuthSystem.mostrarNotificacao('Tempo esgotado! Sessão de estudo concluída! 🎉', 'success');
+                
+                // Mostrar modal de conclusão
+                this.mostrarModalConclusao();
+            },
+
+            tocarAlarme() {
+                // Em um ambiente real, você tocaria um som aqui
+                // Por enquanto, apenas uma notificação visual
+                const display = document.getElementById('display-cronometro-regressivo');
+                if (display) {
+                    display.style.animation = 'pulse 0.5s infinite';
+                    setTimeout(() => {
+                        display.style.animation = '';
+                    }, 3000);
+                }
+            },
+
+            mostrarModalConclusao() {
+                this.mostrarModal(`
+                    <div class="p-6 text-center">
+                        <div class="text-6xl mb-4 text-green-500">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        <h3 class="text-2xl font-bold mb-4">Sessão Concluída!</h3>
+                        <p class="text-gray-600 mb-6">Parabéns! Você completou ${this.formatarTempoRegressivo(this.cronometroRegressivo.tempoTotal)} de estudo focado.</p>
+                        <div class="flex gap-4 justify-center">
+                            <button onclick="AplicacaoPrincipal.fecharModal()" class="btn-primary">
+                                <i class="fas fa-check mr-1"></i>Continuar
+                            </button>
+                            <button onclick="AplicacaoPrincipal.reiniciarCronometroRegressivo(); AplicacaoPrincipal.fecharModal();" class="btn-success">
+                                <i class="fas fa-redo mr-1"></i>Repetir Sessão
+                            </button>
+                        </div>
+                    </div>
+                `);
+            },
+
+            salvarTempoEstudoRegressivo() {
+                if (this.cronometroRegressivo.assuntoAtivo && this.cronometroRegressivo.tempoTotal > 0) {
+                    const [disciplinaId, assuntoId] = this.cronometroRegressivo.assuntoAtivo.split('-');
+                    const horas = this.cronometroRegressivo.tempoTotal / 3600;
+                    
+                    // Atualizar disciplina
+                    const disciplina = this.dados.disciplinas.find(d => d.id === disciplinaId);
+                    if (disciplina) {
+                        disciplina.horasEstudadas = (disciplina.horasEstudadas || 0) + horas;
+                        
+                        // Atualizar assunto
+                        const assunto = disciplina.assuntos.find(a => a.id === assuntoId);
+                        if (assunto) {
+                            assunto.concluido = true;
+                        }
+                        
+                        // Recalcular progresso
+                        disciplina.progresso = this.calcularProgressoDisciplina(disciplina);
+                    }
+                    
+                    // Atualizar tempo total
+                    this.dados.progresso.totalHoras += horas;
+                    
+                    this.salvarDadosUsuario();
+                }
+            },
+
+            atualizarDisplayCronometroRegressivo() {
+                const display = document.getElementById('display-cronometro-regressivo');
+                const status = document.getElementById('status-cronometro-regressivo');
+                
+                if (display && status) {
+                    const tempoFormatado = this.formatarTempoRegressivo(this.cronometroRegressivo.tempoRestante);
+                    
+                    // Atualizar cores baseadas no tempo restante
+                    if (this.cronometroRegressivo.tempoRestante <= 300) { // 5 minutos
+                        display.innerHTML = `<span class="cronometro-perigo">${tempoFormatado}</span>`;
+                        status.textContent = 'Últimos 5 minutos!';
+                    } else if (this.cronometroRegressivo.tempoRestante <= 600) { // 10 minutos
+                        display.innerHTML = `<span class="cronometro-alerta">${tempoFormatado}</span>`;
+                        status.textContent = 'Quase lá! Continue focado!';
+                    } else {
+                        display.innerHTML = `<span class="cronometro-normal">${tempoFormatado}</span>`;
+                        status.textContent = this.cronometroRegressivo.rodando ? 'Estudando...' : 'Pronto para iniciar';
+                    }
+                }
+            },
+
+            atualizarBotoesCronometroRegressivo() {
+                const btnIniciar = document.getElementById('btn-iniciar-regressivo');
+                const btnPausar = document.getElementById('btn-pausar-regressivo');
+                const btnParar = document.getElementById('btn-parar-regressivo');
+
+                if (btnIniciar && btnPausar && btnParar) {
+                    btnIniciar.disabled = this.cronometroRegressivo.rodando;
+                    btnPausar.disabled = !this.cronometroRegressivo.rodando;
+                    btnParar.disabled = !this.cronometroRegressivo.rodando && this.cronometroRegressivo.tempoRestante === this.cronometroRegressivo.tempoTotal;
+                }
+            },
+
+            formatarTempoRegressivo(segundos) {
+                const horas = Math.floor(segundos / 3600);
+                const minutos = Math.floor((segundos % 3600) / 60);
+                const segs = segundos % 60;
+                
+                if (horas > 0) {
+                    return `${horas.toString().padStart(2, '0')}:${minutos.toString().padStart(2, '0')}:${segs.toString().padStart(2, '0')}`;
+                } else {
+                    return `${minutos.toString().padStart(2, '0')}:${segs.toString().padStart(2, '0')}`;
+                }
+            },
+
+            // =========================
+            // FUNÇÃO PARA RENDERIZAR TODAS AS TAREFAS
+            // =========================
+            renderizarTodasTarefas() {
+                if (this.dados.cronograma.length === 0) {
+                    return `
+                        <div class="text-center py-12">
+                            <i class="fas fa-tasks text-6xl text-gray-300 mb-4"></i>
+                            <h3 class="text-xl font-semibold text-gray-600 mb-2">Nenhuma tarefa cadastrada</h3>
+                            <p class="text-gray-500 mb-6">Comece criando sua primeira tarefa de estudo</p>
+                            <button onclick="AplicacaoPrincipal.mostrarModalNovaTarefa()" class="btn-success">
+                                <i class="fas fa-plus mr-1"></i>Criar Primeira Tarefa
+                            </button>
+                        </div>
+                    `;
+                }
+
+                // Separar tarefas concluídas e pendentes
+                const tarefasPendentes = this.dados.cronograma.filter(t => !t.concluida);
+                const tarefasConcluidas = this.dados.cronograma.filter(t => t.concluida);
+
+                let html = '';
+
+                // Tarefas Pendentes
+                if (tarefasPendentes.length > 0) {
+                    html += `
+                        <div class="mb-6">
+                            <h4 class="font-semibold text-lg mb-4 text-gray-700">
+                                <i class="fas fa-clock mr-2"></i>Tarefas Pendentes (${tarefasPendentes.length})
+                            </h4>
+                            <div class="space-y-3">
+                                ${tarefasPendentes.map(tarefa => this.renderizarItemTarefa(tarefa)).join('')}
+                            </div>
+                        </div>
+                    `;
+                }
+
+                // Tarefas Concluídas
+                if (tarefasConcluidas.length > 0) {
+                    html += `
+                        <div>
+                            <h4 class="font-semibold text-lg mb-4 text-gray-700">
+                                <i class="fas fa-check-circle mr-2"></i>Tarefas Concluídas (${tarefasConcluidas.length})
+                            </h4>
+                            <div class="space-y-3">
+                                ${tarefasConcluidas.map(tarefa => this.renderizarItemTarefa(tarefa)).join('')}
+                            </div>
+                        </div>
+                    `;
+                }
+
+                return html;
+            },
+
+            renderizarItemTarefa(tarefa) {
+                const dataTarefa = new Date(tarefa.data);
+                const hoje = new Date();
+                const atrasada = !tarefa.concluida && dataTarefa < hoje;
+                
+                return `
+                    <div class="flex items-center justify-between p-4 border rounded-xl hover:bg-gray-50 transition-colors ${tarefa.concluida ? 'bg-green-50 border-green-200' : atrasada ? 'bg-red-50 border-red-200' : ''}">
+                        <div class="flex items-center flex-1">
+                            <div class="checkbox-custom ${tarefa.concluida ? 'checked' : ''}" 
+                                 onclick="AplicacaoPrincipal.toggleTarefa('${tarefa.id}')"></div>
+                            <div class="ml-4 flex-1">
+                                <div class="flex items-center flex-wrap">
+                                    <h4 class="font-medium ${tarefa.concluida ? 'tarefa-concluida text-gray-500' : ''}">${tarefa.titulo}</h4>
+                                    ${tarefa.importante ? '<span class="badge badge-warning ml-2"><i class="fas fa-exclamation-circle mr-1"></i>Importante</span>' : ''}
+                                    ${atrasada ? '<span class="badge badge-danger ml-2"><i class="fas fa-exclamation-triangle mr-1"></i>Atrasada</span>' : ''}
+                                </div>
+                                <div class="text-sm text-gray-600 mt-2">
+                                    <div class="flex items-center flex-wrap gap-4">
+                                        <span><i class="fas fa-book mr-1"></i>${tarefa.disciplina}</span>
+                                        <span><i class="fas fa-calendar mr-1"></i>${dataTarefa.toLocaleDateString('pt-BR')}</span>
+                                        <span><i class="fas fa-clock mr-1"></i>${tarefa.duracao || '1h'}</span>
+                                    </div>
+                                    ${tarefa.descricao ? `<p class="mt-1 text-gray-500">${tarefa.descricao}</p>` : ''}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="action-buttons">
+                            <button onclick="AplicacaoPrincipal.editarTarefa('${tarefa.id}')" class="btn-acao bg-blue-100 text-blue-600" title="Editar">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button onclick="AplicacaoPrincipal.excluirTarefa('${tarefa.id}')" class="btn-acao bg-red-100 text-red-600" title="Excluir">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            },
+
+            // =========================
+            // FUNÇÕES PARA MANIPULAR TAREFAS
+            // =========================
+            toggleTarefa(id) {
+                const tarefa = this.dados.cronograma.find(t => t.id === id);
+                if (tarefa) {
+                    tarefa.concluida = !tarefa.concluida;
+                    this.salvarDadosUsuario();
+                    this.carregarCronograma();
+                    
+                    AuthSystem.mostrarNotificacao(
+                        tarefa.concluida ? 'Tarefa concluída!' : 'Tarefa reaberta!', 
+                        tarefa.concluida ? 'success' : 'info'
+                    );
+                }
+            },
+
+            excluirTarefa(id) {
+                if (confirm('Tem certeza que deseja excluir esta tarefa?')) {
+                    this.dados.cronograma = this.dados.cronograma.filter(t => t.id !== id);
+                    this.salvarDadosUsuario();
+                    this.carregarCronograma();
+                    AuthSystem.mostrarNotificacao('Tarefa excluída com sucesso!', 'success');
+                }
+            },
+
+            editarTarefa(id) {
+                this.mostrarModalNovaTarefa(id);
+            },
+
+            // =========================
+            // MODAL DE NOVA TAREFA (COMPLETO)
+            // =========================
+            mostrarModalNovaTarefa(tarefaId = null) {
+                const tarefa = tarefaId ? this.dados.cronograma.find(t => t.id === tarefaId) : null;
+                
+                const modalContent = `
+                    <div class="p-6 max-w-md w-full">
+                        <h3 class="text-xl font-semibold mb-4">
+                            <i class="fas ${tarefa ? 'fa-edit' : 'fa-plus-circle'} mr-2"></i>
+                            ${tarefa ? 'Editar Tarefa' : 'Nova Tarefa'}
+                        </h3>
+                        
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-semibold mb-2">Título:</label>
+                                <input type="text" id="tarefa-titulo" class="w-full p-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
+                                       value="${tarefa ? tarefa.titulo : ''}" placeholder="Ex: Estudar Matemática Básica" required>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-semibold mb-2">Disciplina:</label>
+                                <select id="tarefa-disciplina" class="w-full p-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent" required>
+                                    <option value="">Selecione uma disciplina</option>
+                                    ${this.dados.disciplinas.map(d => 
+                                        `<option value="${d.nome}" ${tarefa && tarefa.disciplina === d.nome ? 'selected' : ''}>${d.nome}</option>`
+                                    ).join('')}
+                                </select>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-semibold mb-2">Data:</label>
+                                <input type="date" id="tarefa-data" class="w-full p-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
+                                       value="${tarefa ? tarefa.data.split('T')[0] : new Date().toISOString().split('T')[0]}" required>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-semibold mb-2">Duração (horas):</label>
+                                <input type="number" id="tarefa-duracao" class="w-full p-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
+                                       value="${tarefa ? tarefa.duracao || '1' : '1'}" min="0.5" max="8" step="0.5" required>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-semibold mb-2">Descrição (opcional):</label>
+                                <textarea id="tarefa-descricao" class="w-full p-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
+                                          rows="3" placeholder="Detalhes da tarefa...">${tarefa ? tarefa.descricao || '' : ''}</textarea>
+                            </div>
+                            
+                            <div class="flex items-center">
+                                <input type="checkbox" id="tarefa-importante" class="mr-2" ${tarefa && tarefa.importante ? 'checked' : ''}>
+                                <label class="text-sm">Marcar como importante</label>
+                            </div>
+                        </div>
+                        
+                        <div class="flex gap-4 mt-6">
+                            <button onclick="AplicacaoPrincipal.fecharModal()" class="flex-1 btn-secondary">
+                                <i class="fas fa-times mr-1"></i>Cancelar
+                            </button>
+                            <button onclick="AplicacaoPrincipal.salvarTarefa('${tarefaId}')" class="flex-1 btn-success">
+                                <i class="fas fa-save mr-1"></i>${tarefa ? 'Atualizar' : 'Salvar'}
+                            </button>
+                        </div>
+                    </div>
+                `;
+                
+                this.mostrarModal(modalContent);
+            },
+
+            salvarTarefa(tarefaId = null) {
+                const titulo = document.getElementById('tarefa-titulo').value.trim();
+                const disciplina = document.getElementById('tarefa-disciplina').value;
+                const data = document.getElementById('tarefa-data').value;
+                const duracao = document.getElementById('tarefa-duracao').value;
+                const descricao = document.getElementById('tarefa-descricao').value.trim();
+                const importante = document.getElementById('tarefa-importante').checked;
+
+                if (!titulo || !disciplina || !data || !duracao) {
+                    AuthSystem.mostrarNotificacao('Preencha todos os campos obrigatórios', 'error');
+                    return;
+                }
+
+                if (tarefaId) {
+                    // Editar tarefa existente
+                    const tarefaIndex = this.dados.cronograma.findIndex(t => t.id === tarefaId);
+                    if (tarefaIndex !== -1) {
+                        this.dados.cronograma[tarefaIndex] = {
+                            ...this.dados.cronograma[tarefaIndex],
+                            titulo,
+                            disciplina,
+                            data: new Date(data + 'T12:00:00').toISOString(),
+                            duracao,
+                            descricao,
+                            importante
+                        };
+                    }
+                } else {
+                    // Nova tarefa
+                    const novaTarefa = {
+                        id: Date.now().toString(),
+                        titulo,
+                        disciplina,
+                        data: new Date(data + 'T12:00:00').toISOString(),
+                        duracao,
+                        descricao,
+                        importante,
+                        concluida: false,
+                        dataCriacao: new Date().toISOString()
+                    };
+                    this.dados.cronograma.push(novaTarefa);
+                }
+
+                this.salvarDadosUsuario();
+                this.fecharModal();
+                this.carregarCronograma();
+                
+                AuthSystem.mostrarNotificacao(
+                    tarefaId ? 'Tarefa atualizada com sucesso!' : 'Tarefa criada com sucesso!', 
+                    'success'
+                );
+            },
+
+            // =========================
+            // FUNÇÕES DO DASHBOARD
+            // =========================
             calcularProgresso() {
                 const totalHoras = this.dados.disciplinas.reduce((total, disc) => total + (disc.horasEstudadas || 0), 0);
                 const totalQuestoes = this.dados.questoes.length;
@@ -1286,7 +1897,6 @@
             },
 
             calcularDiasConsecutivos() {
-                // Implementação simplificada - contar dias com tempo registrado
                 const historico = this.dados.cronometro.historico || {};
                 return Object.keys(historico).length;
             },
@@ -1382,7 +1992,6 @@
             // FUNÇÕES DO DASHBOARD
             // =========================
             iniciarSessaoEstudo() {
-                // Foca no seletor de assunto do cronômetro
                 const selectAssunto = document.getElementById('select-assunto-cronometro');
                 if (selectAssunto) {
                     selectAssunto.focus();
@@ -1495,16 +2104,14 @@
             },
 
             filtrarGrafico(tipo) {
-                // Atualizar botões de filtro
                 document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
                 event.target.classList.add('active');
                 
-                // Aqui você implementaria a lógica para filtrar o gráfico
                 AuthSystem.mostrarNotificacao(`Gráfico filtrado por: ${tipo}`, 'info');
             },
 
             // =========================
-            // CRONÔMETRO
+            // CRONÔMETRO PROGRESSIVO (DASHBOARD)
             // =========================
             configurarCronometro() {
                 const btnIniciar = document.getElementById('btn-iniciar-cronometro');
@@ -1520,219 +2127,6 @@
                 }
             },
 
-            // ... (mantenha as outras funções do cronômetro como estão)
-
-            // =========================
-            // MODAIS E UTILITÁRIOS
-            // =========================
-            mostrarModal(conteudo) {
-                const modal = document.createElement('div');
-                modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4';
-                modal.innerHTML = `
-                    <div class="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-                        <div class="modal-content">${conteudo}</div>
-                    </div>
-                `;
-                
-                modal.addEventListener('click', (e) => {
-                    if (e.target === modal) {
-                        document.body.removeChild(modal);
-                    }
-                });
-                
-                document.body.appendChild(modal);
-            },
-
-            fecharModal() {
-                const modal = document.querySelector('.fixed.inset-0.bg-black');
-                if (modal) {
-                    document.body.removeChild(modal);
-                }
-            },
-
-            mostrarModalBackup() {
-                document.getElementById('modal-backup').classList.remove('hidden');
-                
-                document.getElementById('btn-fazer-backup').onclick = () => this.fazerBackup();
-                document.getElementById('input-restaurar-backup').onchange = (e) => this.restaurarBackup(e);
-                document.getElementById('btn-restaurar-backup').onclick = () => {
-                    document.getElementById('input-restaurar-backup').click();
-                };
-            },
-
-            // ... (mantenha as outras funções de backup, configurações, etc.)
-
-            // =========================
-            // FUNÇÕES DE PERSISTÊNCIA
-            // =========================
-            salvarDadosUsuario() {
-                this.usuario.dados = this.dados;
-                
-                const usuarioIndex = AuthSystem.usuarios.findIndex(u => u.id === this.usuario.id);
-                if (usuarioIndex !== -1) {
-                    AuthSystem.usuarios[usuarioIndex] = this.usuario;
-                    AuthSystem.salvarUsuarios();
-                    localStorage.setItem('gfconcursos_usuario_logado', JSON.stringify(this.usuario));
-                }
-            },
-
-            // =========================
-            // OUTRAS ABAS (implementação básica)
-            // =========================
-            carregarCronograma() {
-                const conteudo = document.getElementById('conteudo-principal');
-                conteudo.innerHTML = `
-                    <div class="fade-in">
-                        <div class="mb-8">
-                            <h2 class="text-3xl font-bold gradient-text mb-2">
-                                <i class="fas fa-calendar-alt mr-2"></i>Cronograma de Estudos
-                            </h2>
-                            <p class="text-gray-600">Organize suas tarefas e prazos de estudo</p>
-                        </div>
-                        <!-- Conteúdo do cronograma será implementado aqui -->
-                        <div class="text-center py-12">
-                            <i class="fas fa-calendar-plus text-6xl text-gray-300 mb-4"></i>
-                            <h3 class="text-xl font-semibold text-gray-600 mb-2">Cronograma em Desenvolvimento</h3>
-                            <p class="text-gray-500">Esta funcionalidade está sendo implementada</p>
-                        </div>
-                    </div>
-                `;
-            },
-
-            carregarEditalVertical() {
-                const conteudo = document.getElementById('conteudo-principal');
-                conteudo.innerHTML = `
-                    <div class="fade-in">
-                        <div class="mb-8">
-                            <h2 class="text-3xl font-bold gradient-text mb-2">
-                                <i class="fas fa-file-alt mr-2"></i>Edital Verticalizado
-                            </h2>
-                            <p class="text-gray-600">Organize o conteúdo do seu edital por disciplinas</p>
-                        </div>
-                        <!-- Conteúdo do edital vertical será implementado aqui -->
-                        <div class="text-center py-12">
-                            <i class="fas fa-file-contract text-6xl text-gray-300 mb-4"></i>
-                            <h3 class="text-xl font-semibold text-gray-600 mb-2">Edital Vertical em Desenvolvimento</h3>
-                            <p class="text-gray-500">Esta funcionalidade está sendo implementada</p>
-                        </div>
-                    </div>
-                `;
-            },
-
-            carregarResumos() {
-                const conteudo = document.getElementById('conteudo-principal');
-                conteudo.innerHTML = `
-                    <div class="fade-in">
-                        <div class="mb-8">
-                            <h2 class="text-3xl font-bold gradient-text mb-2">
-                                <i class="fas fa-sticky-note mr-2"></i>Meus Resumos
-                            </h2>
-                            <p class="text-gray-600">Crie e organize seus resumos de estudo</p>
-                        </div>
-                        <!-- Conteúdo dos resumos será implementado aqui -->
-                        <div class="text-center py-12">
-                            <i class="fas fa-book text-6xl text-gray-300 mb-4"></i>
-                            <h3 class="text-xl font-semibold text-gray-600 mb-2">Resumos em Desenvolvimento</h3>
-                            <p class="text-gray-500">Esta funcionalidade está sendo implementada</p>
-                        </div>
-                    </div>
-                `;
-            },
-
-            carregarQuestoes() {
-                const conteudo = document.getElementById('conteudo-principal');
-                conteudo.innerHTML = `
-                    <div class="fade-in">
-                        <div class="mb-8">
-                            <h2 class="text-3xl font-bold gradient-text mb-2">
-                                <i class="fas fa-question-circle mr-2"></i>Banco de Questões
-                            </h2>
-                            <p class="text-gray-600">Registre e analise suas questões resolvidas</p>
-                        </div>
-                        <!-- Conteúdo das questões será implementado aqui -->
-                        <div class="text-center py-12">
-                            <i class="fas fa-puzzle-piece text-6xl text-gray-300 mb-4"></i>
-                            <h3 class="text-xl font-semibold text-gray-600 mb-2">Questões em Desenvolvimento</h3>
-                            <p class="text-gray-500">Esta funcionalidade está sendo implementada</p>
-                        </div>
-                    </div>
-                `;
-            },
-
-            carregarRedacoes() {
-                const conteudo = document.getElementById('conteudo-principal');
-                conteudo.innerHTML = `
-                    <div class="fade-in">
-                        <div class="mb-8">
-                            <h2 class="text-3xl font-bold gradient-text mb-2">
-                                <i class="fas fa-edit mr-2"></i>Minhas Redações
-                            </h2>
-                            <p class="text-gray-600">Acompanhe seu desenvolvimento na escrita</p>
-                        </div>
-                        <!-- Conteúdo das redações será implementado aqui -->
-                        <div class="text-center py-12">
-                            <i class="fas fa-pen-fancy text-6xl text-gray-300 mb-4"></i>
-                            <h3 class="text-xl font-semibold text-gray-600 mb-2">Redações em Desenvolvimento</h3>
-                            <p class="text-gray-500">Esta funcionalidade está sendo implementada</p>
-                        </div>
-                    </div>
-                `;
-            },
-
-            // =========================
-            // FUNÇÕES DE FORMULÁRIO (placeholders)
-            // =========================
-            mostrarModalNovaTarefa() {
-                this.mostrarModal(`
-                    <div class="p-6">
-                        <h3 class="text-xl font-semibold mb-4">
-                            <i class="fas fa-plus-circle mr-2"></i>Nova Tarefa
-                        </h3>
-                        <p class="text-gray-600 mb-4">Formulário de nova tarefa em desenvolvimento</p>
-                        <div class="flex justify-end">
-                            <button onclick="AplicacaoPrincipal.fecharModal()" class="btn-primary">
-                                <i class="fas fa-times mr-1"></i>Fechar
-                            </button>
-                        </div>
-                    </div>
-                `);
-            },
-
-            mostrarModalNovoResumo() {
-                this.mostrarModal(`
-                    <div class="p-6">
-                        <h3 class="text-xl font-semibold mb-4">
-                            <i class="fas fa-file-medical mr-2"></i>Novo Resumo
-                        </h3>
-                        <p class="text-gray-600 mb-4">Formulário de novo resumo em desenvolvimento</p>
-                        <div class="flex justify-end">
-                            <button onclick="AplicacaoPrincipal.fecharModal()" class="btn-primary">
-                                <i class="fas fa-times mr-1"></i>Fechar
-                            </button>
-                        </div>
-                    </div>
-                `);
-            },
-
-            mostrarModalNovaQuestao() {
-                this.mostrarModal(`
-                    <div class="p-6">
-                        <h3 class="text-xl font-semibold mb-4">
-                            <i class="fas fa-question mr-2"></i>Nova Questão
-                        </h3>
-                        <p class="text-gray-600 mb-4">Formulário de nova questão em desenvolvimento</p>
-                        <div class="flex justify-end">
-                            <button onclick="AplicacaoPrincipal.fecharModal()" class="btn-primary">
-                                <i class="fas fa-times mr-1"></i>Fechar
-                            </button>
-                        </div>
-                    </div>
-                `);
-            },
-
-            // =========================
-            // FUNÇÕES DO CRONÔMETRO (implementação básica)
-            // =========================
             iniciarCronometro() {
                 if (!this.cronometro.rodando) {
                     const assuntoSelect = document.getElementById('select-assunto-cronometro');
@@ -1924,6 +2318,123 @@
             },
 
             // =========================
+            // OUTRAS ABAS
+            // =========================
+            carregarEditalVertical() {
+                const conteudo = document.getElementById('conteudo-principal');
+                conteudo.innerHTML = `
+                    <div class="fade-in">
+                        <div class="mb-8">
+                            <h2 class="text-3xl font-bold gradient-text mb-2">
+                                <i class="fas fa-file-alt mr-2"></i>Edital Verticalizado
+                            </h2>
+                            <p class="text-gray-600">Organize o conteúdo do seu edital por disciplinas</p>
+                        </div>
+                        <div class="text-center py-12">
+                            <i class="fas fa-file-contract text-6xl text-gray-300 mb-4"></i>
+                            <h3 class="text-xl font-semibold text-gray-600 mb-2">Edital Vertical em Desenvolvimento</h3>
+                            <p class="text-gray-500">Esta funcionalidade está sendo implementada</p>
+                        </div>
+                    </div>
+                `;
+            },
+
+            carregarResumos() {
+                const conteudo = document.getElementById('conteudo-principal');
+                conteudo.innerHTML = `
+                    <div class="fade-in">
+                        <div class="mb-8">
+                            <h2 class="text-3xl font-bold gradient-text mb-2">
+                                <i class="fas fa-sticky-note mr-2"></i>Meus Resumos
+                            </h2>
+                            <p class="text-gray-600">Crie e organize seus resumos de estudo</p>
+                        </div>
+                        <div class="text-center py-12">
+                            <i class="fas fa-book text-6xl text-gray-300 mb-4"></i>
+                            <h3 class="text-xl font-semibold text-gray-600 mb-2">Resumos em Desenvolvimento</h3>
+                            <p class="text-gray-500">Esta funcionalidade está sendo implementada</p>
+                        </div>
+                    </div>
+                `;
+            },
+
+            carregarQuestoes() {
+                const conteudo = document.getElementById('conteudo-principal');
+                conteudo.innerHTML = `
+                    <div class="fade-in">
+                        <div class="mb-8">
+                            <h2 class="text-3xl font-bold gradient-text mb-2">
+                                <i class="fas fa-question-circle mr-2"></i>Banco de Questões
+                            </h2>
+                            <p class="text-gray-600">Registre e analise suas questões resolvidas</p>
+                        </div>
+                        <div class="text-center py-12">
+                            <i class="fas fa-puzzle-piece text-6xl text-gray-300 mb-4"></i>
+                            <h3 class="text-xl font-semibold text-gray-600 mb-2">Questões em Desenvolvimento</h3>
+                            <p class="text-gray-500">Esta funcionalidade está sendo implementada</p>
+                        </div>
+                    </div>
+                `;
+            },
+
+            carregarRedacoes() {
+                const conteudo = document.getElementById('conteudo-principal');
+                conteudo.innerHTML = `
+                    <div class="fade-in">
+                        <div class="mb-8">
+                            <h2 class="text-3xl font-bold gradient-text mb-2">
+                                <i class="fas fa-edit mr-2"></i>Minhas Redações
+                            </h2>
+                            <p class="text-gray-600">Acompanhe seu desenvolvimento na escrita</p>
+                        </div>
+                        <div class="text-center py-12">
+                            <i class="fas fa-pen-fancy text-6xl text-gray-300 mb-4"></i>
+                            <h3 class="text-xl font-semibold text-gray-600 mb-2">Redações em Desenvolvimento</h3>
+                            <p class="text-gray-500">Esta funcionalidade está sendo implementada</p>
+                        </div>
+                    </div>
+                `;
+            },
+
+            // =========================
+            // MODAIS E UTILITÁRIOS
+            // =========================
+            mostrarModal(conteudo) {
+                const modal = document.createElement('div');
+                modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4';
+                modal.innerHTML = `
+                    <div class="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+                        <div class="modal-content">${conteudo}</div>
+                    </div>
+                `;
+                
+                modal.addEventListener('click', (e) => {
+                    if (e.target === modal) {
+                        document.body.removeChild(modal);
+                    }
+                });
+                
+                document.body.appendChild(modal);
+            },
+
+            fecharModal() {
+                const modal = document.querySelector('.fixed.inset-0.bg-black');
+                if (modal) {
+                    document.body.removeChild(modal);
+                }
+            },
+
+            mostrarModalBackup() {
+                document.getElementById('modal-backup').classList.remove('hidden');
+                
+                document.getElementById('btn-fazer-backup').onclick = () => this.fazerBackup();
+                document.getElementById('input-restaurar-backup').onchange = (e) => this.restaurarBackup(e);
+                document.getElementById('btn-restaurar-backup').onclick = () => {
+                    document.getElementById('input-restaurar-backup').click();
+                };
+            },
+
+            // =========================
             // FUNÇÕES DE BACKUP
             // =========================
             fazerBackup() {
@@ -2026,6 +2537,55 @@
                 if (elementoNome) {
                     elementoNome.textContent = `Olá, ${this.usuario.nome.split(' ')[0]}!`;
                 }
+            },
+
+            // =========================
+            // FUNÇÕES DE PERSISTÊNCIA
+            // =========================
+            salvarDadosUsuario() {
+                this.usuario.dados = this.dados;
+                
+                const usuarioIndex = AuthSystem.usuarios.findIndex(u => u.id === this.usuario.id);
+                if (usuarioIndex !== -1) {
+                    AuthSystem.usuarios[usuarioIndex] = this.usuario;
+                    AuthSystem.salvarUsuarios();
+                    localStorage.setItem('gfconcursos_usuario_logado', JSON.stringify(this.usuario));
+                }
+            },
+
+            // =========================
+            // FUNÇÕES DE FORMULÁRIO (placeholders)
+            // =========================
+            mostrarModalNovoResumo() {
+                this.mostrarModal(`
+                    <div class="p-6">
+                        <h3 class="text-xl font-semibold mb-4">
+                            <i class="fas fa-file-medical mr-2"></i>Novo Resumo
+                        </h3>
+                        <p class="text-gray-600 mb-4">Formulário de novo resumo em desenvolvimento</p>
+                        <div class="flex justify-end">
+                            <button onclick="AplicacaoPrincipal.fecharModal()" class="btn-primary">
+                                <i class="fas fa-times mr-1"></i>Fechar
+                            </button>
+                        </div>
+                    </div>
+                `);
+            },
+
+            mostrarModalNovaQuestao() {
+                this.mostrarModal(`
+                    <div class="p-6">
+                        <h3 class="text-xl font-semibold mb-4">
+                            <i class="fas fa-question mr-2"></i>Nova Questão
+                        </h3>
+                        <p class="text-gray-600 mb-4">Formulário de nova questão em desenvolvimento</p>
+                        <div class="flex justify-end">
+                            <button onclick="AplicacaoPrincipal.fecharModal()" class="btn-primary">
+                                <i class="fas fa-times mr-1"></i>Fechar
+                            </button>
+                        </div>
+                    </div>
+                `);
             }
         };
 
