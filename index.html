@@ -978,39 +978,52 @@
                             <div class="flex justify-between items-center h-16">
                                 <div class="flex items-center">
                                     <h1 class="text-2xl font-bold gradient-text">GFConcursos</h1>
-                                    <nav class="ml-8 flex space-x-2">
-                                        <button class="tab-button nav-btn active" data-tab="dashboard">
+                                    <nav class="ml-8 flex space-x-1">
+                                        <button class="tab-button ${this.currentTab === 'dashboard' ? 'active' : ''}" data-tab="dashboard">
                                             <i class="fas fa-chart-line mr-2"></i>Dashboard
                                         </button>
-                                        <button class="tab-button nav-btn" data-tab="cronograma">
+                                        <button class="tab-button ${this.currentTab === 'disciplinas' ? 'active' : ''}" data-tab="disciplinas">
+                                            <i class="fas fa-book mr-2"></i>Disciplinas
+                                        </button>
+                                        <button class="tab-button ${this.currentTab === 'cronograma' ? 'active' : ''}" data-tab="cronograma">
                                             <i class="fas fa-calendar-alt mr-2"></i>Cronograma
                                         </button>
-                                        <button class="tab-button nav-btn" data-tab="edital">
+                                        <button class="tab-button ${this.currentTab === 'edital' ? 'active' : ''}" data-tab="edital">
                                             <i class="fas fa-file-alt mr-2"></i>Edital Vertical
                                         </button>
-                                        <button class="tab-button nav-btn" data-tab="resumos">
+                                        <button class="tab-button ${this.currentTab === 'resumos' ? 'active' : ''}" data-tab="resumos">
                                             <i class="fas fa-sticky-note mr-2"></i>Resumos
                                         </button>
-                                        <button class="tab-button nav-btn" data-tab="questoes">
+                                        <button class="tab-button ${this.currentTab === 'questoes' ? 'active' : ''}" data-tab="questoes">
                                             <i class="fas fa-question-circle mr-2"></i>Questões
                                         </button>
-                                        <button class="tab-button nav-btn" data-tab="redacoes">
-                                            <i class="fas fa-edit mr-2"></i>Redações
+                                        <button class="tab-button ${this.currentTab === 'redacoes' ? 'active' : ''}" data-tab="redacoes">
+                                            <i class="fas fa-pen-fancy mr-2"></i>Redações
                                         </button>
                                     </nav>
                                 </div>
+                                
                                 <div class="flex items-center space-x-4">
-                                    <span class="text-gray-700">Olá, ${this.usuario.nome.split(' ')[0]}!</span>
-                                    <div class="action-buttons">
-                                        <button id="btn-backup" class="btn-secondary" title="Backup">
-                                            <i class="fas fa-download"></i>
+                                    <div class="text-right">
+                                        <p class="font-semibold">${this.usuario.nome}</p>
+                                        <p class="text-sm text-gray-500">${this.usuario.email}</p>
+                                    </div>
+                                    <div class="relative">
+                                        <button id="btn-menu-usuario" class="w-10 h-10 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full flex items-center justify-center text-white font-bold">
+                                            ${this.usuario.nome.charAt(0).toUpperCase()}
                                         </button>
-                                        <button id="btn-configuracoes" class="btn-warning" title="Configurações">
-                                            <i class="fas fa-cog"></i>
-                                        </button>
-                                        <button id="btn-logout" class="btn-danger" title="Sair">
-                                            <i class="fas fa-sign-out-alt"></i>
-                                        </button>
+                                        <div id="menu-usuario" class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-2 hidden z-50">
+                                            <button onclick="AplicacaoPrincipal.abrirConfiguracoes()" class="w-full text-left px-4 py-2 hover:bg-gray-100">
+                                                <i class="fas fa-cog mr-2"></i>Configurações
+                                            </button>
+                                            <button onclick="AplicacaoPrincipal.abrirBackup()" class="w-full text-left px-4 py-2 hover:bg-gray-100">
+                                                <i class="fas fa-database mr-2"></i>Backup
+                                            </button>
+                                            <hr class="my-2">
+                                            <button onclick="AuthSystem.fazerLogout()" class="w-full text-left px-4 py-2 text-red-600 hover:bg-red-50">
+                                                <i class="fas fa-sign-out-alt mr-2"></i>Sair
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -1020,59 +1033,50 @@
                     <!-- Conteúdo Principal -->
                     <main class="flex-1 p-6">
                         <div id="conteudo-principal">
-                            <!-- Conteúdo será carregado dinamicamente -->
+                            <!-- O conteúdo será carregado dinamicamente aqui -->
                         </div>
                     </main>
                 `;
-
-                this.configurarEventListeners();
+                
+                // Configurar menu do usuário
+                document.getElementById('btn-menu-usuario').addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const menu = document.getElementById('menu-usuario');
+                    menu.classList.toggle('hidden');
+                });
+                
+                document.addEventListener('click', () => {
+                    const menu = document.getElementById('menu-usuario');
+                    if (!menu.classList.contains('hidden')) {
+                        menu.classList.add('hidden');
+                    }
+                });
             },
-
-            configurarEventListeners() {
-                // Logout
-                document.getElementById('btn-logout').addEventListener('click', () => {
-                    AuthSystem.fazerLogout();
-                });
-
-                // Configurações
-                document.getElementById('btn-configuracoes').addEventListener('click', () => {
-                    this.mostrarConfiguracoes();
-                });
-
-                // Backup
-                document.getElementById('btn-backup').addEventListener('click', () => {
-                    this.mostrarModalBackup();
-                });
-
-                // Navegação entre abas
-                document.querySelectorAll('.nav-btn').forEach(btn => {
-                    btn.addEventListener('click', (e) => {
-                        const tab = e.target.getAttribute('data-tab') || e.target.closest('.nav-btn').getAttribute('data-tab');
+            
+            configurarNavegacao() {
+                document.querySelectorAll('.tab-button').forEach(button => {
+                    button.addEventListener('click', () => {
+                        const tab = button.getAttribute('data-tab');
                         this.mudarAba(tab);
                     });
                 });
             },
-
+            
             mudarAba(tab) {
-                // Atualizar botões ativos
-                document.querySelectorAll('.nav-btn').forEach(btn => {
-                    btn.classList.remove('active');
-                });
-                document.querySelector(`[data-tab="${tab}"]`).classList.add('active');
-
                 this.currentTab = tab;
                 
-                // Parar cronômetros se estiverem rodando ao mudar de aba
-                if (this.cronometro.rodando) {
-                    this.pausarCronometro();
-                }
-                if (this.cronometroRegressivo.rodando) {
-                    this.pausarCronometroRegressivo();
-                }
+                // Atualizar botões ativos
+                document.querySelectorAll('.tab-button').forEach(btn => {
+                    btn.classList.toggle('active', btn.getAttribute('data-tab') === tab);
+                });
                 
+                // Carregar conteúdo da aba
                 switch(tab) {
                     case 'dashboard':
                         this.carregarDashboard();
+                        break;
+                    case 'disciplinas':
+                        this.carregarDisciplinas();
                         break;
                     case 'cronograma':
                         this.carregarCronograma();
@@ -1091,9 +1095,9 @@
                         break;
                 }
             },
-
+            
             // =========================
-            // DASHBOARD - COMPLETO
+            // DASHBOARD
             // =========================
             carregarDashboard() {
                 const progresso = this.calcularProgresso();
@@ -1230,7 +1234,7 @@
 
                         <!-- Cronômetro e Gráficos -->
                         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
-                            <!-- Cronômetro de Estudo (Progressivo) -->
+                            <!-- Cronômetro de Estudo -->
                             <div class="glass-card rounded-2xl p-6">
                                 <h3 class="text-xl font-semibold mb-4">
                                     <i class="fas fa-stopwatch mr-2"></i>Cronômetro de Estudo
@@ -1301,566 +1305,6 @@
                 this.inicializarGrafico();
                 this.configurarCronometro();
                 this.atualizarTempoDisplay();
-            },
-
-            // =========================
-            // CRONOGRAMA - COM CRONÔMETRO REGRESSIVO
-            // =========================
-            carregarCronograma() {
-                const conteudo = document.getElementById('conteudo-principal');
-                conteudo.innerHTML = `
-                    <div class="fade-in">
-                        <div class="mb-8">
-                            <h2 class="text-3xl font-bold gradient-text mb-2">
-                                <i class="fas fa-calendar-alt mr-2"></i>Cronograma de Estudos
-                            </h2>
-                            <p class="text-gray-600">Organize suas tarefas e prazos de estudo</p>
-                        </div>
-
-                        <!-- Cronômetro de Estudo Regressivo na Aba Cronograma -->
-                        <div class="glass-card rounded-2xl p-6 mb-8">
-                            <h3 class="text-xl font-semibold mb-4">
-                                <i class="fas fa-hourglass-half mr-2"></i>Cronômetro Regressivo
-                            </h3>
-                            <div class="text-center mb-4">
-                                <div class="cronometro-regressivo" id="display-cronometro-regressivo">
-                                    <span class="cronometro-normal">25:00</span>
-                                </div>
-                                <div class="text-sm text-gray-600 mb-4">
-                                    <span id="status-cronometro-regressivo">Pronto para iniciar</span>
-                                </div>
-                            </div>
-                            
-                            <div class="space-y-4">
-                                <div class="grid grid-cols-3 gap-4 mb-4">
-                                    <div class="text-center">
-                                        <label class="block text-sm font-semibold mb-2">Horas</label>
-                                        <input type="number" id="input-horas" class="input-tempo p-2 border rounded-lg" value="0" min="0" max="23">
-                                    </div>
-                                    <div class="text-center">
-                                        <label class="block text-sm font-semibold mb-2">Minutos</label>
-                                        <input type="number" id="input-minutos" class="input-tempo p-2 border rounded-lg" value="25" min="0" max="59">
-                                    </div>
-                                    <div class="text-center">
-                                        <label class="block text-sm font-semibold mb-2">Segundos</label>
-                                        <input type="number" id="input-segundos" class="input-tempo p-2 border rounded-lg" value="0" min="0" max="59">
-                                    </div>
-                                </div>
-
-                                <select id="select-assunto-cronometro-regressivo" class="w-full p-3 border rounded-xl">
-                                    <option value="">Selecione um assunto para estudar</option>
-                                    ${this.gerarOpcoesAssuntos()}
-                                </select>
-                                
-                                <div class="flex justify-center space-x-2 flex-wrap">
-                                    <button id="btn-definir-tempo" class="btn-primary">
-                                        <i class="fas fa-cog mr-1"></i>Definir Tempo
-                                    </button>
-                                    <button id="btn-iniciar-regressivo" class="btn-success">
-                                        <i class="fas fa-play mr-1"></i>Iniciar
-                                    </button>
-                                    <button id="btn-pausar-regressivo" class="btn-warning" disabled>
-                                        <i class="fas fa-pause mr-1"></i>Pausar
-                                    </button>
-                                    <button id="btn-parar-regressivo" class="btn-danger" disabled>
-                                        <i class="fas fa-stop mr-1"></i>Parar
-                                    </button>
-                                    <button id="btn-reiniciar-regressivo" class="btn-secondary">
-                                        <i class="fas fa-redo mr-1"></i>Reiniciar
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Conteúdo do cronograma -->
-                        <div class="glass-card rounded-2xl p-6">
-                            <div class="flex justify-between items-center mb-6">
-                                <h3 class="text-xl font-semibold">
-                                    <i class="fas fa-tasks mr-2"></i>Minhas Tarefas
-                                </h3>
-                                <button onclick="AplicacaoPrincipal.mostrarModalNovaTarefa()" class="btn-success">
-                                    <i class="fas fa-plus mr-1"></i>Nova Tarefa
-                                </button>
-                            </div>
-                            
-                            <div class="space-y-4">
-                                ${this.renderizarTodasTarefas()}
-                            </div>
-                        </div>
-                    </div>
-                `;
-
-                this.configurarCronometroRegressivo();
-                this.atualizarDisplayCronometroRegressivo();
-            },
-
-            // =========================
-            // FUNÇÕES DO CRONÔMETRO REGRESSIVO
-            // =========================
-            configurarCronometroRegressivo() {
-                const btnDefinir = document.getElementById('btn-definir-tempo');
-                const btnIniciar = document.getElementById('btn-iniciar-regressivo');
-                const btnPausar = document.getElementById('btn-pausar-regressivo');
-                const btnParar = document.getElementById('btn-parar-regressivo');
-                const btnReiniciar = document.getElementById('btn-reiniciar-regressivo');
-
-                if (btnDefinir) {
-                    btnDefinir.addEventListener('click', () => this.definirTempoRegressivo());
-                    btnIniciar.addEventListener('click', () => this.iniciarCronometroRegressivo());
-                    btnPausar.addEventListener('click', () => this.pausarCronometroRegressivo());
-                    btnParar.addEventListener('click', () => this.pararCronometroRegressivo());
-                    btnReiniciar.addEventListener('click', () => this.reiniciarCronometroRegressivo());
-                }
-            },
-
-            definirTempoRegressivo() {
-                const horas = parseInt(document.getElementById('input-horas').value) || 0;
-                const minutos = parseInt(document.getElementById('input-minutos').value) || 0;
-                const segundos = parseInt(document.getElementById('input-segundos').value) || 0;
-
-                const tempoTotal = horas * 3600 + minutos * 60 + segundos;
-                
-                if (tempoTotal <= 0) {
-                    AuthSystem.mostrarNotificacao('Defina um tempo válido maior que zero', 'error');
-                    return;
-                }
-
-                this.cronometroRegressivo.tempoTotal = tempoTotal;
-                this.cronometroRegressivo.tempoRestante = tempoTotal;
-                this.atualizarDisplayCronometroRegressivo();
-                
-                AuthSystem.mostrarNotificacao(`Tempo definido para ${this.formatarTempoRegressivo(tempoTotal)}`, 'success');
-            },
-
-            iniciarCronometroRegressivo() {
-                if (!this.cronometroRegressivo.rodando) {
-                    const assuntoSelect = document.getElementById('select-assunto-cronometro-regressivo');
-                    const assuntoId = assuntoSelect.value;
-                    
-                    if (!assuntoId) {
-                        AuthSystem.mostrarNotificacao('Selecione um assunto para começar a estudar', 'error');
-                        return;
-                    }
-
-                    if (this.cronometroRegressivo.tempoTotal <= 0) {
-                        AuthSystem.mostrarNotificacao('Defina um tempo primeiro', 'error');
-                        return;
-                    }
-
-                    this.cronometroRegressivo.rodando = true;
-                    this.cronometroRegressivo.assuntoAtivo = assuntoId;
-
-                    this.cronometroRegressivo.intervalo = setInterval(() => {
-                        this.cronometroRegressivo.tempoRestante--;
-                        this.atualizarDisplayCronometroRegressivo();
-
-                        if (this.cronometroRegressivo.tempoRestante <= 0) {
-                            this.finalizarCronometroRegressivo();
-                        }
-                    }, 1000);
-
-                    this.atualizarBotoesCronometroRegressivo();
-                    AuthSystem.mostrarNotificacao('Cronômetro regressivo iniciado! Foco nos estudos!', 'success');
-                }
-            },
-
-            pausarCronometroRegressivo() {
-                if (this.cronometroRegressivo.rodando) {
-                    this.cronometroRegressivo.rodando = false;
-                    clearInterval(this.cronometroRegressivo.intervalo);
-                    this.atualizarBotoesCronometroRegressivo();
-                    AuthSystem.mostrarNotificacao('Cronômetro pausado', 'info');
-                }
-            },
-
-            pararCronometroRegressivo() {
-                this.cronometroRegressivo.rodando = false;
-                this.cronometroRegressivo.tempoRestante = this.cronometroRegressivo.tempoTotal;
-                clearInterval(this.cronometroRegressivo.intervalo);
-                this.atualizarDisplayCronometroRegressivo();
-                this.atualizarBotoesCronometroRegressivo();
-                AuthSystem.mostrarNotificacao('Cronômetro parado', 'info');
-            },
-
-            reiniciarCronometroRegressivo() {
-                this.cronometroRegressivo.tempoRestante = this.cronometroRegressivo.tempoTotal;
-                this.atualizarDisplayCronometroRegressivo();
-                if (this.cronometroRegressivo.rodando) {
-                    clearInterval(this.cronometroRegressivo.intervalo);
-                    this.cronometroRegressivo.intervalo = setInterval(() => {
-                        this.cronometroRegressivo.tempoRestante--;
-                        this.atualizarDisplayCronometroRegressivo();
-
-                        if (this.cronometroRegressivo.tempoRestante <= 0) {
-                            this.finalizarCronometroRegressivo();
-                        }
-                    }, 1000);
-                }
-            },
-
-            finalizarCronometroRegressivo() {
-                this.cronometroRegressivo.rodando = false;
-                clearInterval(this.cronometroRegressivo.intervalo);
-                
-                // Salvar tempo estudado
-                this.salvarTempoEstudoRegressivo();
-                
-                this.atualizarBotoesCronometroRegressivo();
-                
-                // Tocar som de notificação (simulado)
-                this.tocarAlarme();
-                
-                AuthSystem.mostrarNotificacao('Tempo esgotado! Sessão de estudo concluída! 🎉', 'success');
-                
-                // Mostrar modal de conclusão
-                this.mostrarModalConclusao();
-            },
-
-            tocarAlarme() {
-                // Em um ambiente real, você tocaria um som aqui
-                // Por enquanto, apenas uma notificação visual
-                const display = document.getElementById('display-cronometro-regressivo');
-                if (display) {
-                    display.style.animation = 'pulse 0.5s infinite';
-                    setTimeout(() => {
-                        display.style.animation = '';
-                    }, 3000);
-                }
-            },
-
-            mostrarModalConclusao() {
-                this.mostrarModal(`
-                    <div class="p-6 text-center">
-                        <div class="text-6xl mb-4 text-green-500">
-                            <i class="fas fa-check-circle"></i>
-                        </div>
-                        <h3 class="text-2xl font-bold mb-4">Sessão Concluída!</h3>
-                        <p class="text-gray-600 mb-6">Parabéns! Você completou ${this.formatarTempoRegressivo(this.cronometroRegressivo.tempoTotal)} de estudo focado.</p>
-                        <div class="flex gap-4 justify-center">
-                            <button onclick="AplicacaoPrincipal.fecharModal()" class="btn-primary">
-                                <i class="fas fa-check mr-1"></i>Continuar
-                            </button>
-                            <button onclick="AplicacaoPrincipal.reiniciarCronometroRegressivo(); AplicacaoPrincipal.fecharModal();" class="btn-success">
-                                <i class="fas fa-redo mr-1"></i>Repetir Sessão
-                            </button>
-                        </div>
-                    </div>
-                `);
-            },
-
-            salvarTempoEstudoRegressivo() {
-                if (this.cronometroRegressivo.assuntoAtivo && this.cronometroRegressivo.tempoTotal > 0) {
-                    const [disciplinaId, assuntoId] = this.cronometroRegressivo.assuntoAtivo.split('-');
-                    const horas = this.cronometroRegressivo.tempoTotal / 3600;
-                    
-                    // Atualizar disciplina
-                    const disciplina = this.dados.disciplinas.find(d => d.id === disciplinaId);
-                    if (disciplina) {
-                        disciplina.horasEstudadas = (disciplina.horasEstudadas || 0) + horas;
-                        
-                        // Atualizar assunto
-                        const assunto = disciplina.assuntos.find(a => a.id === assuntoId);
-                        if (assunto) {
-                            assunto.concluido = true;
-                        }
-                        
-                        // Recalcular progresso
-                        disciplina.progresso = this.calcularProgressoDisciplina(disciplina);
-                    }
-                    
-                    // Atualizar tempo total
-                    this.dados.progresso.totalHoras += horas;
-                    
-                    this.salvarDadosUsuario();
-                }
-            },
-
-            atualizarDisplayCronometroRegressivo() {
-                const display = document.getElementById('display-cronometro-regressivo');
-                const status = document.getElementById('status-cronometro-regressivo');
-                
-                if (display && status) {
-                    const tempoFormatado = this.formatarTempoRegressivo(this.cronometroRegressivo.tempoRestante);
-                    
-                    // Atualizar cores baseadas no tempo restante
-                    if (this.cronometroRegressivo.tempoRestante <= 300) { // 5 minutos
-                        display.innerHTML = `<span class="cronometro-perigo">${tempoFormatado}</span>`;
-                        status.textContent = 'Últimos 5 minutos!';
-                    } else if (this.cronometroRegressivo.tempoRestante <= 600) { // 10 minutos
-                        display.innerHTML = `<span class="cronometro-alerta">${tempoFormatado}</span>`;
-                        status.textContent = 'Quase lá! Continue focado!';
-                    } else {
-                        display.innerHTML = `<span class="cronometro-normal">${tempoFormatado}</span>`;
-                        status.textContent = this.cronometroRegressivo.rodando ? 'Estudando...' : 'Pronto para iniciar';
-                    }
-                }
-            },
-
-            atualizarBotoesCronometroRegressivo() {
-                const btnIniciar = document.getElementById('btn-iniciar-regressivo');
-                const btnPausar = document.getElementById('btn-pausar-regressivo');
-                const btnParar = document.getElementById('btn-parar-regressivo');
-
-                if (btnIniciar && btnPausar && btnParar) {
-                    btnIniciar.disabled = this.cronometroRegressivo.rodando;
-                    btnPausar.disabled = !this.cronometroRegressivo.rodando;
-                    btnParar.disabled = !this.cronometroRegressivo.rodando && this.cronometroRegressivo.tempoRestante === this.cronometroRegressivo.tempoTotal;
-                }
-            },
-
-            formatarTempoRegressivo(segundos) {
-                const horas = Math.floor(segundos / 3600);
-                const minutos = Math.floor((segundos % 3600) / 60);
-                const segs = segundos % 60;
-                
-                if (horas > 0) {
-                    return `${horas.toString().padStart(2, '0')}:${minutos.toString().padStart(2, '0')}:${segs.toString().padStart(2, '0')}`;
-                } else {
-                    return `${minutos.toString().padStart(2, '0')}:${segs.toString().padStart(2, '0')}`;
-                }
-            },
-
-            // =========================
-            // FUNÇÃO PARA RENDERIZAR TODAS AS TAREFAS
-            // =========================
-            renderizarTodasTarefas() {
-                if (this.dados.cronograma.length === 0) {
-                    return `
-                        <div class="text-center py-12">
-                            <i class="fas fa-tasks text-6xl text-gray-300 mb-4"></i>
-                            <h3 class="text-xl font-semibold text-gray-600 mb-2">Nenhuma tarefa cadastrada</h3>
-                            <p class="text-gray-500 mb-6">Comece criando sua primeira tarefa de estudo</p>
-                            <button onclick="AplicacaoPrincipal.mostrarModalNovaTarefa()" class="btn-success">
-                                <i class="fas fa-plus mr-1"></i>Criar Primeira Tarefa
-                            </button>
-                        </div>
-                    `;
-                }
-
-                // Separar tarefas concluídas e pendentes
-                const tarefasPendentes = this.dados.cronograma.filter(t => !t.concluida);
-                const tarefasConcluidas = this.dados.cronograma.filter(t => t.concluida);
-
-                let html = '';
-
-                // Tarefas Pendentes
-                if (tarefasPendentes.length > 0) {
-                    html += `
-                        <div class="mb-6">
-                            <h4 class="font-semibold text-lg mb-4 text-gray-700">
-                                <i class="fas fa-clock mr-2"></i>Tarefas Pendentes (${tarefasPendentes.length})
-                            </h4>
-                            <div class="space-y-3">
-                                ${tarefasPendentes.map(tarefa => this.renderizarItemTarefa(tarefa)).join('')}
-                            </div>
-                        </div>
-                    `;
-                }
-
-                // Tarefas Concluídas
-                if (tarefasConcluidas.length > 0) {
-                    html += `
-                        <div>
-                            <h4 class="font-semibold text-lg mb-4 text-gray-700">
-                                <i class="fas fa-check-circle mr-2"></i>Tarefas Concluídas (${tarefasConcluidas.length})
-                            </h4>
-                            <div class="space-y-3">
-                                ${tarefasConcluidas.map(tarefa => this.renderizarItemTarefa(tarefa)).join('')}
-                            </div>
-                        </div>
-                    `;
-                }
-
-                return html;
-            },
-
-            renderizarItemTarefa(tarefa) {
-                const dataTarefa = new Date(tarefa.data);
-                const hoje = new Date();
-                const atrasada = !tarefa.concluida && dataTarefa < hoje;
-                
-                return `
-                    <div class="flex items-center justify-between p-4 border rounded-xl hover:bg-gray-50 transition-colors ${tarefa.concluida ? 'bg-green-50 border-green-200' : atrasada ? 'bg-red-50 border-red-200' : ''}">
-                        <div class="flex items-center flex-1">
-                            <div class="checkbox-custom ${tarefa.concluida ? 'checked' : ''}" 
-                                 onclick="AplicacaoPrincipal.toggleTarefa('${tarefa.id}')"></div>
-                            <div class="ml-4 flex-1">
-                                <div class="flex items-center flex-wrap">
-                                    <h4 class="font-medium ${tarefa.concluida ? 'tarefa-concluida text-gray-500' : ''}">${tarefa.titulo}</h4>
-                                    ${tarefa.importante ? '<span class="badge badge-warning ml-2"><i class="fas fa-exclamation-circle mr-1"></i>Importante</span>' : ''}
-                                    ${atrasada ? '<span class="badge badge-danger ml-2"><i class="fas fa-exclamation-triangle mr-1"></i>Atrasada</span>' : ''}
-                                </div>
-                                <div class="text-sm text-gray-600 mt-2">
-                                    <div class="flex items-center flex-wrap gap-4">
-                                        <span><i class="fas fa-book mr-1"></i>${tarefa.disciplina}</span>
-                                        <span><i class="fas fa-calendar mr-1"></i>${dataTarefa.toLocaleDateString('pt-BR')}</span>
-                                        <span><i class="fas fa-clock mr-1"></i>${tarefa.duracao || '1h'}</span>
-                                    </div>
-                                    ${tarefa.descricao ? `<p class="mt-1 text-gray-500">${tarefa.descricao}</p>` : ''}
-                                </div>
-                            </div>
-                        </div>
-                        <div class="action-buttons">
-                            <button onclick="AplicacaoPrincipal.editarTarefa('${tarefa.id}')" class="btn-acao bg-blue-100 text-blue-600" title="Editar">
-                                <i class="fas fa-edit"></i>
-                            </button>
-                            <button onclick="AplicacaoPrincipal.excluirTarefa('${tarefa.id}')" class="btn-acao bg-red-100 text-red-600" title="Excluir">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </div>
-                    </div>
-                `;
-            },
-
-            // =========================
-            // FUNÇÕES PARA MANIPULAR TAREFAS
-            // =========================
-            toggleTarefa(id) {
-                const tarefa = this.dados.cronograma.find(t => t.id === id);
-                if (tarefa) {
-                    tarefa.concluida = !tarefa.concluida;
-                    this.salvarDadosUsuario();
-                    this.carregarCronograma();
-                    
-                    AuthSystem.mostrarNotificacao(
-                        tarefa.concluida ? 'Tarefa concluída!' : 'Tarefa reaberta!', 
-                        tarefa.concluida ? 'success' : 'info'
-                    );
-                }
-            },
-
-            excluirTarefa(id) {
-                if (confirm('Tem certeza que deseja excluir esta tarefa?')) {
-                    this.dados.cronograma = this.dados.cronograma.filter(t => t.id !== id);
-                    this.salvarDadosUsuario();
-                    this.carregarCronograma();
-                    AuthSystem.mostrarNotificacao('Tarefa excluída com sucesso!', 'success');
-                }
-            },
-
-            editarTarefa(id) {
-                this.mostrarModalNovaTarefa(id);
-            },
-
-            // =========================
-            // MODAL DE NOVA TAREFA (COMPLETO)
-            // =========================
-            mostrarModalNovaTarefa(tarefaId = null) {
-                const tarefa = tarefaId ? this.dados.cronograma.find(t => t.id === tarefaId) : null;
-                
-                const modalContent = `
-                    <div class="p-6 max-w-md w-full">
-                        <h3 class="text-xl font-semibold mb-4">
-                            <i class="fas ${tarefa ? 'fa-edit' : 'fa-plus-circle'} mr-2"></i>
-                            ${tarefa ? 'Editar Tarefa' : 'Nova Tarefa'}
-                        </h3>
-                        
-                        <div class="space-y-4">
-                            <div>
-                                <label class="block text-sm font-semibold mb-2">Título:</label>
-                                <input type="text" id="tarefa-titulo" class="w-full p-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
-                                       value="${tarefa ? tarefa.titulo : ''}" placeholder="Ex: Estudar Matemática Básica" required>
-                            </div>
-                            
-                            <div>
-                                <label class="block text-sm font-semibold mb-2">Disciplina:</label>
-                                <select id="tarefa-disciplina" class="w-full p-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent" required>
-                                    <option value="">Selecione uma disciplina</option>
-                                    ${this.dados.disciplinas.map(d => 
-                                        `<option value="${d.nome}" ${tarefa && tarefa.disciplina === d.nome ? 'selected' : ''}>${d.nome}</option>`
-                                    ).join('')}
-                                </select>
-                            </div>
-                            
-                            <div>
-                                <label class="block text-sm font-semibold mb-2">Data:</label>
-                                <input type="date" id="tarefa-data" class="w-full p-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
-                                       value="${tarefa ? tarefa.data.split('T')[0] : new Date().toISOString().split('T')[0]}" required>
-                            </div>
-                            
-                            <div>
-                                <label class="block text-sm font-semibold mb-2">Duração (horas):</label>
-                                <input type="number" id="tarefa-duracao" class="w-full p-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
-                                       value="${tarefa ? tarefa.duracao || '1' : '1'}" min="0.5" max="8" step="0.5" required>
-                            </div>
-                            
-                            <div>
-                                <label class="block text-sm font-semibold mb-2">Descrição (opcional):</label>
-                                <textarea id="tarefa-descricao" class="w-full p-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
-                                          rows="3" placeholder="Detalhes da tarefa...">${tarefa ? tarefa.descricao || '' : ''}</textarea>
-                            </div>
-                            
-                            <div class="flex items-center">
-                                <input type="checkbox" id="tarefa-importante" class="mr-2" ${tarefa && tarefa.importante ? 'checked' : ''}>
-                                <label class="text-sm">Marcar como importante</label>
-                            </div>
-                        </div>
-                        
-                        <div class="flex gap-4 mt-6">
-                            <button onclick="AplicacaoPrincipal.fecharModal()" class="flex-1 btn-secondary">
-                                <i class="fas fa-times mr-1"></i>Cancelar
-                            </button>
-                            <button onclick="AplicacaoPrincipal.salvarTarefa('${tarefaId}')" class="flex-1 btn-success">
-                                <i class="fas fa-save mr-1"></i>${tarefa ? 'Atualizar' : 'Salvar'}
-                            </button>
-                        </div>
-                    </div>
-                `;
-                
-                this.mostrarModal(modalContent);
-            },
-
-            salvarTarefa(tarefaId = null) {
-                const titulo = document.getElementById('tarefa-titulo').value.trim();
-                const disciplina = document.getElementById('tarefa-disciplina').value;
-                const data = document.getElementById('tarefa-data').value;
-                const duracao = document.getElementById('tarefa-duracao').value;
-                const descricao = document.getElementById('tarefa-descricao').value.trim();
-                const importante = document.getElementById('tarefa-importante').checked;
-
-                if (!titulo || !disciplina || !data || !duracao) {
-                    AuthSystem.mostrarNotificacao('Preencha todos os campos obrigatórios', 'error');
-                    return;
-                }
-
-                if (tarefaId) {
-                    // Editar tarefa existente
-                    const tarefaIndex = this.dados.cronograma.findIndex(t => t.id === tarefaId);
-                    if (tarefaIndex !== -1) {
-                        this.dados.cronograma[tarefaIndex] = {
-                            ...this.dados.cronograma[tarefaIndex],
-                            titulo,
-                            disciplina,
-                            data: new Date(data + 'T12:00:00').toISOString(),
-                            duracao,
-                            descricao,
-                            importante
-                        };
-                    }
-                } else {
-                    // Nova tarefa
-                    const novaTarefa = {
-                        id: Date.now().toString(),
-                        titulo,
-                        disciplina,
-                        data: new Date(data + 'T12:00:00').toISOString(),
-                        duracao,
-                        descricao,
-                        importante,
-                        concluida: false,
-                        dataCriacao: new Date().toISOString()
-                    };
-                    this.dados.cronograma.push(novaTarefa);
-                }
-
-                this.salvarDadosUsuario();
-                this.fecharModal();
-                this.carregarCronograma();
-                
-                AuthSystem.mostrarNotificacao(
-                    tarefaId ? 'Tarefa atualizada com sucesso!' : 'Tarefa criada com sucesso!', 
-                    'success'
-                );
             },
 
             // =========================
@@ -1988,14 +1432,11 @@
                 `).join('');
             },
 
-            // =========================
-            // FUNÇÕES DO DASHBOARD
-            // =========================
             iniciarSessaoEstudo() {
                 const selectAssunto = document.getElementById('select-assunto-cronometro');
                 if (selectAssunto) {
                     selectAssunto.focus();
-                    AuthSystem.mostrarNotificacao('Selecione um assunto para começar a estudar', 'info');
+                    this.mostrarNotificacao('Selecione um assunto para começar a estudar', 'info');
                 }
             },
 
@@ -2107,7 +1548,7 @@
                 document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
                 event.target.classList.add('active');
                 
-                AuthSystem.mostrarNotificacao(`Gráfico filtrado por: ${tipo}`, 'info');
+                this.mostrarNotificacao(`Gráfico filtrado por: ${tipo}`, 'info');
             },
 
             // =========================
@@ -2133,7 +1574,7 @@
                     const assuntoId = assuntoSelect.value;
                     
                     if (!assuntoId) {
-                        AuthSystem.mostrarNotificacao('Selecione um assunto para começar a estudar', 'error');
+                        this.mostrarNotificacao('Selecione um assunto para começar a estudar', 'error');
                         return;
                     }
 
@@ -2147,7 +1588,7 @@
                     }, 1000);
 
                     this.atualizarBotoesCronometro();
-                    AuthSystem.mostrarNotificacao('Cronômetro iniciado! Bons estudos!', 'success');
+                    this.mostrarNotificacao('Cronômetro iniciado! Bons estudos!', 'success');
                 }
             },
 
@@ -2156,14 +1597,14 @@
                     this.cronometro.rodando = false;
                     clearInterval(this.cronometro.intervalo);
                     this.atualizarBotoesCronometro();
-                    AuthSystem.mostrarNotificacao('Cronômetro pausado', 'info');
+                    this.mostrarNotificacao('Cronômetro pausado', 'info');
                 }
             },
 
             pararCronometro() {
                 if (this.cronometro.tempo > 0) {
                     this.salvarTempoEstudo();
-                    AuthSystem.mostrarNotificacao(`Tempo de estudo registrado: ${this.formatarTempo(this.cronometro.tempo)}`, 'success');
+                    this.mostrarNotificacao(`Tempo de estudo registrado: ${this.formatarTempo(this.cronometro.tempo)}`, 'success');
                 }
                 
                 this.cronometro.rodando = false;
@@ -2179,31 +1620,6 @@
                 this.atualizarDisplayCronometro();
                 if (this.cronometro.rodando) {
                     this.cronometro.tempoInicio = Date.now();
-                }
-            },
-
-            atualizarDisplayCronometro() {
-                const display = document.getElementById('display-cronometro');
-                if (display) {
-                    display.textContent = this.formatarTempo(this.cronometro.tempo);
-                    
-                    if (this.cronometro.rodando) {
-                        display.classList.add('cronometro-ativo');
-                    } else {
-                        display.classList.remove('cronometro-ativo');
-                    }
-                }
-            },
-
-            atualizarBotoesCronometro() {
-                const btnIniciar = document.getElementById('btn-iniciar-cronometro');
-                const btnPausar = document.getElementById('btn-pausar-cronometro');
-                const btnParar = document.getElementById('btn-parar-cronometro');
-
-                if (btnIniciar && btnPausar && btnParar) {
-                    btnIniciar.disabled = this.cronometro.rodando;
-                    btnPausar.disabled = !this.cronometro.rodando;
-                    btnParar.disabled = !this.cronometro.rodando && this.cronometro.tempo === 0;
                 }
             },
 
@@ -2281,6 +1697,31 @@
                 }
             },
 
+            atualizarDisplayCronometro() {
+                const display = document.getElementById('display-cronometro');
+                if (display) {
+                    display.textContent = this.formatarTempo(this.cronometro.tempo);
+                    
+                    if (this.cronometro.rodando) {
+                        display.classList.add('cronometro-ativo');
+                    } else {
+                        display.classList.remove('cronometro-ativo');
+                    }
+                }
+            },
+
+            atualizarBotoesCronometro() {
+                const btnIniciar = document.getElementById('btn-iniciar-cronometro');
+                const btnPausar = document.getElementById('btn-pausar-cronometro');
+                const btnParar = document.getElementById('btn-parar-cronometro');
+
+                if (btnIniciar && btnPausar && btnParar) {
+                    btnIniciar.disabled = this.cronometro.rodando;
+                    btnPausar.disabled = !this.cronometro.rodando;
+                    btnParar.disabled = !this.cronometro.rodando && this.cronometro.tempo === 0;
+                }
+            },
+
             inicializarGrafico() {
                 const ctx = document.getElementById('grafico-progresso');
                 if (!ctx) return;
@@ -2318,86 +1759,1478 @@
             },
 
             // =========================
-            // OUTRAS ABAS
+            // DISCIPLINAS
+            // =========================
+            carregarDisciplinas() {
+                const conteudo = document.getElementById('conteudo-principal');
+                conteudo.innerHTML = `
+                    <div class="fade-in">
+                        <div class="flex justify-between items-center mb-8">
+                            <h2 class="text-3xl font-bold gradient-text">Disciplinas</h2>
+                            <button onclick="AplicacaoPrincipal.mostrarModalNovaDisciplina()" class="btn-success">
+                                <i class="fas fa-plus mr-2"></i>Nova Disciplina
+                            </button>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            ${this.dados.disciplinas.map(disciplina => `
+                                <div class="glass-card rounded-xl p-6 border-l-4" style="border-left-color: ${disciplina.cor}">
+                                    <div class="flex justify-between items-start mb-4">
+                                        <h3 class="text-xl font-semibold">${disciplina.nome}</h3>
+                                        <div class="action-buttons">
+                                            <button onclick="AplicacaoPrincipal.editarDisciplina('${disciplina.id}')" class="btn-acao bg-blue-100 text-blue-600">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button onclick="AplicacaoPrincipal.excluirDisciplina('${disciplina.id}')" class="btn-acao bg-red-100 text-red-600">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mb-4">
+                                        <div class="flex justify-between text-sm mb-1">
+                                            <span>Progresso</span>
+                                            <span>${disciplina.progresso || 0}%</span>
+                                        </div>
+                                        <div class="w-full bg-gray-200 rounded-full h-2">
+                                            <div class="h-2 rounded-full" style="width: ${disciplina.progresso || 0}%; background-color: ${disciplina.cor}"></div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="grid grid-cols-2 gap-4 text-center mb-4">
+                                        <div>
+                                            <div class="text-2xl font-bold text-blue-600">${disciplina.horasEstudadas || 0}</div>
+                                            <div class="text-sm text-gray-600">Horas</div>
+                                        </div>
+                                        <div>
+                                            <div class="text-2xl font-bold text-green-600">${disciplina.questoesResolvidas || 0}</div>
+                                            <div class="text-sm text-gray-600">Questões</div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="space-y-2">
+                                        <h4 class="font-medium">Assuntos:</h4>
+                                        ${disciplina.assuntos.map(assunto => `
+                                            <div class="flex items-center justify-between p-2 bg-gray-50 rounded ${assunto.concluido ? 'assunto-concluido' : ''}">
+                                                <span class="${assunto.concluido ? 'line-through' : ''}">${assunto.nome}</span>
+                                                <button onclick="AplicacaoPrincipal.toggleAssunto('${disciplina.id}', '${assunto.id}')" class="text-sm ${assunto.concluido ? 'text-green-600' : 'text-gray-400'}">
+                                                    <i class="fas ${assunto.concluido ? 'fa-check-circle' : 'fa-circle'}"></i>
+                                                </button>
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                    
+                                    <button onclick="AplicacaoPrincipal.mostrarModalNovoAssunto('${disciplina.id}')" class="w-full mt-4 btn-secondary">
+                                        <i class="fas fa-plus mr-2"></i>Adicionar Assunto
+                                    </button>
+                                </div>
+                            `).join('')}
+                        </div>
+
+                        ${this.dados.disciplinas.length === 0 ? `
+                            <div class="text-center py-12">
+                                <i class="fas fa-book text-6xl text-gray-300 mb-4"></i>
+                                <h3 class="text-xl font-semibold text-gray-600 mb-2">Nenhuma disciplina cadastrada</h3>
+                                <p class="text-gray-500 mb-6">Comece criando sua primeira disciplina de estudo</p>
+                                <button onclick="AplicacaoPrincipal.mostrarModalNovaDisciplina()" class="btn-success">
+                                    <i class="fas fa-plus mr-2"></i>Criar Primeira Disciplina
+                                </button>
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+            },
+
+            mostrarModalNovaDisciplina(disciplinaId = null) {
+                const disciplina = disciplinaId ? this.dados.disciplinas.find(d => d.id === disciplinaId) : null;
+                
+                this.mostrarModal(`
+                    <div class="p-6 max-w-md">
+                        <h3 class="text-xl font-semibold mb-4">
+                            <i class="fas ${disciplina ? 'fa-edit' : 'fa-plus-circle'} mr-2"></i>
+                            ${disciplina ? 'Editar Disciplina' : 'Nova Disciplina'}
+                        </h3>
+                        
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-semibold mb-2">Nome da Disciplina:</label>
+                                <input type="text" id="disciplina-nome" class="w-full p-3 border rounded-xl" 
+                                       value="${disciplina ? disciplina.nome : ''}" placeholder="Ex: Matemática" required>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-semibold mb-2">Cor:</label>
+                                <input type="color" id="disciplina-cor" class="w-full p-1 border rounded-xl h-12" 
+                                       value="${disciplina ? disciplina.cor : '#3B82F6'}">
+                            </div>
+                        </div>
+                        
+                        <div class="flex gap-4 mt-6">
+                            <button onclick="AplicacaoPrincipal.fecharModal()" class="flex-1 btn-secondary">
+                                <i class="fas fa-times mr-1"></i>Cancelar
+                            </button>
+                            <button onclick="AplicacaoPrincipal.salvarDisciplina('${disciplinaId}')" class="flex-1 btn-success">
+                                <i class="fas fa-save mr-1"></i>${disciplina ? 'Atualizar' : 'Salvar'}
+                            </button>
+                        </div>
+                    </div>
+                `);
+            },
+
+            salvarDisciplina(disciplinaId = null) {
+                const nome = document.getElementById('disciplina-nome').value.trim();
+                const cor = document.getElementById('disciplina-cor').value;
+
+                if (!nome) {
+                    this.mostrarNotificacao('Preencha o nome da disciplina', 'error');
+                    return;
+                }
+
+                if (disciplinaId) {
+                    // Editar disciplina existente
+                    const disciplinaIndex = this.dados.disciplinas.findIndex(d => d.id === disciplinaId);
+                    if (disciplinaIndex !== -1) {
+                        this.dados.disciplinas[disciplinaIndex] = {
+                            ...this.dados.disciplinas[disciplinaIndex],
+                            nome,
+                            cor
+                        };
+                    }
+                } else {
+                    // Nova disciplina
+                    const novaDisciplina = {
+                        id: Date.now().toString(),
+                        nome,
+                        cor,
+                        horasEstudadas: 0,
+                        questoesResolvidas: 0,
+                        progresso: 0,
+                        assuntos: []
+                    };
+                    this.dados.disciplinas.push(novaDisciplina);
+                }
+
+                this.salvarDadosUsuario();
+                this.fecharModal();
+                this.carregarDisciplinas();
+                
+                this.mostrarNotificacao(
+                    disciplinaId ? 'Disciplina atualizada com sucesso!' : 'Disciplina criada com sucesso!', 
+                    'success'
+                );
+            },
+
+            editarDisciplina(id) {
+                this.mostrarModalNovaDisciplina(id);
+            },
+
+            excluirDisciplina(id) {
+                if (confirm('Tem certeza que deseja excluir esta disciplina? Todos os assuntos serão perdidos.')) {
+                    this.dados.disciplinas = this.dados.disciplinas.filter(d => d.id !== id);
+                    this.salvarDadosUsuario();
+                    this.carregarDisciplinas();
+                    this.mostrarNotificacao('Disciplina excluída com sucesso!', 'success');
+                }
+            },
+
+            mostrarModalNovoAssunto(disciplinaId) {
+                this.mostrarModal(`
+                    <div class="p-6 max-w-md">
+                        <h3 class="text-xl font-semibold mb-4">
+                            <i class="fas fa-plus-circle mr-2"></i>Novo Assunto
+                        </h3>
+                        
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-semibold mb-2">Nome do Assunto:</label>
+                                <input type="text" id="assunto-nome" class="w-full p-3 border rounded-xl" 
+                                       placeholder="Ex: Álgebra Linear" required>
+                            </div>
+                        </div>
+                        
+                        <div class="flex gap-4 mt-6">
+                            <button onclick="AplicacaoPrincipal.fecharModal()" class="flex-1 btn-secondary">
+                                <i class="fas fa-times mr-1"></i>Cancelar
+                            </button>
+                            <button onclick="AplicacaoPrincipal.salvarAssunto('${disciplinaId}')" class="flex-1 btn-success">
+                                <i class="fas fa-save mr-1"></i>Salvar
+                            </button>
+                        </div>
+                    </div>
+                `);
+            },
+
+            salvarAssunto(disciplinaId) {
+                const nome = document.getElementById('assunto-nome').value.trim();
+
+                if (!nome) {
+                    this.mostrarNotificacao('Preencha o nome do assunto', 'error');
+                    return;
+                }
+
+                const disciplina = this.dados.disciplinas.find(d => d.id === disciplinaId);
+                if (disciplina) {
+                    const novoAssunto = {
+                        id: Date.now().toString(),
+                        nome,
+                        concluido: false
+                    };
+                    disciplina.assuntos.push(novoAssunto);
+                    
+                    // Recalcular progresso
+                    disciplina.progresso = this.calcularProgressoDisciplina(disciplina);
+                    
+                    this.salvarDadosUsuario();
+                    this.fecharModal();
+                    this.carregarDisciplinas();
+                    
+                    this.mostrarNotificacao('Assunto adicionado com sucesso!', 'success');
+                }
+            },
+
+            toggleAssunto(disciplinaId, assuntoId) {
+                const disciplina = this.dados.disciplinas.find(d => d.id === disciplinaId);
+                if (disciplina) {
+                    const assunto = disciplina.assuntos.find(a => a.id === assuntoId);
+                    if (assunto) {
+                        assunto.concluido = !assunto.concluido;
+                        
+                        // Recalcular progresso
+                        disciplina.progresso = this.calcularProgressoDisciplina(disciplina);
+                        
+                        this.salvarDadosUsuario();
+                        this.carregarDisciplinas();
+                    }
+                }
+            },
+
+            // =========================
+            // CRONOGRAMA
+            // =========================
+            carregarCronograma() {
+                const conteudo = document.getElementById('conteudo-principal');
+                conteudo.innerHTML = `
+                    <div class="fade-in">
+                        <div class="flex justify-between items-center mb-8">
+                            <h2 class="text-3xl font-bold gradient-text">Cronograma</h2>
+                            <button onclick="AplicacaoPrincipal.mostrarModalNovaTarefa()" class="btn-success">
+                                <i class="fas fa-plus mr-2"></i>Nova Tarefa
+                            </button>
+                        </div>
+
+                        <div class="glass-card rounded-xl p-6">
+                            <div class="space-y-4">
+                                ${this.renderizarTodasTarefas()}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            },
+
+            renderizarTodasTarefas() {
+                if (this.dados.cronograma.length === 0) {
+                    return `
+                        <div class="text-center py-12">
+                            <i class="fas fa-tasks text-6xl text-gray-300 mb-4"></i>
+                            <h3 class="text-xl font-semibold text-gray-600 mb-2">Nenhuma tarefa cadastrada</h3>
+                            <p class="text-gray-500 mb-6">Comece criando sua primeira tarefa de estudo</p>
+                            <button onclick="AplicacaoPrincipal.mostrarModalNovaTarefa()" class="btn-success">
+                                <i class="fas fa-plus mr-2"></i>Criar Primeira Tarefa
+                            </button>
+                        </div>
+                    `;
+                }
+
+                // Separar tarefas concluídas e pendentes
+                const tarefasPendentes = this.dados.cronograma.filter(t => !t.concluida);
+                const tarefasConcluidas = this.dados.cronograma.filter(t => t.concluida);
+
+                let html = '';
+
+                // Tarefas Pendentes
+                if (tarefasPendentes.length > 0) {
+                    html += `
+                        <div class="mb-6">
+                            <h4 class="font-semibold text-lg mb-4 text-gray-700">
+                                <i class="fas fa-clock mr-2"></i>Tarefas Pendentes (${tarefasPendentes.length})
+                            </h4>
+                            <div class="space-y-3">
+                                ${tarefasPendentes.map(tarefa => this.renderizarItemTarefa(tarefa)).join('')}
+                            </div>
+                        </div>
+                    `;
+                }
+
+                // Tarefas Concluídas
+                if (tarefasConcluidas.length > 0) {
+                    html += `
+                        <div>
+                            <h4 class="font-semibold text-lg mb-4 text-gray-700">
+                                <i class="fas fa-check-circle mr-2"></i>Tarefas Concluídas (${tarefasConcluidas.length})
+                            </h4>
+                            <div class="space-y-3">
+                                ${tarefasConcluidas.map(tarefa => this.renderizarItemTarefa(tarefa)).join('')}
+                            </div>
+                        </div>
+                    `;
+                }
+
+                return html;
+            },
+
+            renderizarItemTarefa(tarefa) {
+                const dataTarefa = new Date(tarefa.data);
+                const hoje = new Date();
+                const atrasada = !tarefa.concluida && dataTarefa < hoje;
+                
+                return `
+                    <div class="flex items-center justify-between p-4 border rounded-xl hover:bg-gray-50 transition-colors ${tarefa.concluida ? 'bg-green-50 border-green-200' : atrasada ? 'bg-red-50 border-red-200' : ''}">
+                        <div class="flex items-center flex-1">
+                            <div class="checkbox-custom ${tarefa.concluida ? 'checked' : ''}" 
+                                 onclick="AplicacaoPrincipal.toggleTarefa('${tarefa.id}')"></div>
+                            <div class="ml-4 flex-1">
+                                <div class="flex items-center flex-wrap">
+                                    <h4 class="font-medium ${tarefa.concluida ? 'tarefa-concluida text-gray-500' : ''}">${tarefa.titulo}</h4>
+                                    ${tarefa.importante ? '<span class="badge badge-warning ml-2"><i class="fas fa-exclamation-circle mr-1"></i>Importante</span>' : ''}
+                                    ${atrasada ? '<span class="badge badge-danger ml-2"><i class="fas fa-exclamation-triangle mr-1"></i>Atrasada</span>' : ''}
+                                </div>
+                                <div class="text-sm text-gray-600 mt-2">
+                                    <div class="flex items-center flex-wrap gap-4">
+                                        <span><i class="fas fa-book mr-1"></i>${tarefa.disciplina}</span>
+                                        <span><i class="fas fa-calendar mr-1"></i>${dataTarefa.toLocaleDateString('pt-BR')}</span>
+                                        <span><i class="fas fa-clock mr-1"></i>${tarefa.duracao || '1h'}</span>
+                                    </div>
+                                    ${tarefa.descricao ? `<p class="mt-1 text-gray-500">${tarefa.descricao}</p>` : ''}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="action-buttons">
+                            <button onclick="AplicacaoPrincipal.editarTarefa('${tarefa.id}')" class="btn-acao bg-blue-100 text-blue-600" title="Editar">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button onclick="AplicacaoPrincipal.excluirTarefa('${tarefa.id}')" class="btn-acao bg-red-100 text-red-600" title="Excluir">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            },
+
+            mostrarModalNovaTarefa(tarefaId = null) {
+                const tarefa = tarefaId ? this.dados.cronograma.find(t => t.id === tarefaId) : null;
+                
+                this.mostrarModal(`
+                    <div class="p-6 max-w-md">
+                        <h3 class="text-xl font-semibold mb-4">
+                            <i class="fas ${tarefa ? 'fa-edit' : 'fa-plus-circle'} mr-2"></i>
+                            ${tarefa ? 'Editar Tarefa' : 'Nova Tarefa'}
+                        </h3>
+                        
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-semibold mb-2">Título:</label>
+                                <input type="text" id="tarefa-titulo" class="w-full p-3 border rounded-xl" 
+                                       value="${tarefa ? tarefa.titulo : ''}" placeholder="Ex: Estudar Matemática Básica" required>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-semibold mb-2">Disciplina:</label>
+                                <select id="tarefa-disciplina" class="w-full p-3 border rounded-xl" required>
+                                    <option value="">Selecione uma disciplina</option>
+                                    ${this.dados.disciplinas.map(d => 
+                                        `<option value="${d.nome}" ${tarefa && tarefa.disciplina === d.nome ? 'selected' : ''}>${d.nome}</option>`
+                                    ).join('')}
+                                </select>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-semibold mb-2">Data:</label>
+                                <input type="date" id="tarefa-data" class="w-full p-3 border rounded-xl" 
+                                       value="${tarefa ? tarefa.data.split('T')[0] : new Date().toISOString().split('T')[0]}" required>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-semibold mb-2">Duração (horas):</label>
+                                <input type="number" id="tarefa-duracao" class="w-full p-3 border rounded-xl" 
+                                       value="${tarefa ? tarefa.duracao || '1' : '1'}" min="0.5" max="8" step="0.5" required>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-semibold mb-2">Descrição (opcional):</label>
+                                <textarea id="tarefa-descricao" class="w-full p-3 border rounded-xl" 
+                                          rows="3" placeholder="Detalhes da tarefa...">${tarefa ? tarefa.descricao || '' : ''}</textarea>
+                            </div>
+                            
+                            <div class="flex items-center">
+                                <input type="checkbox" id="tarefa-importante" class="mr-2" ${tarefa && tarefa.importante ? 'checked' : ''}>
+                                <label class="text-sm">Marcar como importante</label>
+                            </div>
+                        </div>
+                        
+                        <div class="flex gap-4 mt-6">
+                            <button onclick="AplicacaoPrincipal.fecharModal()" class="flex-1 btn-secondary">
+                                <i class="fas fa-times mr-1"></i>Cancelar
+                            </button>
+                            <button onclick="AplicacaoPrincipal.salvarTarefa('${tarefaId}')" class="flex-1 btn-success">
+                                <i class="fas fa-save mr-1"></i>${tarefa ? 'Atualizar' : 'Salvar'}
+                            </button>
+                        </div>
+                    </div>
+                `);
+            },
+
+            salvarTarefa(tarefaId = null) {
+                const titulo = document.getElementById('tarefa-titulo').value.trim();
+                const disciplina = document.getElementById('tarefa-disciplina').value;
+                const data = document.getElementById('tarefa-data').value;
+                const duracao = document.getElementById('tarefa-duracao').value;
+                const descricao = document.getElementById('tarefa-descricao').value.trim();
+                const importante = document.getElementById('tarefa-importante').checked;
+
+                if (!titulo || !disciplina || !data || !duracao) {
+                    this.mostrarNotificacao('Preencha todos os campos obrigatórios', 'error');
+                    return;
+                }
+
+                if (tarefaId) {
+                    // Editar tarefa existente
+                    const tarefaIndex = this.dados.cronograma.findIndex(t => t.id === tarefaId);
+                    if (tarefaIndex !== -1) {
+                        this.dados.cronograma[tarefaIndex] = {
+                            ...this.dados.cronograma[tarefaIndex],
+                            titulo,
+                            disciplina,
+                            data: new Date(data + 'T12:00:00').toISOString(),
+                            duracao,
+                            descricao,
+                            importante
+                        };
+                    }
+                } else {
+                    // Nova tarefa
+                    const novaTarefa = {
+                        id: Date.now().toString(),
+                        titulo,
+                        disciplina,
+                        data: new Date(data + 'T12:00:00').toISOString(),
+                        duracao,
+                        descricao,
+                        importante,
+                        concluida: false,
+                        dataCriacao: new Date().toISOString()
+                    };
+                    this.dados.cronograma.push(novaTarefa);
+                }
+
+                this.salvarDadosUsuario();
+                this.fecharModal();
+                this.carregarCronograma();
+                
+                this.mostrarNotificacao(
+                    tarefaId ? 'Tarefa atualizada com sucesso!' : 'Tarefa criada com sucesso!', 
+                    'success'
+                );
+            },
+
+            toggleTarefa(id) {
+                const tarefa = this.dados.cronograma.find(t => t.id === id);
+                if (tarefa) {
+                    tarefa.concluida = !tarefa.concluida;
+                    this.salvarDadosUsuario();
+                    this.carregarCronograma();
+                    
+                    this.mostrarNotificacao(
+                        tarefa.concluida ? 'Tarefa concluída!' : 'Tarefa reaberta!', 
+                        tarefa.concluida ? 'success' : 'info'
+                    );
+                }
+            },
+
+            editarTarefa(id) {
+                this.mostrarModalNovaTarefa(id);
+            },
+
+            excluirTarefa(id) {
+                if (confirm('Tem certeza que deseja excluir esta tarefa?')) {
+                    this.dados.cronograma = this.dados.cronograma.filter(t => t.id !== id);
+                    this.salvarDadosUsuario();
+                    this.carregarCronograma();
+                    this.mostrarNotificacao('Tarefa excluída com sucesso!', 'success');
+                }
+            },
+
+            // =========================
+            // EDITAL VERTICAL
             // =========================
             carregarEditalVertical() {
                 const conteudo = document.getElementById('conteudo-principal');
                 conteudo.innerHTML = `
                     <div class="fade-in">
-                        <div class="mb-8">
-                            <h2 class="text-3xl font-bold gradient-text mb-2">
-                                <i class="fas fa-file-alt mr-2"></i>Edital Verticalizado
-                            </h2>
-                            <p class="text-gray-600">Organize o conteúdo do seu edital por disciplinas</p>
+                        <div class="flex justify-between items-center mb-8">
+                            <h2 class="text-3xl font-bold gradient-text">Edital Verticalizado</h2>
+                            <button onclick="AplicacaoPrincipal.mostrarModalConfigurarEdital()" class="btn-primary">
+                                <i class="fas fa-cog mr-2"></i>Configurar Edital
+                            </button>
                         </div>
-                        <div class="text-center py-12">
-                            <i class="fas fa-file-contract text-6xl text-gray-300 mb-4"></i>
-                            <h3 class="text-xl font-semibold text-gray-600 mb-2">Edital Vertical em Desenvolvimento</h3>
-                            <p class="text-gray-500">Esta funcionalidade está sendo implementada</p>
+
+                        <div class="glass-card rounded-xl p-6">
+                            ${this.dados.editalVerticalizado.disciplinas.length === 0 ? `
+                                <div class="text-center py-12">
+                                    <i class="fas fa-file-contract text-6xl text-gray-300 mb-4"></i>
+                                    <h3 class="text-xl font-semibold text-gray-600 mb-2">Edital não configurado</h3>
+                                    <p class="text-gray-500 mb-6">Configure o edital do seu concurso para começar</p>
+                                    <button onclick="AplicacaoPrincipal.mostrarModalConfigurarEdital()" class="btn-primary">
+                                        <i class="fas fa-cog mr-2"></i>Configurar Edital
+                                    </button>
+                                </div>
+                            ` : `
+                                <div class="mb-6">
+                                    <h3 class="text-2xl font-semibold mb-2">${this.dados.editalVerticalizado.nomeConcurso}</h3>
+                                    <p class="text-gray-600">Progresso geral do edital: <span class="font-semibold">${this.calcularProgressoEdital()}%</span></p>
+                                </div>
+                                
+                                <div class="space-y-6">
+                                    ${this.dados.editalVerticalizado.disciplinas.map(disciplina => `
+                                        <div class="border rounded-xl p-4">
+                                            <div class="flex justify-between items-center mb-3">
+                                                <h4 class="text-xl font-semibold">${disciplina.nome}</h4>
+                                                <span class="badge badge-primary">${disciplina.progresso || 0}%</span>
+                                            </div>
+                                            
+                                            <div class="w-full bg-gray-200 rounded-full h-3 mb-3">
+                                                <div class="h-3 rounded-full bg-blue-500" style="width: ${disciplina.progresso || 0}%"></div>
+                                            </div>
+                                            
+                                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                ${disciplina.topicos.map(topico => `
+                                                    <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                                        <span class="${topico.concluido ? 'line-through text-gray-500' : ''}">${topico.nome}</span>
+                                                        <button onclick="AplicacaoPrincipal.toggleTopicoEdital('${disciplina.id}', '${topico.id}')" 
+                                                                class="text-sm ${topico.concluido ? 'text-green-600' : 'text-gray-400'}">
+                                                            <i class="fas ${topico.concluido ? 'fa-check-circle' : 'fa-circle'}"></i>
+                                                        </button>
+                                                    </div>
+                                                `).join('')}
+                                            </div>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            `}
                         </div>
                     </div>
                 `;
             },
 
+            mostrarModalConfigurarEdital() {
+                this.mostrarModal(`
+                    <div class="p-6 max-w-2xl max-h-[80vh] overflow-y-auto">
+                        <h3 class="text-xl font-semibold mb-4">
+                            <i class="fas fa-cog mr-2"></i>Configurar Edital
+                        </h3>
+                        
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-semibold mb-2">Nome do Concurso:</label>
+                                <input type="text" id="edital-nome" class="w-full p-3 border rounded-xl" 
+                                       value="${this.dados.editalVerticalizado.nomeConcurso}" placeholder="Ex: Concurso público X" required>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-semibold mb-2">Disciplinas do Edital:</label>
+                                <div id="disciplinas-edital" class="space-y-3">
+                                    ${this.dados.editalVerticalizado.disciplinas.map((disciplina, index) => `
+                                        <div class="flex items-center space-x-2">
+                                            <input type="text" value="${disciplina.nome}" 
+                                                   class="flex-1 p-2 border rounded" placeholder="Nome da disciplina">
+                                            <button onclick="this.parentElement.remove()" class="btn-danger">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                                <button onclick="AplicacaoPrincipal.adicionarCampoDisciplina()" class="btn-secondary mt-2">
+                                    <i class="fas fa-plus mr-2"></i>Adicionar Disciplina
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="flex gap-4 mt-6">
+                            <button onclick="AplicacaoPrincipal.fecharModal()" class="flex-1 btn-secondary">
+                                <i class="fas fa-times mr-1"></i>Cancelar
+                            </button>
+                            <button onclick="AplicacaoPrincipal.salvarConfiguracaoEdital()" class="flex-1 btn-success">
+                                <i class="fas fa-save mr-1"></i>Salvar
+                            </button>
+                        </div>
+                    </div>
+                `);
+            },
+
+            adicionarCampoDisciplina() {
+                const container = document.getElementById('disciplinas-edital');
+                const novoCampo = document.createElement('div');
+                novoCampo.className = 'flex items-center space-x-2';
+                novoCampo.innerHTML = `
+                    <input type="text" class="flex-1 p-2 border rounded" placeholder="Nome da disciplina">
+                    <button onclick="this.parentElement.remove()" class="btn-danger">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                `;
+                container.appendChild(novoCampo);
+            },
+
+            salvarConfiguracaoEdital() {
+                const nomeConcurso = document.getElementById('edital-nome').value.trim();
+                const inputsDisciplinas = document.querySelectorAll('#disciplinas-edital input');
+                
+                if (!nomeConcurso || inputsDisciplinas.length === 0) {
+                    this.mostrarNotificacao('Preencha o nome do concurso e adicione pelo menos uma disciplina', 'error');
+                    return;
+                }
+
+                const disciplinas = Array.from(inputsDisciplinas)
+                    .map(input => input.value.trim())
+                    .filter(nome => nome !== '')
+                    .map(nome => ({
+                        id: Date.now().toString() + Math.random(),
+                        nome,
+                        progresso: 0,
+                        topicos: []
+                    }));
+
+                this.dados.editalVerticalizado = {
+                    nomeConcurso,
+                    disciplinas
+                };
+
+                this.salvarDadosUsuario();
+                this.fecharModal();
+                this.carregarEditalVertical();
+                
+                this.mostrarNotificacao('Edital configurado com sucesso!', 'success');
+            },
+
+            calcularProgressoEdital() {
+                if (this.dados.editalVerticalizado.disciplinas.length === 0) return 0;
+                
+                const totalTopicos = this.dados.editalVerticalizado.disciplinas.reduce(
+                    (total, disc) => total + disc.topicos.length, 0
+                );
+                const topicosConcluidos = this.dados.editalVerticalizado.disciplinas.reduce(
+                    (total, disc) => total + disc.topicos.filter(t => t.concluido).length, 0
+                );
+                
+                return totalTopicos > 0 ? Math.round((topicosConcluidos / totalTopicos) * 100) : 0;
+            },
+
+            toggleTopicoEdital(disciplinaId, topicoId) {
+                const disciplina = this.dados.editalVerticalizado.disciplinas.find(d => d.id === disciplinaId);
+                if (disciplina) {
+                    const topico = disciplina.topicos.find(t => t.id === topicoId);
+                    if (topico) {
+                        topico.concluido = !topico.concluido;
+                        
+                        // Recalcular progresso da disciplina
+                        const topicosConcluidos = disciplina.topicos.filter(t => t.concluido).length;
+                        disciplina.progresso = disciplina.topicos.length > 0 ? 
+                            Math.round((topicosConcluidos / disciplina.topicos.length) * 100) : 0;
+                        
+                        this.salvarDadosUsuario();
+                        this.carregarEditalVertical();
+                    }
+                }
+            },
+
+            // =========================
+            // RESUMOS
+            // =========================
             carregarResumos() {
                 const conteudo = document.getElementById('conteudo-principal');
                 conteudo.innerHTML = `
                     <div class="fade-in">
-                        <div class="mb-8">
-                            <h2 class="text-3xl font-bold gradient-text mb-2">
-                                <i class="fas fa-sticky-note mr-2"></i>Meus Resumos
-                            </h2>
-                            <p class="text-gray-600">Crie e organize seus resumos de estudo</p>
+                        <div class="flex justify-between items-center mb-8">
+                            <h2 class="text-3xl font-bold gradient-text">Resumos</h2>
+                            <button onclick="AplicacaoPrincipal.mostrarModalNovoResumo()" class="btn-success">
+                                <i class="fas fa-plus mr-2"></i>Novo Resumo
+                            </button>
                         </div>
-                        <div class="text-center py-12">
-                            <i class="fas fa-book text-6xl text-gray-300 mb-4"></i>
-                            <h3 class="text-xl font-semibold text-gray-600 mb-2">Resumos em Desenvolvimento</h3>
-                            <p class="text-gray-500">Esta funcionalidade está sendo implementada</p>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            ${this.dados.resumos.map(resumo => `
+                                <div class="resumo-card glass-card rounded-xl p-6" style="border-left-color: ${this.obterCorDisciplina(resumo.disciplina)}">
+                                    <div class="flex justify-between items-start mb-4">
+                                        <h3 class="text-xl font-semibold">${resumo.titulo}</h3>
+                                        <div class="action-buttons">
+                                            <button onclick="AplicacaoPrincipal.editarResumo('${resumo.id}')" class="btn-acao bg-blue-100 text-blue-600">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button onclick="AplicacaoPrincipal.excluirResumo('${resumo.id}')" class="btn-acao bg-red-100 text-red-600">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mb-4">
+                                        <span class="badge" style="background-color: ${this.obterCorDisciplina(resumo.disciplina)}; color: white;">
+                                            ${resumo.disciplina}
+                                        </span>
+                                        <span class="text-sm text-gray-500 ml-2">
+                                            ${new Date(resumo.dataCriacao).toLocaleDateString('pt-BR')}
+                                        </span>
+                                    </div>
+                                    
+                                    <div class="resumo-preview mb-4">
+                                        <p class="text-gray-600">${resumo.conteudo.substring(0, 100)}${resumo.conteudo.length > 100 ? '...' : ''}</p>
+                                    </div>
+                                    
+                                    <div class="flex flex-wrap gap-1 mb-4">
+                                        ${resumo.tags.map(tag => `
+                                            <span class="tag-resumo">${tag}</span>
+                                        `).join('')}
+                                    </div>
+                                    
+                                    <button onclick="AplicacaoPrincipal.visualizarResumo('${resumo.id}')" class="w-full btn-primary">
+                                        <i class="fas fa-eye mr-2"></i>Visualizar
+                                    </button>
+                                </div>
+                            `).join('')}
                         </div>
+
+                        ${this.dados.resumos.length === 0 ? `
+                            <div class="text-center py-12">
+                                <i class="fas fa-sticky-note text-6xl text-gray-300 mb-4"></i>
+                                <h3 class="text-xl font-semibold text-gray-600 mb-2">Nenhum resumo criado</h3>
+                                <p class="text-gray-500 mb-6">Comece criando seu primeiro resumo de estudo</p>
+                                <button onclick="AplicacaoPrincipal.mostrarModalNovoResumo()" class="btn-success">
+                                    <i class="fas fa-plus mr-2"></i>Criar Primeiro Resumo
+                                </button>
+                            </div>
+                        ` : ''}
                     </div>
                 `;
             },
 
+            obterCorDisciplina(nomeDisciplina) {
+                const disciplina = this.dados.disciplinas.find(d => d.nome === nomeDisciplina);
+                return disciplina ? disciplina.cor : '#6B7280';
+            },
+
+            mostrarModalNovoResumo(resumoId = null) {
+                const resumo = resumoId ? this.dados.resumos.find(r => r.id === resumoId) : null;
+                
+                this.mostrarModal(`
+                    <div class="p-6 max-w-4xl max-h-[80vh] overflow-y-auto">
+                        <h3 class="text-xl font-semibold mb-4">
+                            <i class="fas ${resumo ? 'fa-edit' : 'fa-plus-circle'} mr-2"></i>
+                            ${resumo ? 'Editar Resumo' : 'Novo Resumo'}
+                        </h3>
+                        
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-semibold mb-2">Título:</label>
+                                <input type="text" id="resumo-titulo" class="w-full p-3 border rounded-xl" 
+                                       value="${resumo ? resumo.titulo : ''}" placeholder="Ex: Resumo de Matemática Básica" required>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-semibold mb-2">Disciplina:</label>
+                                <select id="resumo-disciplina" class="w-full p-3 border rounded-xl" required>
+                                    <option value="">Selecione uma disciplina</option>
+                                    ${this.dados.disciplinas.map(d => 
+                                        `<option value="${d.nome}" ${resumo && resumo.disciplina === d.nome ? 'selected' : ''}>${d.nome}</option>`
+                                    ).join('')}
+                                </select>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-semibold mb-2">Conteúdo:</label>
+                                <textarea id="resumo-conteudo" class="editor-resumo w-full p-3 border rounded-xl" 
+                                          rows="10" placeholder="Digite o conteúdo do seu resumo..." required>${resumo ? resumo.conteudo : ''}</textarea>
+                                <div class="character-count" id="contador-caracteres">0 caracteres</div>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-semibold mb-2">Tags (separadas por vírgula):</label>
+                                <input type="text" id="resumo-tags" class="w-full p-3 border rounded-xl" 
+                                       value="${resumo ? resumo.tags.join(', ') : ''}" placeholder="Ex: matemática, álgebra, equações">
+                            </div>
+                        </div>
+                        
+                        <div class="flex gap-4 mt-6">
+                            <button onclick="AplicacaoPrincipal.fecharModal()" class="flex-1 btn-secondary">
+                                <i class="fas fa-times mr-1"></i>Cancelar
+                            </button>
+                            <button onclick="AplicacaoPrincipal.salvarResumo('${resumoId}')" class="flex-1 btn-success">
+                                <i class="fas fa-save mr-1"></i>${resumo ? 'Atualizar' : 'Salvar'}
+                            </button>
+                        </div>
+                    </div>
+                `);
+
+                // Configurar contador de caracteres
+                const textarea = document.getElementById('resumo-conteudo');
+                const contador = document.getElementById('contador-caracteres');
+                
+                if (textarea && contador) {
+                    textarea.addEventListener('input', function() {
+                        contador.textContent = `${this.value.length} caracteres`;
+                    });
+                    // Inicializar contador
+                    contador.textContent = `${textarea.value.length} caracteres`;
+                }
+            },
+
+            salvarResumo(resumoId = null) {
+                const titulo = document.getElementById('resumo-titulo').value.trim();
+                const disciplina = document.getElementById('resumo-disciplina').value;
+                const conteudo = document.getElementById('resumo-conteudo').value.trim();
+                const tags = document.getElementById('resumo-tags').value.split(',').map(tag => tag.trim()).filter(tag => tag !== '');
+
+                if (!titulo || !disciplina || !conteudo) {
+                    this.mostrarNotificacao('Preencha todos os campos obrigatórios', 'error');
+                    return;
+                }
+
+                if (resumoId) {
+                    // Editar resumo existente
+                    const resumoIndex = this.dados.resumos.findIndex(r => r.id === resumoId);
+                    if (resumoIndex !== -1) {
+                        this.dados.resumos[resumoIndex] = {
+                            ...this.dados.resumos[resumoIndex],
+                            titulo,
+                            disciplina,
+                            conteudo,
+                            tags,
+                            dataAtualizacao: new Date().toISOString()
+                        };
+                    }
+                } else {
+                    // Novo resumo
+                    const novoResumo = {
+                        id: Date.now().toString(),
+                        titulo,
+                        disciplina,
+                        conteudo,
+                        tags,
+                        dataCriacao: new Date().toISOString(),
+                        dataAtualizacao: new Date().toISOString()
+                    };
+                    this.dados.resumos.push(novoResumo);
+                }
+
+                this.salvarDadosUsuario();
+                this.fecharModal();
+                this.carregarResumos();
+                
+                this.mostrarNotificacao(
+                    resumoId ? 'Resumo atualizado com sucesso!' : 'Resumo criado com sucesso!', 
+                    'success'
+                );
+            },
+
+            visualizarResumo(id) {
+                const resumo = this.dados.resumos.find(r => r.id === id);
+                if (resumo) {
+                    this.mostrarModal(`
+                        <div class="p-6 max-w-4xl max-h-[80vh] overflow-y-auto">
+                            <h3 class="text-2xl font-bold mb-4">${resumo.titulo}</h3>
+                            
+                            <div class="flex items-center mb-6">
+                                <span class="badge mr-2" style="background-color: ${this.obterCorDisciplina(resumo.disciplina)}; color: white;">
+                                    ${resumo.disciplina}
+                                </span>
+                                <span class="text-sm text-gray-500">
+                                    Criado em: ${new Date(resumo.dataCriacao).toLocaleDateString('pt-BR')}
+                                    ${resumo.dataAtualizacao ? ` | Atualizado em: ${new Date(resumo.dataAtualizacao).toLocaleDateString('pt-BR')}` : ''}
+                                </span>
+                            </div>
+                            
+                            <div class="flex flex-wrap gap-1 mb-6">
+                                ${resumo.tags.map(tag => `
+                                    <span class="tag-resumo">${tag}</span>
+                                `).join('')}
+                            </div>
+                            
+                            <div class="prose max-w-none">
+                                <pre class="whitespace-pre-wrap font-sans">${resumo.conteudo}</pre>
+                            </div>
+                            
+                            <div class="flex gap-4 mt-6">
+                                <button onclick="AplicacaoPrincipal.fecharModal()" class="flex-1 btn-secondary">
+                                    <i class="fas fa-times mr-1"></i>Fechar
+                                </button>
+                                <button onclick="AplicacaoPrincipal.editarResumo('${resumo.id}')" class="flex-1 btn-primary">
+                                    <i class="fas fa-edit mr-1"></i>Editar
+                                </button>
+                            </div>
+                        </div>
+                    `);
+                }
+            },
+
+            editarResumo(id) {
+                this.mostrarModalNovoResumo(id);
+            },
+
+            excluirResumo(id) {
+                if (confirm('Tem certeza que deseja excluir este resumo?')) {
+                    this.dados.resumos = this.dados.resumos.filter(r => r.id !== id);
+                    this.salvarDadosUsuario();
+                    this.carregarResumos();
+                    this.mostrarNotificacao('Resumo excluído com sucesso!', 'success');
+                }
+            },
+
+            // =========================
+            // QUESTÕES
+            // =========================
             carregarQuestoes() {
                 const conteudo = document.getElementById('conteudo-principal');
                 conteudo.innerHTML = `
                     <div class="fade-in">
-                        <div class="mb-8">
-                            <h2 class="text-3xl font-bold gradient-text mb-2">
-                                <i class="fas fa-question-circle mr-2"></i>Banco de Questões
-                            </h2>
-                            <p class="text-gray-600">Registre e analise suas questões resolvidas</p>
+                        <div class="flex justify-between items-center mb-8">
+                            <h2 class="text-3xl font-bold gradient-text">Banco de Questões</h2>
+                            <button onclick="AplicacaoPrincipal.mostrarModalNovaQuestao()" class="btn-success">
+                                <i class="fas fa-plus mr-2"></i>Nova Questão
+                            </button>
                         </div>
-                        <div class="text-center py-12">
-                            <i class="fas fa-puzzle-piece text-6xl text-gray-300 mb-4"></i>
-                            <h3 class="text-xl font-semibold text-gray-600 mb-2">Questões em Desenvolvimento</h3>
-                            <p class="text-gray-500">Esta funcionalidade está sendo implementada</p>
+
+                        <!-- Estatísticas -->
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+                            <div class="glass-card rounded-xl p-4 text-center">
+                                <div class="text-2xl font-bold text-blue-600">${this.dados.questoes.length}</div>
+                                <div class="text-sm text-gray-600">Total</div>
+                            </div>
+                            <div class="glass-card rounded-xl p-4 text-center">
+                                <div class="text-2xl font-bold text-green-600">${this.dados.questoes.filter(q => q.status === 'correta').length}</div>
+                                <div class="text-sm text-gray-600">Corretas</div>
+                            </div>
+                            <div class="glass-card rounded-xl p-4 text-center">
+                                <div class="text-2xl font-bold text-red-600">${this.dados.questoes.filter(q => q.status === 'errada').length}</div>
+                                <div class="text-sm text-gray-600">Erradas</div>
+                            </div>
+                            <div class="glass-card rounded-xl p-4 text-center">
+                                <div class="text-2xl font-bold text-purple-600">${this.calcularTaxaAcerto()}%</div>
+                                <div class="text-sm text-gray-600">Taxa de Acerto</div>
+                            </div>
+                        </div>
+
+                        <div class="glass-card rounded-xl p-6">
+                            <div class="space-y-4">
+                                ${this.dados.questoes.map(questao => `
+                                    <div class="questao-item ${questao.status === 'correta' ? 'questao-correta' : 'questao-errada'} glass-card rounded-lg p-4">
+                                        <div class="flex justify-between items-start mb-3">
+                                            <div>
+                                                <h4 class="font-semibold">${questao.enunciado}</h4>
+                                                <div class="flex items-center mt-1">
+                                                    <span class="badge mr-2" style="background-color: ${this.obterCorDisciplina(questao.disciplina)}; color: white;">
+                                                        ${questao.disciplina}
+                                                    </span>
+                                                    <span class="text-sm text-gray-500">
+                                                        ${new Date(questao.data).toLocaleDateString('pt-BR')}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <div class="action-buttons">
+                                                <button onclick="AplicacaoPrincipal.editarQuestao('${questao.id}')" class="btn-acao bg-blue-100 text-blue-600">
+                                                    <i class="fas fa-edit"></i>
+                                                </button>
+                                                <button onclick="AplicacaoPrincipal.excluirQuestao('${questao.id}')" class="btn-acao bg-red-100 text-red-600">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
+                                            <div>
+                                                <strong>Alternativas:</strong>
+                                                <div class="mt-1 space-y-1">
+                                                    ${questao.alternativas.map((alt, index) => `
+                                                        <div class="flex items-center">
+                                                            <span class="w-6 h-6 flex items-center justify-center rounded-full border mr-2 
+                                                                ${questao.resposta === index ? 'bg-green-500 text-white border-green-500' : 'border-gray-300'}">
+                                                                ${String.fromCharCode(65 + index)}
+                                                            </span>
+                                                            <span class="${questao.resposta === index ? 'font-semibold' : ''}">${alt}</span>
+                                                        </div>
+                                                    `).join('')}
+                                                </div>
+                                            </div>
+                                            
+                                            <div>
+                                                <strong>Resposta:</strong>
+                                                <p class="mt-1">${String.fromCharCode(65 + questao.resposta)}</p>
+                                                
+                                                <strong class="mt-2 block">Comentário:</strong>
+                                                <p class="mt-1 text-sm">${questao.comentario || 'Sem comentários'}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+
+                            ${this.dados.questoes.length === 0 ? `
+                                <div class="text-center py-12">
+                                    <i class="fas fa-question-circle text-6xl text-gray-300 mb-4"></i>
+                                    <h3 class="text-xl font-semibold text-gray-600 mb-2">Nenhuma questão registrada</h3>
+                                    <p class="text-gray-500 mb-6">Comece registrando suas primeiras questões</p>
+                                    <button onclick="AplicacaoPrincipal.mostrarModalNovaQuestao()" class="btn-success">
+                                        <i class="fas fa-plus mr-2"></i>Registrar Primeira Questão
+                                    </button>
+                                </div>
+                            ` : ''}
                         </div>
                     </div>
                 `;
             },
 
+            calcularTaxaAcerto() {
+                const total = this.dados.questoes.length;
+                const corretas = this.dados.questoes.filter(q => q.status === 'correta').length;
+                return total > 0 ? Math.round((corretas / total) * 100) : 0;
+            },
+
+            mostrarModalNovaQuestao(questaoId = null) {
+                const questao = questaoId ? this.dados.questoes.find(q => q.id === questaoId) : null;
+                
+                this.mostrarModal(`
+                    <div class="p-6 max-w-2xl max-h-[80vh] overflow-y-auto">
+                        <h3 class="text-xl font-semibold mb-4">
+                            <i class="fas ${questao ? 'fa-edit' : 'fa-plus-circle'} mr-2"></i>
+                            ${questao ? 'Editar Questão' : 'Nova Questão'}
+                        </h3>
+                        
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-semibold mb-2">Disciplina:</label>
+                                <select id="questao-disciplina" class="w-full p-3 border rounded-xl" required>
+                                    <option value="">Selecione uma disciplina</option>
+                                    ${this.dados.disciplinas.map(d => 
+                                        `<option value="${d.nome}" ${questao && questao.disciplina === d.nome ? 'selected' : ''}>${d.nome}</option>`
+                                    ).join('')}
+                                </select>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-semibold mb-2">Enunciado:</label>
+                                <textarea id="questao-enunciado" class="w-full p-3 border rounded-xl" 
+                                          rows="4" placeholder="Digite o enunciado da questão..." required>${questao ? questao.enunciado : ''}</textarea>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-semibold mb-2">Alternativas:</label>
+                                <div class="space-y-2">
+                                    ${['A', 'B', 'C', 'D', 'E'].map((letra, index) => `
+                                        <div class="flex items-center space-x-2">
+                                            <span class="w-6 h-6 flex items-center justify-center rounded-full border border-gray-300">${letra}</span>
+                                            <input type="text" id="alternativa-${index}" class="flex-1 p-2 border rounded" 
+                                                   value="${questao ? questao.alternativas[index] || '' : ''}" 
+                                                   placeholder="Texto da alternativa ${letra}">
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-semibold mb-2">Resposta Correta:</label>
+                                <select id="questao-resposta" class="w-full p-3 border rounded-xl" required>
+                                    <option value="">Selecione a alternativa correta</option>
+                                    ${['A', 'B', 'C', 'D', 'E'].map((letra, index) => `
+                                        <option value="${index}" ${questao && questao.resposta === index ? 'selected' : ''}>${letra}</option>
+                                    `).join('')}
+                                </select>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-semibold mb-2">Status:</label>
+                                <select id="questao-status" class="w-full p-3 border rounded-xl" required>
+                                    <option value="pendente" ${questao && questao.status === 'pendente' ? 'selected' : ''}>Pendente</option>
+                                    <option value="correta" ${questao && questao.status === 'correta' ? 'selected' : ''}>Correta</option>
+                                    <option value="errada" ${questao && questao.status === 'errada' ? 'selected' : ''}>Errada</option>
+                                </select>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-semibold mb-2">Comentário (opcional):</label>
+                                <textarea id="questao-comentario" class="w-full p-3 border rounded-xl" 
+                                          rows="3" placeholder="Comentários sobre a questão...">${questao ? questao.comentario || '' : ''}</textarea>
+                            </div>
+                        </div>
+                        
+                        <div class="flex gap-4 mt-6">
+                            <button onclick="AplicacaoPrincipal.fecharModal()" class="flex-1 btn-secondary">
+                                <i class="fas fa-times mr-1"></i>Cancelar
+                            </button>
+                            <button onclick="AplicacaoPrincipal.salvarQuestao('${questaoId}')" class="flex-1 btn-success">
+                                <i class="fas fa-save mr-1"></i>${questao ? 'Atualizar' : 'Salvar'}
+                            </button>
+                        </div>
+                    </div>
+                `);
+            },
+
+            salvarQuestao(questaoId = null) {
+                const disciplina = document.getElementById('questao-disciplina').value;
+                const enunciado = document.getElementById('questao-enunciado').value.trim();
+                const alternativas = [];
+                for (let i = 0; i < 5; i++) {
+                    const alt = document.getElementById(`alternativa-${i}`).value.trim();
+                    if (alt) alternativas.push(alt);
+                }
+                const resposta = parseInt(document.getElementById('questao-resposta').value);
+                const status = document.getElementById('questao-status').value;
+                const comentario = document.getElementById('questao-comentario').value.trim();
+
+                if (!disciplina || !enunciado || alternativas.length === 0 || isNaN(resposta)) {
+                    this.mostrarNotificacao('Preencha todos os campos obrigatórios', 'error');
+                    return;
+                }
+
+                if (alternativas.length < 2) {
+                    this.mostrarNotificacao('Adicione pelo menos 2 alternativas', 'error');
+                    return;
+                }
+
+                if (questaoId) {
+                    // Editar questão existente
+                    const questaoIndex = this.dados.questoes.findIndex(q => q.id === questaoId);
+                    if (questaoIndex !== -1) {
+                        this.dados.questoes[questaoIndex] = {
+                            ...this.dados.questoes[questaoIndex],
+                            disciplina,
+                            enunciado,
+                            alternativas,
+                            resposta,
+                            status,
+                            comentario,
+                            dataAtualizacao: new Date().toISOString()
+                        };
+                    }
+                } else {
+                    // Nova questão
+                    const novaQuestao = {
+                        id: Date.now().toString(),
+                        disciplina,
+                        enunciado,
+                        alternativas,
+                        resposta,
+                        status,
+                        comentario,
+                        data: new Date().toISOString(),
+                        dataAtualizacao: new Date().toISOString()
+                    };
+                    this.dados.questoes.push(novaQuestao);
+                }
+
+                this.salvarDadosUsuario();
+                this.fecharModal();
+                this.carregarQuestoes();
+                
+                this.mostrarNotificacao(
+                    questaoId ? 'Questão atualizada com sucesso!' : 'Questão registrada com sucesso!', 
+                    'success'
+                );
+            },
+
+            editarQuestao(id) {
+                this.mostrarModalNovaQuestao(id);
+            },
+
+            excluirQuestao(id) {
+                if (confirm('Tem certeza que deseja excluir esta questão?')) {
+                    this.dados.questoes = this.dados.questoes.filter(q => q.id !== id);
+                    this.salvarDadosUsuario();
+                    this.carregarQuestoes();
+                    this.mostrarNotificacao('Questão excluída com sucesso!', 'success');
+                }
+            },
+
+            // =========================
+            // REDAÇÕES
+            // =========================
             carregarRedacoes() {
                 const conteudo = document.getElementById('conteudo-principal');
                 conteudo.innerHTML = `
                     <div class="fade-in">
-                        <div class="mb-8">
-                            <h2 class="text-3xl font-bold gradient-text mb-2">
-                                <i class="fas fa-edit mr-2"></i>Minhas Redações
-                            </h2>
-                            <p class="text-gray-600">Acompanhe seu desenvolvimento na escrita</p>
+                        <div class="flex justify-between items-center mb-8">
+                            <h2 class="text-3xl font-bold gradient-text">Redações</h2>
+                            <button onclick="AplicacaoPrincipal.mostrarModalNovaRedacao()" class="btn-success">
+                                <i class="fas fa-plus mr-2"></i>Nova Redação
+                            </button>
                         </div>
-                        <div class="text-center py-12">
-                            <i class="fas fa-pen-fancy text-6xl text-gray-300 mb-4"></i>
-                            <h3 class="text-xl font-semibold text-gray-600 mb-2">Redações em Desenvolvimento</h3>
-                            <p class="text-gray-500">Esta funcionalidade está sendo implementada</p>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            ${this.dados.redacoes.map(redacao => `
+                                <div class="redacao-item glass-card rounded-xl p-6">
+                                    <div class="flex justify-between items-start mb-4">
+                                        <h3 class="text-xl font-semibold">${redacao.titulo}</h3>
+                                        <div class="action-buttons">
+                                            <button onclick="AplicacaoPrincipal.editarRedacao('${redacao.id}')" class="btn-acao bg-blue-100 text-blue-600">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button onclick="AplicacaoPrincipal.excluirRedacao('${redacao.id}')" class="btn-acao bg-red-100 text-red-600">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mb-4">
+                                        <div class="flex items-center mb-2">
+                                            <span class="text-sm text-gray-500 mr-4">
+                                                <i class="fas fa-calendar mr-1"></i>
+                                                ${new Date(redacao.data).toLocaleDateString('pt-BR')}
+                                            </span>
+                                            ${redacao.nota ? `
+                                                <span class="badge badge-success">
+                                                    <i class="fas fa-star mr-1"></i>${redacao.nota}
+                                                </span>
+                                            ` : ''}
+                                        </div>
+                                        <div class="text-sm text-gray-600">
+                                            ${redacao.tema}
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="resumo-preview mb-4">
+                                        <p class="text-gray-600">${redacao.conteudo.substring(0, 100)}${redacao.conteudo.length > 100 ? '...' : ''}</p>
+                                    </div>
+                                    
+                                    <div class="flex justify-between items-center">
+                                        <span class="text-sm text-gray-500">
+                                            ${redacao.palavras} palavras
+                                        </span>
+                                        <button onclick="AplicacaoPrincipal.visualizarRedacao('${redacao.id}')" class="btn-primary">
+                                            <i class="fas fa-eye mr-2"></i>Visualizar
+                                        </button>
+                                    </div>
+                                </div>
+                            `).join('')}
                         </div>
+
+                        ${this.dados.redacoes.length === 0 ? `
+                            <div class="text-center py-12">
+                                <i class="fas fa-pen-fancy text-6xl text-gray-300 mb-4"></i>
+                                <h3 class="text-xl font-semibold text-gray-600 mb-2">Nenhuma redação criada</h3>
+                                <p class="text-gray-500 mb-6">Comece criando sua primeira redação</p>
+                                <button onclick="AplicacaoPrincipal.mostrarModalNovaRedacao()" class="btn-success">
+                                    <i class="fas fa-plus mr-2"></i>Criar Primeira Redação
+                                </button>
+                            </div>
+                        ` : ''}
                     </div>
                 `;
             },
 
+            mostrarModalNovaRedacao(redacaoId = null) {
+                const redacao = redacaoId ? this.dados.redacoes.find(r => r.id === redacaoId) : null;
+                
+                this.mostrarModal(`
+                    <div class="p-6 max-w-4xl max-h-[80vh] overflow-y-auto">
+                        <h3 class="text-xl font-semibold mb-4">
+                            <i class="fas ${redacao ? 'fa-edit' : 'fa-plus-circle'} mr-2"></i>
+                            ${redacao ? 'Editar Redação' : 'Nova Redação'}
+                        </h3>
+                        
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-semibold mb-2">Título:</label>
+                                <input type="text" id="redacao-titulo" class="w-full p-3 border rounded-xl" 
+                                       value="${redacao ? redacao.titulo : ''}" placeholder="Ex: Redação sobre Sustentabilidade" required>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-semibold mb-2">Tema:</label>
+                                <input type="text" id="redacao-tema" class="w-full p-3 border rounded-xl" 
+                                       value="${redacao ? redacao.tema : ''}" placeholder="Ex: Desafios da sustentabilidade no século XXI" required>
+                            </div>
+                            
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-semibold mb-2">Data:</label>
+                                    <input type="date" id="redacao-data" class="w-full p-3 border rounded-xl" 
+                                           value="${redacao ? redacao.data.split('T')[0] : new Date().toISOString().split('T')[0]}" required>
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-sm font-semibold mb-2">Nota (opcional):</label>
+                                    <input type="number" id="redacao-nota" class="w-full p-3 border rounded-xl" 
+                                           value="${redacao ? redacao.nota || '' : ''}" min="0" max="1000" step="0.1" placeholder="Ex: 920">
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-semibold mb-2">Conteúdo:</label>
+                                <textarea id="redacao-conteudo" class="editor-resumo w-full p-3 border rounded-xl" 
+                                          rows="15" placeholder="Digite o conteúdo da sua redação..." required>${redacao ? redacao.conteudo : ''}</textarea>
+                                <div class="flex justify-between text-sm text-gray-500 mt-1">
+                                    <span id="contador-palavras">0 palavras</span>
+                                    <span id="contador-caracteres-redacao">0 caracteres</span>
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-semibold mb-2">Comentários (opcional):</label>
+                                <textarea id="redacao-comentarios" class="w-full p-3 border rounded-xl" 
+                                          rows="3" placeholder="Comentários sobre a redação...">${redacao ? redacao.comentarios || '' : ''}</textarea>
+                            </div>
+                        </div>
+                        
+                        <div class="flex gap-4 mt-6">
+                            <button onclick="AplicacaoPrincipal.fecharModal()" class="flex-1 btn-secondary">
+                                <i class="fas fa-times mr-1"></i>Cancelar
+                            </button>
+                            <button onclick="AplicacaoPrincipal.salvarRedacao('${redacaoId}')" class="flex-1 btn-success">
+                                <i class="fas fa-save mr-1"></i>${redacao ? 'Atualizar' : 'Salvar'}
+                            </button>
+                        </div>
+                    </div>
+                `);
+
+                // Configurar contadores
+                const textarea = document.getElementById('redacao-conteudo');
+                const contadorPalavras = document.getElementById('contador-palavras');
+                const contadorCaracteres = document.getElementById('contador-caracteres-redacao');
+                
+                if (textarea && contadorPalavras && contadorCaracteres) {
+                    textarea.addEventListener('input', function() {
+                        const texto = this.value;
+                        const palavras = texto.trim() === '' ? 0 : texto.trim().split(/\s+/).length;
+                        const caracteres = texto.length;
+                        
+                        contadorPalavras.textContent = `${palavras} palavras`;
+                        contadorCaracteres.textContent = `${caracteres} caracteres`;
+                    });
+                    
+                    // Inicializar contadores
+                    const texto = textarea.value;
+                    const palavras = texto.trim() === '' ? 0 : texto.trim().split(/\s+/).length;
+                    const caracteres = texto.length;
+                    
+                    contadorPalavras.textContent = `${palavras} palavras`;
+                    contadorCaracteres.textContent = `${caracteres} caracteres`;
+                }
+            },
+
+            salvarRedacao(redacaoId = null) {
+                const titulo = document.getElementById('redacao-titulo').value.trim();
+                const tema = document.getElementById('redacao-tema').value.trim();
+                const data = document.getElementById('redacao-data').value;
+                const nota = document.getElementById('redacao-nota').value ? parseFloat(document.getElementById('redacao-nota').value) : null;
+                const conteudo = document.getElementById('redacao-conteudo').value.trim();
+                const comentarios = document.getElementById('redacao-comentarios').value.trim();
+                const palavras = conteudo.trim() === '' ? 0 : conteudo.trim().split(/\s+/).length;
+
+                if (!titulo || !tema || !data || !conteudo) {
+                    this.mostrarNotificacao('Preencha todos os campos obrigatórios', 'error');
+                    return;
+                }
+
+                if (redacaoId) {
+                    // Editar redação existente
+                    const redacaoIndex = this.dados.redacoes.findIndex(r => r.id === redacaoId);
+                    if (redacaoIndex !== -1) {
+                        this.dados.redacoes[redacaoIndex] = {
+                            ...this.dados.redacoes[redacaoIndex],
+                            titulo,
+                            tema,
+                            data: new Date(data + 'T12:00:00').toISOString(),
+                            nota,
+                            conteudo,
+                            comentarios,
+                            palavras,
+                            dataAtualizacao: new Date().toISOString()
+                        };
+                    }
+                } else {
+                    // Nova redação
+                    const novaRedacao = {
+                        id: Date.now().toString(),
+                        titulo,
+                        tema,
+                        data: new Date(data + 'T12:00:00').toISOString(),
+                        nota,
+                        conteudo,
+                        comentarios,
+                        palavras,
+                        dataCriacao: new Date().toISOString(),
+                        dataAtualizacao: new Date().toISOString()
+                    };
+                    this.dados.redacoes.push(novaRedacao);
+                }
+
+                this.salvarDadosUsuario();
+                this.fecharModal();
+                this.carregarRedacoes();
+                
+                this.mostrarNotificacao(
+                    redacaoId ? 'Redação atualizada com sucesso!' : 'Redação criada com sucesso!', 
+                    'success'
+                );
+            },
+
+            visualizarRedacao(id) {
+                const redacao = this.dados.redacoes.find(r => r.id === id);
+                if (redacao) {
+                    this.mostrarModal(`
+                        <div class="p-6 max-w-4xl max-h-[80vh] overflow-y-auto">
+                            <h3 class="text-2xl font-bold mb-2">${redacao.titulo}</h3>
+                            <p class="text-lg text-gray-600 mb-4">${redacao.tema}</p>
+                            
+                            <div class="flex items-center mb-6">
+                                <span class="text-sm text-gray-500 mr-4">
+                                    <i class="fas fa-calendar mr-1"></i>
+                                    ${new Date(redacao.data).toLocaleDateString('pt-BR')}
+                                </span>
+                                <span class="text-sm text-gray-500 mr-4">
+                                    <i class="fas fa-font mr-1"></i>
+                                    ${redacao.palavras} palavras
+                                </span>
+                                ${redacao.nota ? `
+                                    <span class="badge badge-success">
+                                        <i class="fas fa-star mr-1"></i>${redacao.nota}
+                                    </span>
+                                ` : ''}
+                            </div>
+                            
+                            <div class="prose max-w-none mb-6">
+                                <pre class="whitespace-pre-wrap font-sans text-gray-800 leading-relaxed">${redacao.conteudo}</pre>
+                            </div>
+                            
+                            ${redacao.comentarios ? `
+                                <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
+                                    <h4 class="font-semibold text-yellow-800 mb-2">Comentários:</h4>
+                                    <p class="text-yellow-700">${redacao.comentarios}</p>
+                                </div>
+                            ` : ''}
+                            
+                            <div class="flex gap-4">
+                                <button onclick="AplicacaoPrincipal.fecharModal()" class="flex-1 btn-secondary">
+                                    <i class="fas fa-times mr-1"></i>Fechar
+                                </button>
+                                <button onclick="AplicacaoPrincipal.editarRedacao('${redacao.id}')" class="flex-1 btn-primary">
+                                    <i class="fas fa-edit mr-1"></i>Editar
+                                </button>
+                            </div>
+                        </div>
+                    `);
+                }
+            },
+
+            editarRedacao(id) {
+                this.mostrarModalNovaRedacao(id);
+            },
+
+            excluirRedacao(id) {
+                if (confirm('Tem certeza que deseja excluir esta redação?')) {
+                    this.dados.redacoes = this.dados.redacoes.filter(r => r.id !== id);
+                    this.salvarDadosUsuario();
+                    this.carregarRedacoes();
+                    this.mostrarNotificacao('Redação excluída com sucesso!', 'success');
+                }
+            },
+
             // =========================
-            // MODAIS E UTILITÁRIOS
+            // FUNÇÕES UTILITÁRIAS
             // =========================
             mostrarModal(conteudo) {
                 const modal = document.createElement('div');
@@ -2424,124 +3257,28 @@
                 }
             },
 
-            mostrarModalBackup() {
-                document.getElementById('modal-backup').classList.remove('hidden');
+            mostrarNotificacao(mensagem, tipo = 'info') {
+                const notificacao = document.createElement('div');
+                notificacao.className = `fixed top-4 right-4 p-4 rounded-xl shadow-lg z-50 transform transition-all duration-300 ${
+                    tipo === 'success' ? 'bg-green-500 text-white' :
+                    tipo === 'error' ? 'bg-red-500 text-white' :
+                    'bg-blue-500 text-white'
+                }`;
+                notificacao.textContent = mensagem;
                 
-                document.getElementById('btn-fazer-backup').onclick = () => this.fazerBackup();
-                document.getElementById('input-restaurar-backup').onchange = (e) => this.restaurarBackup(e);
-                document.getElementById('btn-restaurar-backup').onclick = () => {
-                    document.getElementById('input-restaurar-backup').click();
-                };
-            },
-
-            // =========================
-            // FUNÇÕES DE BACKUP
-            // =========================
-            fazerBackup() {
-                const dadosBackup = {
-                    usuario: this.usuario,
-                    dados: this.dados,
-                    dataBackup: new Date().toISOString(),
-                    versao: '1.0'
-                };
-
-                const blob = new Blob([JSON.stringify(dadosBackup, null, 2)], { type: 'application/json' });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `backup_gfconcursos_${new Date().toISOString().split('T')[0]}.json`;
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                URL.revokeObjectURL(url);
-
-                AuthSystem.mostrarNotificacao('Backup realizado com sucesso!', 'success');
-            },
-
-            restaurarBackup(event) {
-                const file = event.target.files[0];
-                if (!file) return;
-
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    try {
-                        const backup = JSON.parse(e.target.result);
-                        
-                        if (confirm('Tem certeza que deseja restaurar este backup? Todos os dados atuais serão substituídos.')) {
-                            this.usuario = backup.usuario;
-                            this.dados = backup.dados;
-                            
-                            const usuarioIndex = AuthSystem.usuarios.findIndex(u => u.id === this.usuario.id);
-                            if (usuarioIndex !== -1) {
-                                AuthSystem.usuarios[usuarioIndex] = this.usuario;
-                                AuthSystem.salvarUsuarios();
-                                localStorage.setItem('gfconcursos_usuario_logado', JSON.stringify(this.usuario));
-                            }
-
-                            this.salvarDadosUsuario();
-                            fecharModal('modal-backup');
-                            
-                            AuthSystem.mostrarNotificacao('Backup restaurado com sucesso!', 'success');
-                            
-                            setTimeout(() => {
-                                location.reload();
-                            }, 1000);
+                document.body.appendChild(notificacao);
+                
+                setTimeout(() => {
+                    notificacao.style.opacity = '0';
+                    notificacao.style.transform = 'translateX(100%)';
+                    setTimeout(() => {
+                        if (notificacao.parentNode) {
+                            notificacao.parentNode.removeChild(notificacao);
                         }
-                    } catch (error) {
-                        AuthSystem.mostrarNotificacao('Erro ao restaurar backup. Arquivo inválido.', 'error');
-                    }
-                };
-                reader.readAsText(file);
+                    }, 300);
+                }, 3000);
             },
 
-            // =========================
-            // CONFIGURAÇÕES
-            // =========================
-            mostrarConfiguracoes() {
-                document.getElementById('config-nome').value = this.usuario.nome;
-                document.getElementById('config-email').value = this.usuario.email;
-                document.getElementById('config-meta').value = this.dados.configuracoes.metaDiaria;
-                
-                document.getElementById('modal-configuracoes').classList.remove('hidden');
-                
-                document.getElementById('btn-salvar-configuracoes').onclick = () => this.salvarConfiguracoes();
-            },
-
-            salvarConfiguracoes() {
-                const nome = document.getElementById('config-nome').value.trim();
-                const email = document.getElementById('config-email').value.trim();
-                const meta = document.getElementById('config-meta').value;
-
-                if (!nome || !email) {
-                    AuthSystem.mostrarNotificacao('Preencha nome e email', 'error');
-                    return;
-                }
-
-                this.usuario.nome = nome;
-                this.usuario.email = email;
-                this.dados.configuracoes.metaDiaria = parseInt(meta) || 4;
-
-                const usuarioIndex = AuthSystem.usuarios.findIndex(u => u.id === this.usuario.id);
-                if (usuarioIndex !== -1) {
-                    AuthSystem.usuarios[usuarioIndex] = this.usuario;
-                    AuthSystem.salvarUsuarios();
-                    localStorage.setItem('gfconcursos_usuario_logado', JSON.stringify(this.usuario));
-                }
-
-                this.salvarDadosUsuario();
-                fecharModal('modal-configuracoes');
-                
-                AuthSystem.mostrarNotificacao('Configurações salvas com sucesso!', 'success');
-                
-                const elementoNome = document.querySelector('header span.text-gray-700');
-                if (elementoNome) {
-                    elementoNome.textContent = `Olá, ${this.usuario.nome.split(' ')[0]}!`;
-                }
-            },
-
-            // =========================
-            // FUNÇÕES DE PERSISTÊNCIA
-            // =========================
             salvarDadosUsuario() {
                 this.usuario.dados = this.dados;
                 
@@ -2553,39 +3290,15 @@
                 }
             },
 
-            // =========================
-            // FUNÇÕES DE FORMULÁRIO (placeholders)
-            // =========================
-            mostrarModalNovoResumo() {
-                this.mostrarModal(`
-                    <div class="p-6">
-                        <h3 class="text-xl font-semibold mb-4">
-                            <i class="fas fa-file-medical mr-2"></i>Novo Resumo
-                        </h3>
-                        <p class="text-gray-600 mb-4">Formulário de novo resumo em desenvolvimento</p>
-                        <div class="flex justify-end">
-                            <button onclick="AplicacaoPrincipal.fecharModal()" class="btn-primary">
-                                <i class="fas fa-times mr-1"></i>Fechar
-                            </button>
-                        </div>
-                    </div>
-                `);
+            abrirConfiguracoes() {
+                document.getElementById('modal-configuracoes').classList.remove('hidden');
+                document.getElementById('config-nome').value = this.usuario.nome;
+                document.getElementById('config-email').value = this.usuario.email;
+                document.getElementById('config-meta').value = this.dados.configuracoes.metaDiaria;
             },
 
-            mostrarModalNovaQuestao() {
-                this.mostrarModal(`
-                    <div class="p-6">
-                        <h3 class="text-xl font-semibold mb-4">
-                            <i class="fas fa-question mr-2"></i>Nova Questão
-                        </h3>
-                        <p class="text-gray-600 mb-4">Formulário de nova questão em desenvolvimento</p>
-                        <div class="flex justify-end">
-                            <button onclick="AplicacaoPrincipal.fecharModal()" class="btn-primary">
-                                <i class="fas fa-times mr-1"></i>Fechar
-                            </button>
-                        </div>
-                    </div>
-                `);
+            abrirBackup() {
+                document.getElementById('modal-backup').classList.remove('hidden');
             }
         };
 
@@ -2596,15 +3309,87 @@
             document.getElementById(modalId).classList.add('hidden');
         }
 
-        function mostrarModal(modalId) {
-            document.getElementById(modalId).classList.remove('hidden');
-        }
-
         // =========================
         // INICIALIZAÇÃO
         // =========================
         document.addEventListener('DOMContentLoaded', function() {
             AuthSystem.init();
+            
+            // Configurar eventos dos modais
+            document.getElementById('btn-salvar-configuracoes').addEventListener('click', function() {
+                const nome = document.getElementById('config-nome').value;
+                const email = document.getElementById('config-email').value;
+                const meta = parseInt(document.getElementById('config-meta').value);
+                
+                if (nome && email && meta) {
+                    AplicacaoPrincipal.usuario.nome = nome;
+                    AplicacaoPrincipal.usuario.email = email;
+                    AplicacaoPrincipal.dados.configuracoes.metaDiaria = meta;
+                    AplicacaoPrincipal.salvarDadosUsuario();
+                    fecharModal('modal-configuracoes');
+                    AplicacaoPrincipal.mostrarNotificacao('Configurações salvas com sucesso!', 'success');
+                    
+                    // Recarregar a interface para atualizar o nome
+                    AplicacaoPrincipal.carregarInterface();
+                    AplicacaoPrincipal.configurarNavegacao();
+                    AplicacaoPrincipal.carregarDashboard();
+                }
+            });
+            
+            // Configurar backup
+            document.getElementById('btn-fazer-backup').addEventListener('click', function() {
+                const dados = {
+                    usuario: AplicacaoPrincipal.usuario,
+                    timestamp: new Date().toISOString()
+                };
+                
+                const blob = new Blob([JSON.stringify(dados, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `backup_gfconcursos_${new Date().toISOString().split('T')[0]}.json`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                
+                AplicacaoPrincipal.mostrarNotificacao('Backup realizado com sucesso!', 'success');
+            });
+            
+            document.getElementById('btn-restaurar-backup').addEventListener('click', function() {
+                const input = document.getElementById('input-restaurar-backup');
+                const file = input.files[0];
+                
+                if (!file) {
+                    AplicacaoPrincipal.mostrarNotificacao('Selecione um arquivo de backup', 'error');
+                    return;
+                }
+                
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        const dados = JSON.parse(e.target.result);
+                        
+                        if (dados.usuario && dados.usuario.id === AplicacaoPrincipal.usuario.id) {
+                            AplicacaoPrincipal.usuario = dados.usuario;
+                            AplicacaoPrincipal.dados = dados.usuario.dados;
+                            AplicacaoPrincipal.salvarDadosUsuario();
+                            fecharModal('modal-backup');
+                            AplicacaoPrincipal.mostrarNotificacao('Backup restaurado com sucesso!', 'success');
+                            
+                            // Recarregar a aplicação
+                            AplicacaoPrincipal.carregarInterface();
+                            AplicacaoPrincipal.configurarNavegacao();
+                            AplicacaoPrincipal.carregarDashboard();
+                        } else {
+                            AplicacaoPrincipal.mostrarNotificacao('Arquivo de backup inválido', 'error');
+                        }
+                    } catch (error) {
+                        AplicacaoPrincipal.mostrarNotificacao('Erro ao ler arquivo de backup', 'error');
+                    }
+                };
+                reader.readAsText(file);
+            });
         });
     </script>
 </body>
