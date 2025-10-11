@@ -1101,213 +1101,179 @@
             // =========================
             // DASHBOARD
             // =========================
-            carregarDashboard() {
-                const progresso = this.calcularProgresso();
-                const estatisticas = this.calcularEstatisticas();
+            // =========================
+// DASHBOARD (SEM CRONÔMETRO, MANTENDO GRÁFICO)
+// =========================
+carregarDashboard() {
+    const progresso = this.calcularProgresso();
+    const estatisticas = this.calcularEstatisticas();
 
-                const conteudo = document.getElementById('conteudo-principal');
-                conteudo.innerHTML = `
-                    <div class="fade-in">
-                        <div class="mb-8">
-                            <h2 class="text-3xl font-bold gradient-text mb-2">Dashboard de Estudos</h2>
-                            <p class="text-gray-600">Visão geral do seu progresso e desempenho</p>
-                        </div>
+    const conteudo = document.getElementById('conteudo-principal');
+    conteudo.innerHTML = `
+        <div class="fade-in">
+            <div class="mb-8">
+                <h2 class="text-3xl font-bold gradient-text mb-2">Dashboard de Estudos</h2>
+                <p class="text-gray-600">Visão geral do seu progresso e desempenho</p>
+            </div>
 
-                        <!-- Ações Rápidas -->
-                        <div class="quick-actions">
-                            <div class="quick-action-btn" onclick="AplicacaoPrincipal.iniciarSessaoEstudo()">
-                                <div class="quick-action-icon">
-                                    <i class="fas fa-play-circle"></i>
-                                </div>
-                                <h3 class="font-semibold">Iniciar Estudo</h3>
-                                <p class="text-sm text-gray-600">Começar nova sessão</p>
-                            </div>
-                            <div class="quick-action-btn" onclick="AplicacaoPrincipal.mostrarModalNovaTarefa()">
-                                <div class="quick-action-icon">
-                                    <i class="fas fa-plus-circle"></i>
-                                </div>
-                                <h3 class="font-semibold">Nova Tarefa</h3>
-                                <p class="text-sm text-gray-600">Agendar estudo</p>
-                            </div>
-                            <div class="quick-action-btn" onclick="AplicacaoPrincipal.mostrarModalNovoResumo()">
-                                <div class="quick-action-icon">
-                                    <i class="fas fa-file-medical"></i>
-                                </div>
-                                <h3 class="font-semibold">Novo Resumo</h3>
-                                <p class="text-sm text-gray-600">Criar anotações</p>
-                            </div>
-                            <div class="quick-action-btn" onclick="AplicacaoPrincipal.mostrarModalNovaQuestao()">
-                                <div class="quick-action-icon">
-                                    <i class="fas fa-question"></i>
-                                </div>
-                                <h3 class="font-semibold">Nova Questão</h3>
-                                <p class="text-sm text-gray-600">Registrar exercício</p>
-                            </div>
-                        </div>
+            <!-- Ações Rápidas -->
+            <div class="quick-actions">
+                <div class="quick-action-btn" onclick="AplicacaoPrincipal.iniciarSessaoEstudo()">
+                    <div class="quick-action-icon">
+                        <i class="fas fa-play-circle"></i>
+                    </div>
+                    <h3 class="font-semibold">Iniciar Estudo</h3>
+                    <p class="text-sm text-gray-600">Começar nova sessão</p>
+                </div>
+                <div class="quick-action-btn" onclick="AplicacaoPrincipal.mostrarModalNovaTarefa()">
+                    <div class="quick-action-icon">
+                        <i class="fas fa-plus-circle"></i>
+                    </div>
+                    <h3 class="font-semibold">Nova Tarefa</h3>
+                    <p class="text-sm text-gray-600">Agendar estudo</p>
+                </div>
+                <div class="quick-action-btn" onclick="AplicacaoPrincipal.mostrarModalNovoResumo()">
+                    <div class="quick-action-icon">
+                        <i class="fas fa-file-medical"></i>
+                    </div>
+                    <h3 class="font-semibold">Novo Resumo</h3>
+                    <p class="text-sm text-gray-600">Criar anotações</p>
+                </div>
+                <div class="quick-action-btn" onclick="AplicacaoPrincipal.mostrarModalNovaQuestao()">
+                    <div class="quick-action-icon">
+                        <i class="fas fa-question"></i>
+                    </div>
+                    <h3 class="font-semibold">Nova Questão</h3>
+                    <p class="text-sm text-gray-600">Registrar exercício</p>
+                </div>
+            </div>
 
-                        <!-- Cards de Estatísticas -->
-                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                            <div class="glass-card stats-card rounded-2xl p-6 text-center">
-                                <div class="text-3xl mb-2 text-blue-600">
-                                    <i class="fas fa-clock"></i>
-                                </div>
-                                <h3 class="font-semibold text-gray-700">Tempo Total</h3>
-                                <p class="text-2xl font-bold gradient-text">${progresso.tempoTotal}</p>
-                                <p class="text-sm text-gray-500 mt-1">${this.dados.configuracoes.metaDiaria}h meta/dia</p>
-                            </div>
-                            <div class="glass-card stats-card rounded-2xl p-6 text-center">
-                                <div class="text-3xl mb-2 text-green-600">
-                                    <i class="fas fa-book"></i>
-                                </div>
-                                <h3 class="font-semibold text-gray-700">Disciplinas</h3>
-                                <p class="text-2xl font-bold gradient-text">${this.dados.disciplinas.length}</p>
-                                <p class="text-sm text-gray-500 mt-1">${estatisticas.disciplinasConcluidas} concluídas</p>
-                            </div>
-                            <div class="glass-card stats-card rounded-2xl p-6 text-center">
-                                <div class="text-3xl mb-2 text-purple-600">
-                                    <i class="fas fa-question"></i>
-                                </div>
-                                <h3 class="font-semibold text-gray-700">Questões</h3>
-                                <p class="text-2xl font-bold gradient-text">${this.dados.questoes.length}</p>
-                                <p class="text-sm text-gray-500 mt-1">${estatisticas.taxaAcerto}% de acerto</p>
-                            </div>
-                            <div class="glass-card stats-card rounded-2xl p-6 text-center">
-                                <div class="text-3xl mb-2 text-orange-600">
-                                    <i class="fas fa-sticky-note"></i>
-                                </div>
-                                <h3 class="font-semibold text-gray-700">Resumos</h3>
-                                <p class="text-2xl font-bold gradient-text">${this.dados.resumos.length}</p>
-                                <p class="text-sm text-gray-500 mt-1">${estatisticas.redacoes} redações</p>
-                            </div>
-                        </div>
+            <!-- Cards de Estatísticas -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <div class="glass-card stats-card rounded-2xl p-6 text-center">
+                    <div class="text-3xl mb-2 text-blue-600">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                    <h3 class="font-semibold text-gray-700">Tempo Total</h3>
+                    <p class="text-2xl font-bold gradient-text">${progresso.tempoTotal}</p>
+                    <p class="text-sm text-gray-500 mt-1">${this.dados.configuracoes.metaDiaria}h meta/dia</p>
+                </div>
+                <div class="glass-card stats-card rounded-2xl p-6 text-center">
+                    <div class="text-3xl mb-2 text-green-600">
+                        <i class="fas fa-book"></i>
+                    </div>
+                    <h3 class="font-semibold text-gray-700">Disciplinas</h3>
+                    <p class="text-2xl font-bold gradient-text">${this.dados.disciplinas.length}</p>
+                    <p class="text-sm text-gray-500 mt-1">${estatisticas.disciplinasConcluidas} concluídas</p>
+                </div>
+                <div class="glass-card stats-card rounded-2xl p-6 text-center">
+                    <div class="text-3xl mb-2 text-purple-600">
+                        <i class="fas fa-question"></i>
+                    </div>
+                    <h3 class="font-semibold text-gray-700">Questões</h3>
+                    <p class="text-2xl font-bold gradient-text">${this.dados.questoes.length}</p>
+                    <p class="text-sm text-gray-500 mt-1">${estatisticas.taxaAcerto}% de acerto</p>
+                </div>
+                <div class="glass-card stats-card rounded-2xl p-6 text-center">
+                    <div class="text-3xl mb-2 text-orange-600">
+                        <i class="fas fa-sticky-note"></i>
+                    </div>
+                    <h3 class="font-semibold text-gray-700">Resumos</h3>
+                    <p class="text-2xl font-bold gradient-text">${this.dados.resumos.length}</p>
+                    <p class="text-sm text-gray-500 mt-1">${estatisticas.redacoes} redações</p>
+                </div>
+            </div>
 
-                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                            <!-- Progresso por Disciplina -->
-                            <div class="glass-card rounded-2xl p-6">
-                                <div class="flex justify-between items-center mb-4">
-                                    <h3 class="text-xl font-semibold">
-                                        <i class="fas fa-chart-bar mr-2"></i>Progresso por Disciplina
-                                    </h3>
-                                    <button onclick="AplicacaoPrincipal.mostrarDetalhesProgresso()" class="btn-primary text-sm">
-                                        <i class="fas fa-expand mr-1"></i>Detalhes
-                                    </button>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <!-- Progresso por Disciplina -->
+                <div class="glass-card rounded-2xl p-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-xl font-semibold">
+                            <i class="fas fa-chart-bar mr-2"></i>Progresso por Disciplina
+                        </h3>
+                        <button onclick="AplicacaoPrincipal.mostrarDetalhesProgresso()" class="btn-primary text-sm">
+                            <i class="fas fa-expand mr-1"></i>Detalhes
+                        </button>
+                    </div>
+                    <div class="space-y-4">
+                        ${this.dados.disciplinas.map(disciplina => `
+                            <div class="space-y-2">
+                                <div class="flex justify-between items-center">
+                                    <span class="font-medium">${disciplina.nome}</span>
+                                    <span class="text-sm text-gray-600">${disciplina.progresso || 0}%</span>
                                 </div>
-                                <div class="space-y-4">
-                                    ${this.dados.disciplinas.map(disciplina => `
-                                        <div class="space-y-2">
-                                            <div class="flex justify-between items-center">
-                                                <span class="font-medium">${disciplina.nome}</span>
-                                                <span class="text-sm text-gray-600">${disciplina.progresso || 0}%</span>
-                                            </div>
-                                            <div class="w-full bg-gray-200 rounded-full h-3">
-                                                <div class="progresso-disciplina h-3 rounded-full" 
-                                                     style="width: ${disciplina.progresso || 0}%; background-color: ${disciplina.cor}"></div>
-                                            </div>
-                                            <div class="flex justify-between text-xs text-gray-500">
-                                                <span><i class="fas fa-clock mr-1"></i>${disciplina.horasEstudadas || 0}h</span>
-                                                <span><i class="fas fa-question mr-1"></i>${disciplina.questoesResolvidas || 0} questões</span>
-                                                <span><i class="fas fa-check-circle mr-1"></i>${disciplina.assuntos.filter(a => a.concluido).length}/${disciplina.assuntos.length} assuntos</span>
-                                            </div>
-                                        </div>
-                                    `).join('')}
+                                <div class="w-full bg-gray-200 rounded-full h-3">
+                                    <div class="progresso-disciplina h-3 rounded-full" 
+                                         style="width: ${disciplina.progresso || 0}%; background-color: ${disciplina.cor}"></div>
+                                </div>
+                                <div class="flex justify-between text-xs text-gray-500">
+                                    <span><i class="fas fa-clock mr-1"></i>${disciplina.horasEstudadas || 0}h</span>
+                                    <span><i class="fas fa-question mr-1"></i>${disciplina.questoesResolvidas || 0} questões</span>
+                                    <span><i class="fas fa-check-circle mr-1"></i>${disciplina.assuntos.filter(a => a.concluido).length}/${disciplina.assuntos.length} assuntos</span>
                                 </div>
                             </div>
+                        `).join('')}
+                    </div>
+                </div>
 
-                            <!-- Próximas Tarefas -->
-                            <div class="glass-card rounded-2xl p-6">
-                                <div class="flex justify-between items-center mb-4">
-                                    <h3 class="text-xl font-semibold">
-                                        <i class="fas fa-tasks mr-2"></i>Próximas Tarefas
-                                    </h3>
-                                    <div class="action-buttons">
-                                        <button onclick="AplicacaoPrincipal.mostrarModalNovaTarefa()" class="btn-success text-sm">
-                                            <i class="fas fa-plus mr-1"></i>Nova
-                                        </button>
-                                        <button onclick="AplicacaoPrincipal.verTodasTarefas()" class="btn-primary text-sm">
-                                            <i class="fas fa-list mr-1"></i>Ver Todas
-                                        </button>
-                                    </div>
-                                </div>
-                                <div class="space-y-3">
-                                    ${this.renderizarProximasTarefas()}
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Cronômetro e Gráficos -->
-                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
-                            <!-- Cronômetro de Estudo -->
-                            <div class="glass-card rounded-2xl p-6">
-                                <h3 class="text-xl font-semibold mb-4">
-                                    <i class="fas fa-stopwatch mr-2"></i>Cronômetro de Estudo
-                                </h3>
-                                <div class="text-center mb-4">
-                                    <div class="cronometro" id="display-cronometro">00:00:00</div>
-                                    <div class="text-sm text-gray-600 mb-4">
-                                        <span id="tempo-hoje">Hoje: 0h 0min</span> | 
-                                        <span id="tempo-total">Total: ${progresso.tempoTotal}</span>
-                                    </div>
-                                </div>
-                                
-                                <div class="space-y-4">
-                                    <select id="select-assunto-cronometro" class="w-full p-3 border rounded-xl">
-                                        <option value="">Selecione um assunto para estudar</option>
-                                        ${this.gerarOpcoesAssuntos()}
-                                    </select>
-                                    <div class="flex justify-center space-x-2 flex-wrap">
-                                        <button id="btn-iniciar-cronometro" class="btn-success">
-                                            <i class="fas fa-play mr-1"></i>Iniciar
-                                        </button>
-                                        <button id="btn-pausar-cronometro" class="btn-warning" disabled>
-                                            <i class="fas fa-pause mr-1"></i>Pausar
-                                        </button>
-                                        <button id="btn-parar-cronometro" class="btn-danger" disabled>
-                                            <i class="fas fa-stop mr-1"></i>Parar
-                                        </button>
-                                        <button id="btn-reiniciar-cronometro" class="btn-secondary">
-                                            <i class="fas fa-redo mr-1"></i>Reiniciar
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Gráfico de Progresso Semanal -->
-                            <div class="glass-card rounded-2xl p-6">
-                                <div class="flex justify-between items-center mb-4">
-                                    <h3 class="text-xl font-semibold">
-                                        <i class="fas fa-chart-line mr-2"></i>Progresso Semanal
-                                    </h3>
-                                    <div class="filter-buttons">
-                                        <button class="filter-btn active" onclick="AplicacaoPrincipal.filtrarGrafico('tempo')">Tempo</button>
-                                        <button class="filter-btn" onclick="AplicacaoPrincipal.filtrarGrafico('questoes')">Questões</button>
-                                        <button class="filter-btn" onclick="AplicacaoPrincipal.filtrarGrafico('resumos')">Resumos</button>
-                                    </div>
-                                </div>
-                                <canvas id="grafico-progresso" height="200"></canvas>
-                            </div>
-                        </div>
-
-                        <!-- Metas e Conquistas -->
-                        <div class="glass-card rounded-2xl p-6 mt-8">
-                            <div class="flex justify-between items-center mb-4">
-                                <h3 class="text-xl font-semibold">
-                                    <i class="fas fa-trophy mr-2"></i>Metas e Conquistas
-                                </h3>
-                                <button onclick="AplicacaoPrincipal.verTodasConquistas()" class="btn-primary text-sm">
-                                    <i class="fas fa-award mr-1"></i>Ver Todas
-                                </button>
-                            </div>
-                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                ${this.renderizarConquistas()}
-                            </div>
+                <!-- Próximas Tarefas -->
+                <div class="glass-card rounded-2xl p-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-xl font-semibold">
+                            <i class="fas fa-tasks mr-2"></i>Próximas Tarefas
+                        </h3>
+                        <div class="action-buttons">
+                            <button onclick="AplicacaoPrincipal.mostrarModalNovaTarefa()" class="btn-success text-sm">
+                                <i class="fas fa-plus mr-1"></i>Nova
+                            </button>
+                            <button onclick="AplicacaoPrincipal.verTodasTarefas()" class="btn-primary text-sm">
+                                <i class="fas fa-list mr-1"></i>Ver Todas
+                            </button>
                         </div>
                     </div>
-                `;
+                    <div class="space-y-3">
+                        ${this.renderizarProximasTarefas()}
+                    </div>
+                </div>
+            </div>
 
-                this.inicializarGrafico();
-                this.configurarCronometro();
-                this.atualizarTempoDisplay();
-            },
+            <!-- Gráfico de Progresso Semanal -->
+            <div class="grid grid-cols-1 gap-8 mt-8">
+                <div class="glass-card rounded-2xl p-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-xl font-semibold">
+                            <i class="fas fa-chart-line mr-2"></i>Progresso Semanal
+                        </h3>
+                        <div class="filter-buttons">
+                            <button class="filter-btn active" onclick="AplicacaoPrincipal.filtrarGrafico('tempo')">Tempo</button>
+                            <button class="filter-btn" onclick="AplicacaoPrincipal.filtrarGrafico('questoes')">Questões</button>
+                            <button class="filter-btn" onclick="AplicacaoPrincipal.filtrarGrafico('resumos')">Resumos</button>
+                        </div>
+                    </div>
+                    <canvas id="grafico-progresso" height="200"></canvas>
+                </div>
+            </div>
+
+            <!-- Metas e Conquistas -->
+            <div class="glass-card rounded-2xl p-6 mt-8">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-xl font-semibold">
+                        <i class="fas fa-trophy mr-2"></i>Metas e Conquistas
+                    </h3>
+                    <button onclick="AplicacaoPrincipal.verTodasConquistas()" class="btn-primary text-sm">
+                        <i class="fas fa-award mr-1"></i>Ver Todas
+                    </button>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    ${this.renderizarConquistas()}
+                </div>
+            </div>
+        </div>
+    `;
+
+    this.inicializarGrafico();
+    this.atualizarTempoDisplay();
+},
 
             calcularProgresso() {
                 const totalHoras = this.dados.disciplinas.reduce((total, disc) => total + (disc.horasEstudadas || 0), 0);
