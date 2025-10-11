@@ -2080,86 +2080,80 @@
                 return data.toDateString() === hoje.toDateString();
             },
 
-            renderizarTarefasDia(data) {
-                const tarefasDia = this.dados.cronograma.filter(tarefa => {
-                    const dataTarefa = new Date(tarefa.data);
-                    return dataTarefa.toDateString() === data.toDateString();
-                }).slice(0, 3); // Limitar a 3 tarefas por dia na visualização semanal
-                
-                if (tarefasDia.length === 0) {
-                    return '<div class="text-xs text-gray-400 italic">Nenhuma tarefa</div>';
-                }
-                
-                return tarefasDia.map(tarefa => `
-                    <div class="bg-white border rounded-lg p-2 text-left cursor-pointer hover:shadow-md transition-shadow"
-                         onclick="AplicacaoPrincipal.mostrarDetalhesTarefa('${tarefa.id}')">
-                        <div class="flex items-start justify-between">
-                            <div class="flex-1">
-                                <div class="text-xs font-medium truncate ${tarefa.concluida ? 'line-through text-gray-500' : ''}">
-                                    ${tarefa.titulo}
-                                </div>
-                                <div class="text-xs text-gray-500 mt-1">
-                                    <i class="fas fa-clock mr-1"></i>${tarefa.duracao || '1h'}
-                                </div>
-                            </div>
-                            <div class="flex items-center ml-1">
-                                <div class="checkbox-custom ${tarefa.concluida ? 'checked' : ''}" 
-                                     onclick="event.stopPropagation(); AplicacaoPrincipal.toggleTarefa('${tarefa.id}')"></div>
-                            </div>
-                        </div>
-                        ${tarefa.importante ? '<div class="w-2 h-2 bg-yellow-400 rounded-full mt-1"></div>' : ''}
+            // =========================
+// FUNÇÕES AUXILIARES DO CRONOGRAMA - CORREÇÃO
+// =========================
+renderizarTarefasDia(data) {
+    const tarefasDia = this.dados.cronograma.filter(tarefa => {
+        const dataTarefa = new Date(tarefa.data);
+        const dataComparacao = new Date(data);
+        
+        // Comparar apenas ano, mês e dia (ignorar horas)
+        return dataTarefa.getFullYear() === dataComparacao.getFullYear() &&
+               dataTarefa.getMonth() === dataComparacao.getMonth() &&
+               dataTarefa.getDate() === dataComparacao.getDate();
+    }).slice(0, 3); // Limitar a 3 tarefas por dia na visualização semanal
+    
+    if (tarefasDia.length === 0) {
+        return '<div class="text-xs text-gray-400 italic">Nenhuma tarefa</div>';
+    }
+    
+    return tarefasDia.map(tarefa => `
+        <div class="bg-white border rounded-lg p-2 text-left cursor-pointer hover:shadow-md transition-shadow"
+             onclick="AplicacaoPrincipal.mostrarDetalhesTarefa('${tarefa.id}')">
+            <div class="flex items-start justify-between">
+                <div class="flex-1">
+                    <div class="text-xs font-medium truncate ${tarefa.concluida ? 'line-through text-gray-500' : ''}">
+                        ${tarefa.titulo}
                     </div>
-                `).join('');
-            },
+                    <div class="text-xs text-gray-500 mt-1">
+                        <i class="fas fa-clock mr-1"></i>${tarefa.duracao || '1h'}
+                    </div>
+                </div>
+                <div class="flex items-center ml-1">
+                    <div class="checkbox-custom ${tarefa.concluida ? 'checked' : ''}" 
+                         onclick="event.stopPropagation(); AplicacaoPrincipal.toggleTarefa('${tarefa.id}')"></div>
+                </div>
+            </div>
+            ${tarefa.importante ? '<div class="w-2 h-2 bg-yellow-400 rounded-full mt-1"></div>' : ''}
+        </div>
+    `).join('');
+},
 
-            adicionarTarefaRapida(dataString) {
-                const data = new Date(dataString);
-                this.mostrarModal(`
-                    <div class="p-6 max-w-md">
-                        <h3 class="text-xl font-semibold mb-4">
-                            <i class="fas fa-plus-circle mr-2"></i>Nova Tarefa Rápida
-                        </h3>
-                        
-                        <div class="space-y-4">
-                            <div>
-                                <label class="block text-sm font-semibold mb-2">Título:</label>
-                                <input type="text" id="tarefa-rapida-titulo" class="w-full p-3 border rounded-xl" 
-                                       placeholder="Ex: Estudar Matemática" required>
-                            </div>
-                            
-                            <div>
-                                <label class="block text-sm font-semibold mb-2">Disciplina:</label>
-                                <select id="tarefa-rapida-disciplina" class="w-full p-3 border rounded-xl" required>
-                                    <option value="">Selecione uma disciplina</option>
-                                    ${this.dados.disciplinas.map(d => 
-                                        `<option value="${d.nome}">${d.nome}</option>`
-                                    ).join('')}
-                                </select>
-                            </div>
-                            
-                            <div>
-                                <label class="block text-sm font-semibold mb-2">Duração (horas):</label>
-                                <input type="number" id="tarefa-rapida-duracao" class="w-full p-3 border rounded-xl" 
-                                       value="1" min="0.5" max="8" step="0.5" required>
-                            </div>
-                            
-                            <div class="flex items-center">
-                                <input type="checkbox" id="tarefa-rapida-importante" class="mr-2">
-                                <label class="text-sm">Marcar como importante</label>
-                            </div>
-                        </div>
-                        
-                        <div class="flex gap-4 mt-6">
-                            <button onclick="AplicacaoPrincipal.fecharModal()" class="flex-1 btn-secondary">
-                                <i class="fas fa-times mr-1"></i>Cancelar
-                            </button>
-                            <button onclick="AplicacaoPrincipal.salvarTarefaRapida('${dataString}')" class="flex-1 btn-success">
-                                <i class="fas fa-save mr-1"></i>Salvar
-                            </button>
-                        </div>
-                    </div>
-                `);
-            },
+// Também precisamos corrigir a função salvarTarefaRapida para garantir que a data seja salva corretamente
+salvarTarefaRapida(dataString) {
+    const titulo = document.getElementById('tarefa-rapida-titulo').value.trim();
+    const disciplina = document.getElementById('tarefa-rapida-disciplina').value;
+    const duracao = document.getElementById('tarefa-rapida-duracao').value;
+    const importante = document.getElementById('tarefa-rapida-importante').checked;
+
+    if (!titulo || !disciplina || !duracao) {
+        this.mostrarNotificacao('Preencha todos os campos obrigatórios', 'error');
+        return;
+    }
+
+    // Garantir que a data seja salva no formato correto
+    const data = new Date(dataString);
+    data.setHours(12, 0, 0, 0); // Definir horário fixo para evitar problemas de timezone
+
+    const novaTarefa = {
+        id: Date.now().toString(),
+        titulo,
+        disciplina,
+        data: data.toISOString(),
+        duracao,
+        importante,
+        concluida: false,
+        dataCriacao: new Date().toISOString()
+    };
+    
+    this.dados.cronograma.push(novaTarefa);
+    this.salvarDadosUsuario();
+    this.fecharModal();
+    this.carregarCronograma();
+    
+    this.mostrarNotificacao('Tarefa adicionada com sucesso!', 'success');
+},
 
             salvarTarefaRapida(dataString) {
                 const titulo = document.getElementById('tarefa-rapida-titulo').value.trim();
