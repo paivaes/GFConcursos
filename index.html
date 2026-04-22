@@ -2310,36 +2310,6 @@ salvarTarefaRapida(dataString) {
     this.mostrarNotificacao('Tarefa adicionada com sucesso!', 'success');
 },
 
-            salvarTarefaRapida(dataString) {
-                const titulo = document.getElementById('tarefa-rapida-titulo').value.trim();
-                const disciplina = document.getElementById('tarefa-rapida-disciplina').value;
-                const duracao = document.getElementById('tarefa-rapida-duracao').value;
-                const importante = document.getElementById('tarefa-rapida-importante').checked;
-
-                if (!titulo || !disciplina || !duracao) {
-                    this.mostrarNotificacao('Preencha todos os campos obrigatórios', 'error');
-                    return;
-                }
-
-                const novaTarefa = {
-                    id: Date.now().toString(),
-                    titulo,
-                    disciplina,
-                    data: new Date(dataString).toISOString(),
-                    duracao,
-                    importante,
-                    concluida: false,
-                    dataCriacao: new Date().toISOString()
-                };
-                
-                this.dados.cronograma.push(novaTarefa);
-                this.salvarDadosUsuario();
-                this.fecharModal();
-                this.carregarCronograma();
-                
-                this.mostrarNotificacao('Tarefa adicionada com sucesso!', 'success');
-            },
-
             mudarSemana(direcao) {
                 // Esta função será implementada quando adicionarmos navegação entre semanas
                 this.mostrarNotificacao('Navegação entre semanas será implementada em breve', 'info');
@@ -3599,14 +3569,6 @@ salvarTarefaRapida(dataString) {
             // Funções de placeholder para modais não implementados
             mostrarModalConfigurarEdital() {
                 this.mostrarNotificacao('Configuração de edital será implementada em breve!', 'info');
-            },
-
-            mostrarModalNovoResumo() {
-                this.mostrarNotificacao('Criação de resumos será implementada em breve!', 'info');
-            },
-
-            mostrarModalNovaQuestao() {
-                this.mostrarNotificacao('Criação de questões será implementada em breve!', 'info');
             },
 
             mostrarModalNovaRedacao() {
