@@ -1022,6 +1022,33 @@
 
                 return await this.callGemini(`Crie um resumo esquematizado sobre a disciplina '${disciplina}', focado no tema: '${tema}'.`, instrucao);
             }
+	    
+	    async gerarResumo(disciplina, tema) {
+                // ... código existente do resumo ...
+                return await this.callGemini(`Crie um resumo esquematizado sobre a disciplina '${disciplina}', focado no tema: '${tema}'.`, instrucao);
+            }, 
+
+            async gerarEdital(concurso) {
+                const instrucao = `Você é um mentor especialista em organização de estudos para concursos públicos.
+                O usuário fornecerá o nome de um concurso e cargo.
+                Crie um edital verticalizado focado nas disciplinas e tópicos mais cobrados e previstos para essa área.
+                Retorne EXATAMENTE este formato JSON:
+                {
+                    "nomeConcurso": "Nome do Concurso",
+                    "disciplinas": [
+                        {
+                            "nome": "Nome da Disciplina",
+                            "topicos": [
+                                "Tópico 1",
+                                "Tópico 2",
+                                "Tópico 3"
+                            ]
+                        }
+                    ]
+                }`;
+
+                return await this.callGemini(`Monte o edital verticalizado listando as disciplinas e tópicos essenciais para o concurso: '${concurso}'.`, instrucao);
+            }
         };
 
         // =========================
