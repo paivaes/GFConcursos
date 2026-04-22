@@ -1019,11 +1019,10 @@
                     "conteudo": "O texto do resumo com quebras de linha (\\n) separando os tópicos",
                     "tags": ["tag1", "tag2", "tag3"]
                 }`;
-
                 return await this.callGemini(`Crie um resumo esquematizado sobre a disciplina '${disciplina}', focado no tema: '${tema}'.`, instrucao);
-            }
-	    
-	    async gerarEdital(concurso) {
+            },
+
+            async gerarEdital(concurso) {
                 const instrucao = `Você é um mentor especialista em organização de estudos para concursos públicos.
                 O usuário fornecerá o nome de um concurso e cargo.
                 Crie um edital verticalizado focado nas disciplinas e tópicos mais cobrados e previstos para essa área.
