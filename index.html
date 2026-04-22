@@ -1023,12 +1023,7 @@
                 return await this.callGemini(`Crie um resumo esquematizado sobre a disciplina '${disciplina}', focado no tema: '${tema}'.`, instrucao);
             }
 	    
-	    async gerarResumo(disciplina, tema) {
-                // ... código existente do resumo ...
-                return await this.callGemini(`Crie um resumo esquematizado sobre a disciplina '${disciplina}', focado no tema: '${tema}'.`, instrucao);
-            }, 
-
-            async gerarEdital(concurso) {
+	    async gerarEdital(concurso) {
                 const instrucao = `Você é um mentor especialista em organização de estudos para concursos públicos.
                 O usuário fornecerá o nome de um concurso e cargo.
                 Crie um edital verticalizado focado nas disciplinas e tópicos mais cobrados e previstos para essa área.
@@ -3752,66 +3747,103 @@ salvarTarefaRapida(dataString) {
             abrirBackup() {
                 document.getElementById('modal-backup').classList.remove('hidden');
             },
+	mostrarModalConfigurarEdital() {
+                this.mostrarModal(`
+                    <div class="p-6 max-w-2xl">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-xl font-semibold">
+                                <i class="fas fa-file-contract mr-2"></i>Configurar Edital Verticalizado
+                            </h3>
+                        </div>
 
-            // Funções de placeholder para modais não implementados
-            mostrarModalConfigurarEdital() {
-                this.mostrarNotificacao('Configuração de edital será implementada em breve!', 'info');
+                        <div class="space-y-4">
+                            <div class="bg-purple-50 border border-purple-200 text-purple-800 p-4 rounded-xl text-sm">
+                                <i class="fas fa-magic mr-2"></i>
+                                Digite o nome do concurso e o cargo. A Inteligência Artificial vai analisar o padrão da banca e montar automaticamente as disciplinas e tópicos do edital para você acompanhar.
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-semibold mb-2">Concurso e Cargo:</label>
+                                <input type="text" id="edital-busca-ia" class="w-full p-3 border rounded-xl focus:ring-2 focus:ring-purple-500" placeholder="Ex: ALE-RO para Técnico em Informática" value="${this.dados.editalVerticalizado.nomeConcurso !== 'Meu Concurso' ? this.dados.editalVerticalizado.nomeConcurso : ''}">
+                            </div>
+                        </div>
+
+                        <div class="flex gap-4 mt-6">
+                            <button onclick="AplicacaoPrincipal.fecharModal()" class="flex-1 btn-secondary">
+                                <i class="fas fa-times mr-1"></i>Cancelar
+                            </button>
+                            <button type="button" onclick="AplicacaoPrincipal.gerarEditalIA()" id="btn-ia-edital" class="flex-1 bg-gradient-to-r from-purple-600 to-indigo-600 text-white py-3 rounded-xl font-semibold hover:shadow-lg transition-all flex justify-center items-center gap-2">
+                                ✨ Gerar Edital com IA
+                            </button>
+                        </div>
+                    </div>
+                `);
             },
 
-            mostrarModalNovaRedacao() {
-                this.mostrarNotificacao('Criação de redações será implementada em breve!', 'info');
-            },
+            async gerarEditalIA() {
+                const concurso = document.getElementById('edital-busca-ia').value.trim();
 
-            visualizarResumo(id) {
-                this.mostrarNotificacao('Visualização de resumo será implementada em breve!', 'info');
-            },
-
-            editarResumo(id) {
-                this.mostrarNotificacao('Edição de resumo será implementada em breve!', 'info');
-            },
-
-            excluirResumo(id) {
-                if (confirm('Tem certeza que deseja excluir este resumo?')) {
-                    this.dados.resumos = this.dados.resumos.filter(r => r.id !== id);
-                    this.salvarDadosUsuario();
-                    this.carregarResumos();
-                    this.mostrarNotificacao('Resumo excluído com sucesso!', 'success');
+                if (!concurso) {
+                    this.mostrarNotificacao('Digite o nome do concurso e cargo.', 'error');
+                    return;
                 }
-            },
 
-            editarQuestao(id) {
-                this.mostrarNotificacao('Edição de questão será implementada em breve!', 'info');
-            },
+                const btn = document.getElementById('btn-ia-edital');
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Montando Edital...';
+                btn.disabled = true;
 
-            excluirQuestao(id) {
-                if (confirm('Tem certeza que deseja excluir esta questão?')) {
-                    this.dados.questoes = this.dados.questoes.filter(q => q.id !== id);
+                try {
+                    const editalGerado = await AIAssistant.gerarEdital(concurso);
+
+                    // Transforma o retorno da IA no modelo de dados do nosso sistema
+                    const novoEdital = {
+                        nomeConcurso: editalGerado.nomeConcurso,
+                        disciplinas: editalGerado.disciplinas.map(disc => ({
+                            id: 'disc_' + Date.now().toString() + Math.random().toString(36).substr(2, 5),
+                            nome: disc.nome,
+                            progresso: 0,
+                            topicos: disc.topicos.map(topicoNome => ({
+                                id: 'top_' + Date.now().toString() + Math.random().toString(36).substr(2, 5),
+                                nome: topicoNome,
+                                concluido: false
+                            }))
+                        }))
+                    };
+
+                    this.dados.editalVerticalizado = novoEdital;
                     this.salvarDadosUsuario();
-                    this.carregarQuestoes();
-                    this.mostrarNotificacao('Questão excluída com sucesso!', 'success');
-                }
-            },
+                    this.fecharModal();
+                    this.carregarEditalVertical();
+                    this.mostrarNotificacao('Edital verticalizado montado com sucesso!', 'success');
 
-            visualizarRedacao(id) {
-                this.mostrarNotificacao('Visualização de redação será implementada em breve!', 'info');
-            },
-
-            editarRedacao(id) {
-                this.mostrarNotificacao('Edição de redação será implementada em breve!', 'info');
-            },
-
-            excluirRedacao(id) {
-                if (confirm('Tem certeza que deseja excluir esta redação?')) {
-                    this.dados.redacoes = this.dados.redacoes.filter(r => r.id !== id);
-                    this.salvarDadosUsuario();
-                    this.carregarRedacoes();
-                    this.mostrarNotificacao('Redação excluída com sucesso!', 'success');
+                } catch (error) {
+                    this.mostrarNotificacao(error.message || 'Erro ao gerar edital.', 'error');
+                } finally {
+                    btn.innerHTML = '✨ Gerar Edital com IA';
+                    btn.disabled = false;
                 }
             },
 
             toggleTopicoEdital(disciplinaId, topicoId) {
-                this.mostrarNotificacao('Funcionalidade de tópicos do edital será implementada em breve!', 'info');
+                const edital = this.dados.editalVerticalizado;
+                const disciplina = edital.disciplinas.find(d => d.id === disciplinaId);
+
+                if (disciplina) {
+                    const topico = disciplina.topicos.find(t => t.id === topicoId);
+                    if (topico) {
+                        // Inverte o status de conclusão do tópico
+                        topico.concluido = !topico.concluido;
+
+                        // Recalcula o percentual de progresso da disciplina automaticamente
+                        const concluidos = disciplina.topicos.filter(t => t.concluido).length;
+                        disciplina.progresso = Math.round((concluidos / disciplina.topicos.length) * 100);
+
+                        this.salvarDadosUsuario();
+                        this.carregarEditalVertical(); // Atualiza a tela para mostrar a barra a carregar
+                    }
+                }
             }
+
         };
 
         // =========================
