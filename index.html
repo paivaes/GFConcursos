@@ -946,7 +946,7 @@
             }
         };
 
-// =========================
+	// =========================
         // SERVIÇO DE IA (GEMINI API)
         // =========================
         const AIAssistant = {
@@ -954,7 +954,7 @@
                 const apiKey = localStorage.getItem('gfconcursos_gemini_key');
                 
                 if (!apiKey) {
-                    throw new Error("API Key não configurada. Vá em Configurações para adicionar sua chave.");
+                    throw new Error("API Key não configurada. Vá a Configurações para adicionar a sua chave.");
                 }
 
                 const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
@@ -975,7 +975,12 @@
                         body: JSON.stringify(body)
                     });
 
-                    if (!response.ok) throw new Error('Erro na comunicação com a API');
+                    // 👇 NOVA LÓGICA: Lê o motivo exato da recusa do Google
+                    if (!response.ok) {
+                        const erroGoogle = await response.json();
+                        console.error("Detalhes exatos do Google:", erroGoogle);
+                        throw new Error(`Recusado pelo Google: ${erroGoogle.error?.message || response.status}`);
+                    }
                     
                     const data = await response.json();
                     return JSON.parse(data.candidates[0].content.parts[0].text);
