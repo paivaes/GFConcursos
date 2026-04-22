@@ -1042,39 +1042,7 @@
                 assuntoAtivo: null
             },
 
-            async gerarQuestao(disciplina, tema) {
-                const instrucao = `Você é um examinador sênior de concursos públicos (nível FGV/Cebraspe). 
-                Crie UMA questão inédita de múltipla escolha (5 alternativas). 
-                REGRAS ESTRITAS: 
-                1. Dificuldade técnica máxima. 
-                2. NENHUMA dica ou facilitador no enunciado. 
-                3. As respostas devem exigir raciocínio profundo ou conhecimento específico da lei/teoria.
-                4. A alternativa correta deve ser distribuída aleatoriamente (evite colocar sempre na letra A).
-                Retorne EXATAMENTE este formato JSON:
-                {
-                    "enunciado": "texto do enunciado",
-                    "alternativas": ["alt A", "alt B", "alt C", "alt D", "alt E"],
-                    "resposta": 0, // índice numérico de 0 a 4 da alternativa correta
-                    "comentario": "Explicação técnica detalhada justificando a correta e o erro das demais."
-                }`;
-
-                return await this.callGemini(`Crie uma questão sobre a disciplina '${disciplina}', abordando o tema: '${tema}'.`, instrucao);
-            },
-
-            async gerarResumo(disciplina, tema) {
-                const instrucao = `Você é um professor especialista em concursos públicos.
-                Crie um resumo altamente esquematizado, focado apenas no que despenca em provas.
-                Use tópicos curtos, elimine "palavras de preenchimento".
-                Retorne EXATAMENTE este formato JSON:
-                {
-                    "titulo": "Título direto do resumo",
-                    "conteudo": "O texto do resumo com quebras de linha (\\n) separando os tópicos",
-                    "tags": ["tag1", "tag2", "tag3"]
-                }`;
-
-                return await this.callGemini(`Crie um resumo esquematizado sobre a disciplina '${disciplina}', focado no tema: '${tema}'.`, instrucao);
-            }
-        };
+           
 	    mostrarModalNovaQuestao(questaoId = null) {
                 const questao = questaoId ? this.dados.questoes.find(q => q.id === questaoId) : null;
                 
