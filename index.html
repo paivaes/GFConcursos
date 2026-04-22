@@ -653,6 +653,14 @@
                         Salvar
                     </button>
                 </div>
+		
+                <div class="mt-4 border-t pt-4">
+                    <label class="block text-sm font-semibold text-purple-600 mb-2">
+                        <i class="fas fa-robot mr-1"></i> Gemini API Key (IA):
+                    </label>
+                    <input type="password" id="config-api-key" class="w-full p-3 border rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent" placeholder="Cole sua chave aqui...">
+                    <p class="text-xs text-gray-500 mt-1">Sua chave fica salva apenas no seu navegador local.</p>
+                </div>
             </div>
         </div>
     </div>
@@ -938,6 +946,79 @@
             }
         };
 
+// =========================
+        // SERVIÇO DE IA (GEMINI API)
+        // =========================
+        const AIAssistant = {
+            async callGemini(prompt, systemInstruction = "") {
+                const apiKey = localStorage.getItem('gfconcursos_gemini_key');
+                
+                if (!apiKey) {
+                    throw new Error("API Key não configurada. Vá em Configurações para adicionar sua chave.");
+                }
+
+                const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+                
+                const body = {
+                    contents: [{ parts: [{ text: prompt }] }],
+                    systemInstruction: { parts: [{ text: systemInstruction }] },
+                    generationConfig: {
+                        temperature: 0.2, // Baixa temperatura para respostas mais exatas e técnicas
+                        responseMimeType: "application/json" // Força retorno em JSON estruturado
+                    }
+                };
+
+                try {
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(body)
+                    });
+
+                    if (!response.ok) throw new Error('Erro na comunicação com a API');
+                    
+                    const data = await response.json();
+                    return JSON.parse(data.candidates[0].content.parts[0].text);
+                } catch (error) {
+                    console.error("Erro no AIAssistant:", error);
+                    throw error;
+                }
+            },
+
+            async gerarQuestao(disciplina, tema) {
+                const instrucao = `Você é um examinador sênior de concursos públicos (nível FGV/Cebraspe). 
+                Crie UMA questão inédita de múltipla escolha (5 alternativas). 
+                REGRAS ESTRITAS: 
+                1. Dificuldade técnica máxima. 
+                2. NENHUMA dica ou facilitador no enunciado. 
+                3. As respostas devem exigir raciocínio profundo ou conhecimento específico da lei/teoria.
+                4. A alternativa correta deve ser distribuída aleatoriamente (evite colocar sempre na letra A).
+                Retorne EXATAMENTE este formato JSON:
+                {
+                    "enunciado": "texto do enunciado",
+                    "alternativas": ["alt A", "alt B", "alt C", "alt D", "alt E"],
+                    "resposta": 0, 
+                    "comentario": "Explicação técnica detalhada justificando a correta e o erro das demais."
+                }`;
+
+                return await this.callGemini(`Crie uma questão sobre a disciplina '${disciplina}', abordando o tema: '${tema}'.`, instrucao);
+            },
+
+            async gerarResumo(disciplina, tema) {
+                const instrucao = `Você é um professor especialista em concursos públicos.
+                Crie um resumo altamente esquematizado, focado apenas no que despenca em provas.
+                Use tópicos curtos, elimine "palavras de preenchimento".
+                Retorne EXATAMENTE este formato JSON:
+                {
+                    "titulo": "Título direto do resumo",
+                    "conteudo": "O texto do resumo com quebras de linha (\\n) separando os tópicos",
+                    "tags": ["tag1", "tag2", "tag3"]
+                }`;
+
+                return await this.callGemini(`Crie um resumo esquematizado sobre a disciplina '${disciplina}', focado no tema: '${tema}'.`, instrucao);
+            }
+        };
+
         // =========================
         // APLICAÇÃO PRINCIPAL
         // =========================
@@ -960,15 +1041,55 @@
                 intervalo: null,
                 assuntoAtivo: null
             },
+
+            async gerarQuestao(disciplina, tema) {
+                const instrucao = `Você é um examinador sênior de concursos públicos (nível FGV/Cebraspe). 
+                Crie UMA questão inédita de múltipla escolha (5 alternativas). 
+                REGRAS ESTRITAS: 
+                1. Dificuldade técnica máxima. 
+                2. NENHUMA dica ou facilitador no enunciado. 
+                3. As respostas devem exigir raciocínio profundo ou conhecimento específico da lei/teoria.
+                4. A alternativa correta deve ser distribuída aleatoriamente (evite colocar sempre na letra A).
+                Retorne EXATAMENTE este formato JSON:
+                {
+                    "enunciado": "texto do enunciado",
+                    "alternativas": ["alt A", "alt B", "alt C", "alt D", "alt E"],
+                    "resposta": 0, // índice numérico de 0 a 4 da alternativa correta
+                    "comentario": "Explicação técnica detalhada justificando a correta e o erro das demais."
+                }`;
+
+                return await this.callGemini(`Crie uma questão sobre a disciplina '${disciplina}', abordando o tema: '${tema}'.`, instrucao);
+            },
+
+            async gerarResumo(disciplina, tema) {
+                const instrucao = `Você é um professor especialista em concursos públicos.
+                Crie um resumo altamente esquematizado, focado apenas no que despenca em provas.
+                Use tópicos curtos, elimine "palavras de preenchimento".
+                Retorne EXATAMENTE este formato JSON:
+                {
+                    "titulo": "Título direto do resumo",
+                    "conteudo": "O texto do resumo com quebras de linha (\\n) separando os tópicos",
+                    "tags": ["tag1", "tag2", "tag3"]
+                }`;
+
+                return await this.callGemini(`Crie um resumo esquematizado sobre a disciplina '${disciplina}', focado no tema: '${tema}'.`, instrucao);
+            }
+        };
 	    mostrarModalNovaQuestao(questaoId = null) {
                 const questao = questaoId ? this.dados.questoes.find(q => q.id === questaoId) : null;
                 
                 this.mostrarModal(`
-                    <div class="p-6 max-w-2xl max-h-[80vh] overflow-y-auto">
-                        <h3 class="text-xl font-semibold mb-4">
-                            <i class="fas ${questao ? 'fa-edit' : 'fa-plus-circle'} mr-2"></i>
-                            ${questao ? 'Editar Questão' : 'Nova Questão de Nível Alto'}
-                        </h3>
+                         <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-xl font-semibold">
+                                <i class="fas ${questao ? 'fa-edit' : 'fa-plus-circle'} mr-2"></i>
+                                ${questao ? 'Editar Questão' : 'Nova Questão de Nível Alto'}
+                            </h3>
+                            ${!questao ? `
+                            <button type="button" onclick="AplicacaoPrincipal.gerarQuestaoIA()" id="btn-ia-questao" class="bg-purple-100 text-purple-700 px-3 py-1 rounded-lg text-sm font-bold hover:bg-purple-200 transition-colors">
+                                ✨ Gerar com IA
+                            </button>
+                            ` : ''}
+                        </div>
                         
                         <div class="space-y-4">
                             <div>
@@ -1053,16 +1174,55 @@
                 this.carregarQuestoes();
                 this.mostrarNotificacao('Questão técnica salva com sucesso!', 'success');
             },
+	    async gerarQuestaoIA() {
+                const disciplina = document.getElementById('questao-disciplina').value;
+                const tema = prompt("Qual o tema ou assunto específico para a questão?"); // Você pode trocar por um input se preferir
+                
+                if (!disciplina || !tema) {
+                    this.mostrarNotificacao('Selecione a disciplina e informe o tema para gerar.', 'error');
+                    return;
+                }
+
+                const btn = document.getElementById('btn-ia-questao');
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i>Gerando...';
+                btn.disabled = true;
+
+                try {
+                    const questaoGerada = await AIAssistant.gerarQuestao(disciplina, tema);
+                    
+                    document.getElementById('questao-enunciado').value = questaoGerada.enunciado;
+                    document.getElementById('questao-comentario').value = questaoGerada.comentario;
+                    
+                    questaoGerada.alternativas.forEach((alt, index) => {
+                        document.getElementById(`alternativa-${index}`).value = alt;
+                    });
+                    
+                    document.querySelector(`input[name="questao-resposta"][value="${questaoGerada.resposta}"]`).checked = true;
+                    
+                    this.mostrarNotificacao('Questão técnica gerada com sucesso!', 'success');
+                } catch (error) {
+                    this.mostrarNotificacao(error.message || 'Erro ao gerar questão.', 'error');
+                } finally {
+                    btn.innerHTML = '✨ Gerar com IA';
+                    btn.disabled = false;
+                }
+            },
 	    
-mostrarModalNovoResumo(resumoId = null) {
+	    mostrarModalNovoResumo(resumoId = null) {
                 const resumo = resumoId ? this.dados.resumos.find(r => r.id === resumoId) : null;
                 
                 this.mostrarModal(`
-                    <div class="p-6 max-w-2xl">
-                        <h3 class="text-xl font-semibold mb-4">
-                            <i class="fas ${resumo ? 'fa-edit' : 'fa-plus-circle'} mr-2"></i>
-                            ${resumo ? 'Editar Resumo' : 'Novo Resumo'}
-                        </h3>
+                    <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-xl font-semibold">
+                                <i class="fas ${resumo ? 'fa-edit' : 'fa-plus-circle'} mr-2"></i>
+                                ${resumo ? 'Editar Resumo' : 'Novo Resumo'}
+                            </h3>
+                            ${!resumo ? `
+                            <button type="button" onclick="AplicacaoPrincipal.gerarResumoIA()" id="btn-ia-resumo" class="bg-purple-100 text-purple-700 px-3 py-1 rounded-lg text-sm font-bold hover:bg-purple-200 transition-colors">
+                                ✨ Gerar com IA
+                            </button>
+                            ` : ''}
+                        </div>
                         
                         <div class="space-y-4">
                             <div>
@@ -1128,7 +1288,34 @@ mostrarModalNovoResumo(resumoId = null) {
                 this.mostrarNotificacao('Resumo salvo com sucesso!', 'success');
             },
 
-	    
+	    async gerarResumoIA() {
+                const disciplina = document.getElementById('resumo-disciplina').value;
+                const tema = prompt("Sobre qual assunto você quer o resumo esquematizado?");
+                
+                if (!disciplina || !tema) {
+                    this.mostrarNotificacao('Selecione a disciplina e informe o tema.', 'error');
+                    return;
+                }
+
+                const btn = document.getElementById('btn-ia-resumo');
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i>Gerando...';
+                btn.disabled = true;
+
+                try {
+                    const resumoGerado = await AIAssistant.gerarResumo(disciplina, tema);
+                    
+                    document.getElementById('resumo-titulo').value = resumoGerado.titulo;
+                    document.getElementById('resumo-conteudo').value = resumoGerado.conteudo;
+                    document.getElementById('resumo-tags').value = resumoGerado.tags.join(', ');
+                    
+                    this.mostrarNotificacao('Resumo esquematizado com sucesso!', 'success');
+                } catch (error) {
+                    this.mostrarNotificacao(error.message || 'Erro ao gerar resumo.', 'error');
+                } finally {
+                    btn.innerHTML = '✨ Gerar com IA';
+                    btn.disabled = false;
+                }
+            },
             
             init(usuario) {
                 this.usuario = usuario;
@@ -3645,16 +3832,22 @@ salvarTarefaRapida(dataString) {
                 const nome = document.getElementById('config-nome').value;
                 const email = document.getElementById('config-email').value;
                 const meta = parseInt(document.getElementById('config-meta').value);
+                const apiKey = document.getElementById('config-api-key').value.trim(); // NOVA LINHA
                 
                 if (nome && email && meta) {
                     AplicacaoPrincipal.usuario.nome = nome;
                     AplicacaoPrincipal.usuario.email = email;
                     AplicacaoPrincipal.dados.configuracoes.metaDiaria = meta;
+                    
+                    if (apiKey) {
+                        localStorage.setItem('gfconcursos_gemini_key', apiKey);
+                    }
+
                     AplicacaoPrincipal.salvarDadosUsuario();
                     fecharModal('modal-configuracoes');
                     AplicacaoPrincipal.mostrarNotificacao('Configurações salvas com sucesso!', 'success');
                     
-                    // Recarregar a interface para atualizar o nome
+                    // Recarregar a interface para atualizar
                     AplicacaoPrincipal.carregarInterface();
                     AplicacaoPrincipal.configurarNavegacao();
                     AplicacaoPrincipal.carregarDashboard();
