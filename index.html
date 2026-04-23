@@ -833,7 +833,7 @@
                     
                 } catch (error) {
                     console.error("Erro no login:", error);
-                    this.mostrarNotificacao('Email ou senha incorretos.', 'error');
+                    this.mostrarNotificacao('Erro: ' + error.message, 'error');
                     document.getElementById('btn-login').innerHTML = '🚀 Entrar';
                 }
             },
