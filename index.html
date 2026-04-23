@@ -4,7 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Plataforma de Estudos GFConcursos</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/bcryptjs/2.4.3/bcrypt.min.js"></script>
+    
+    <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore-compat.js"></script>
 
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -698,12 +701,29 @@
     </div>
 
     <script>
+
+
         // =========================
-        // SISTEMA DE AUTENTICAÇÃO
+        // CONFIGURAÇÃO DO FIREBASE
+        // =========================
+        const firebaseConfig = {
+            apiKey: "AIzaSyALCiObahTfvlEkjPA5jv60kOmhNdUi2-Q",
+            authDomain: "gfconcursos-esp.firebaseapp.com",
+            projectId: "gfconcursos-esp",
+            storageBucket: "gfconcursos-esp.firebasestorage.app",
+            messagingSenderId: "1074223930621",
+            appId: "1:1074223930621:web:23b2217c28d12ee2963294"
+        };
+        
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        // =========================
+        // SISTEMA DE AUTENTICAÇÃO (NUVEM)
         // =========================
         const AuthSystem = {
-            usuarios: JSON.parse(localStorage.getItem('gfconcursos_usuarios')) || [],
-            usuarioLogado: JSON.parse(localStorage.getItem('gfconcursos_usuario_logado')) || null,
+            usuarioLogado: null,
             
             init() {
                 this.configurarEventListeners();
@@ -711,30 +731,44 @@
             },
             
             verificarLoginAuto() {
-                if (this.usuarioLogado) {
-                    this.entrarNaAplicacao(this.usuarioLogado);
-                }
+                // Fica "escutando" as mudanças de estado do Firebase
+                auth.onAuthStateChanged(async (user) => {
+                    if (user) {
+                        try {
+                            const doc = await db.collection('usuarios').doc(user.uid).get();
+                            if (doc.exists) {
+                                const userData = doc.data();
+                                this.usuarioLogado = { 
+                                    id: user.uid, 
+                                    nome: userData.nome, 
+                                    email: userData.email, 
+                                    dados: userData.dados 
+                                };
+                                this.entrarNaAplicacao(this.usuarioLogado);
+                            }
+                        } catch (error) {
+                            console.error("Erro ao puxar dados:", error);
+                        }
+                    } else {
+                        this.mostrarLogin();
+                    }
+                });
             },
             
             configurarEventListeners() {
-                // Login
                 document.getElementById('btn-login').addEventListener('click', () => this.fazerLogin());
                 document.getElementById('login-password').addEventListener('keypress', (e) => {
                     if (e.key === 'Enter') this.fazerLogin();
                 });
-                
-                // Cadastro
                 document.getElementById('btn-cadastrar').addEventListener('click', () => this.fazerCadastro());
                 document.getElementById('cadastro-confirm-password').addEventListener('keypress', (e) => {
                     if (e.key === 'Enter') this.fazerCadastro();
                 });
-                
-                // Alternância entre login e cadastro
                 document.getElementById('btn-criar-conta').addEventListener('click', () => this.mostrarCadastro());
                 document.getElementById('btn-ja-tenho-conta').addEventListener('click', () => this.mostrarLogin());
             },
             
-            fazerLogin() {
+            async fazerLogin() {
                 const email = document.getElementById('login-email').value.trim();
                 const senha = document.getElementById('login-password').value;
                 
@@ -743,24 +777,18 @@
                     return;
                 }
                 
-                const usuario = this.usuarios.find(u => u.email === email);
-                if (!usuario) {
-                    this.mostrarNotificacao('Email não cadastrado. Por favor, cadastre-se primeiro.', 'error');
-                    return;
-                }
-                
-                // Comparando a senha digitada com o hash salvo
-                if (dcodeIO.bcrypt.compareSync(senha, usuario.senha)) {
-                    this.usuarioLogado = usuario;
-                    localStorage.setItem('gfconcursos_usuario_logado', JSON.stringify(usuario));
-                    this.entrarNaAplicacao(usuario);
-                    this.mostrarNotificacao(`Bem-vindo de volta, ${usuario.nome}!`, 'success');
-                } else {
-                    this.mostrarNotificacao('Senha incorreta', 'error');
+                try {
+                    document.getElementById('btn-login').innerHTML = '<i class="fas fa-spinner fa-spin"></i> Entrando...';
+                    await auth.signInWithEmailAndPassword(email, senha);
+                    this.mostrarNotificacao('Bem-vindo de volta!', 'success');
+                    document.getElementById('btn-login').innerHTML = '🚀 Entrar';
+                } catch (error) {
+                    this.mostrarNotificacao('Email ou senha incorretos.', 'error');
+                    document.getElementById('btn-login').innerHTML = '🚀 Entrar';
                 }
             },
             
-            fazerCadastro() {
+            async fazerCadastro() {
                 const nome = document.getElementById('cadastro-nome').value.trim();
                 const email = document.getElementById('cadastro-email').value.trim();
                 const senha = document.getElementById('cadastro-password').value;
@@ -783,96 +811,47 @@
                     this.mostrarNotificacao('A senha deve ter pelo menos 6 caracteres', 'error');
                     return;
                 }
-                if (this.usuarios.find(u => u.email === email)) {
-                    this.mostrarNotificacao('Este email já está cadastrado', 'error');
-                    return;
+                
+                try {
+                    document.getElementById('btn-cadastrar').innerHTML = '<i class="fas fa-spinner fa-spin"></i> Criando conta...';
+                    
+                    // Cria o usuário na Autenticação Segura
+                    const userCredential = await auth.createUserWithEmailAndPassword(email, senha);
+                    const user = userCredential.user;
+                    
+                    // Cria a ficha do usuário na Base de Dados
+                    const defaultData = this.criarDadosUsuarioPadrao();
+                    await db.collection('usuarios').doc(user.uid).set({
+                        nome: nome,
+                        email: email,
+                        dataCadastro: new Date().toISOString(),
+                        dados: defaultData
+                    });
+
+                    this.mostrarNotificacao('Conta criada com sucesso!', 'success');
+                    document.getElementById('btn-cadastrar').innerHTML = '📝 Criar Conta';
+                } catch (error) {
+                    this.mostrarNotificacao('Erro: ' + error.message, 'error');
+                    document.getElementById('btn-cadastrar').innerHTML = '📝 Criar Conta';
                 }
-                
-                // Gerando hash seguro da senha
-                const salt = dcodeIO.bcrypt.genSaltSync(10);
-                const hashSenha = dcodeIO.bcrypt.hashSync(senha, salt);
-
-                const novoUsuario = {
-                    id: Date.now().toString(),
-                    nome,
-                    email,
-                    senha: hashSenha,
-                    dataCadastro: new Date().toISOString(),
-                    dados: this.criarDadosUsuarioPadrao()
-                };
-
-                this.usuarios.push(novoUsuario);
-                this.salvarUsuarios();
-                
-                this.mostrarNotificacao('Cadastro realizado com sucesso! Faça seu login.', 'success');
-                setTimeout(() => {
-                    this.mostrarLogin();
-                    document.getElementById('login-email').value = email;
-                    document.getElementById('login-password').value = '';
-                }, 1500);
             },
             
             criarDadosUsuarioPadrao() {
                 return {
                     disciplinas: [
-                        { 
-                            id: '1', 
-                            nome: 'Português', 
-                            cor: '#3B82F6', 
-                            horasEstudadas: 0, 
-                            questoesResolvidas: 0,
-                            progresso: 0,
-                            assuntos: [
-                                { id: '101', nome: 'Gramática', concluido: false },
-                                { id: '102', nome: 'Interpretação de Texto', concluido: false },
-                                { id: '103', nome: 'Redação', concluido: false }
-                            ]
-                        },
-                        { 
-                            id: '2', 
-                            nome: 'Matemática', 
-                            cor: '#10B981', 
-                            horasEstudadas: 0, 
-                            questoesResolvidas: 0,
-                            progresso: 0,
-                            assuntos: [
-                                { id: '201', nome: 'Álgebra', concluido: false },
-                                { id: '202', nome: 'Geometria', concluido: false },
-                                { id: '203', nome: 'Estatística', concluido: false }
-                            ]
-                        }
+                        { id: '1', nome: 'Português', cor: '#3B82F6', horasEstudadas: 0, questoesResolvidas: 0, progresso: 0, assuntos: [{ id: '101', nome: 'Gramática', concluido: false }, { id: '102', nome: 'Interpretação de Texto', concluido: false }] },
+                        { id: '2', nome: 'Matemática', cor: '#10B981', horasEstudadas: 0, questoesResolvidas: 0, progresso: 0, assuntos: [{ id: '201', nome: 'Álgebra', concluido: false }, { id: '202', nome: 'Geometria', concluido: false }] }
                     ],
                     cronograma: [],
                     ciclos: [],
-                    editalVerticalizado: {
-                        nomeConcurso: 'Meu Concurso',
-                        disciplinas: []
-                    },
+                    editalVerticalizado: { nomeConcurso: 'Meu Concurso', disciplinas: [] },
                     resumos: [],
                     questoes: [],
                     redacoes: [],
-                    progresso: {
-                        totalHoras: 0,
-                        totalQuestoes: 0,
-                        diasConsecutivos: 0,
-                        ultimoAcesso: new Date().toISOString()
-                    },
-                    cronometro: {
-                        tempoTotal: 0,
-                        tempoHoje: 0,
-                        historico: {}
-                    },
-                    configuracoes: {
-                        notificacoes: true,
-                        lembretesTarefas: true,
-                        metaDiaria: 4,
-                        tempoPausa: 5
-                    }
+                    progresso: { totalHoras: 0, totalQuestoes: 0, diasConsecutivos: 0, ultimoAcesso: new Date().toISOString() },
+                    cronometro: { tempoTotal: 0, tempoHoje: 0, historico: {} },
+                    configuracoes: { notificacoes: true, lembretesTarefas: true, metaDiaria: 4, tempoPausa: 5 }
                 };
-            },
-            
-            salvarUsuarios() {
-                localStorage.setItem('gfconcursos_usuarios', JSON.stringify(this.usuarios));
             },
             
             entrarNaAplicacao(usuario) {
@@ -884,15 +863,13 @@
                     loginSystem.classList.add('hidden');
                     appWrapper.classList.remove('hidden');
                     appWrapper.classList.add('fade-in');
-                    
-                    // Inicializar a aplicação principal
                     AplicacaoPrincipal.init(usuario);
                 }, 500);
             },
             
-            fazerLogout() {
+            async fazerLogout() {
+                await auth.signOut();
                 this.usuarioLogado = null;
-                localStorage.removeItem('gfconcursos_usuario_logado');
                 
                 const loginSystem = document.getElementById('login-system');
                 const appWrapper = document.getElementById('app-wrapper');
@@ -905,7 +882,6 @@
                     loginSystem.classList.remove('fade-out');
                     loginSystem.classList.add('fade-in');
                     
-                    // Limpar formulários
                     document.getElementById('login-email').value = '';
                     document.getElementById('login-password').value = '';
                 }, 500);
@@ -922,25 +898,18 @@
             },
             
             mostrarNotificacao(mensagem, tipo = 'info') {
-                // Criar elemento de notificação
                 const notificacao = document.createElement('div');
                 notificacao.className = `fixed top-4 right-4 p-4 rounded-xl shadow-lg z-50 transform transition-all duration-300 ${
                     tipo === 'success' ? 'bg-green-500 text-white' :
-                    tipo === 'error' ? 'bg-red-500 text-white' :
-                    'bg-blue-500 text-white'
+                    tipo === 'error' ? 'bg-red-500 text-white' : 'bg-blue-500 text-white'
                 }`;
                 notificacao.textContent = mensagem;
-                
                 document.body.appendChild(notificacao);
-                
-                // Remover após 3 segundos
                 setTimeout(() => {
                     notificacao.style.opacity = '0';
                     notificacao.style.transform = 'translateX(100%)';
                     setTimeout(() => {
-                        if (notificacao.parentNode) {
-                            notificacao.parentNode.removeChild(notificacao);
-                        }
+                        if (notificacao.parentNode) notificacao.parentNode.removeChild(notificacao);
                     }, 300);
                 }, 3000);
             }
@@ -3728,12 +3697,13 @@ salvarTarefaRapida(dataString) {
             salvarDadosUsuario() {
                 this.usuario.dados = this.dados;
                 
-                const usuarioIndex = AuthSystem.usuarios.findIndex(u => u.id === this.usuario.id);
-                if (usuarioIndex !== -1) {
-                    AuthSystem.usuarios[usuarioIndex] = this.usuario;
-                    AuthSystem.salvarUsuarios();
-                    localStorage.setItem('gfconcursos_usuario_logado', JSON.stringify(this.usuario));
-                }
+                // Sincroniza com a nuvem (Firestore) silenciosamente no background
+                db.collection('usuarios').doc(this.usuario.id).update({
+                    dados: this.dados
+                }).catch(error => {
+                    console.error("Erro de sincronização com a nuvem: ", error);
+                    this.mostrarNotificacao('Erro de conexão. As alterações não foram salvas na nuvem.', 'error');
+                });
             },
 
             abrirConfiguracoes() {
