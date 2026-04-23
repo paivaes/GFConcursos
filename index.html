@@ -731,12 +731,13 @@
             },
             
             verificarLoginAuto() {
-                // Fica "escutando" as mudanças de estado do Firebase
                 auth.onAuthStateChanged(async (user) => {
                     if (user) {
                         try {
                             const doc = await db.collection('usuarios').doc(user.uid).get();
+                            
                             if (doc.exists) {
+                                // Utilizador normal com dados
                                 const userData = doc.data();
                                 this.usuarioLogado = { 
                                     id: user.uid, 
@@ -745,9 +746,28 @@
                                     dados: userData.dados 
                                 };
                                 this.entrarNaAplicacao(this.usuarioLogado);
+                            } else {
+                                // CASO ESPECIAL: O utilizador existe mas não tem pasta no banco
+                                // Vamos criar os dados iniciais agora para ele poder entrar
+                                const defaultData = this.criarDadosUsuarioPadrao();
+                                await db.collection('usuarios').doc(user.uid).set({
+                                    nome: user.displayName || 'Estudante',
+                                    email: user.email,
+                                    dataCadastro: new Date().toISOString(),
+                                    dados: defaultData
+                                });
+                                
+                                this.usuarioLogado = { 
+                                    id: user.uid, 
+                                    nome: user.displayName || 'Estudante', 
+                                    email: user.email, 
+                                    dados: defaultData 
+                                };
+                                this.entrarNaAplicacao(this.usuarioLogado);
                             }
                         } catch (error) {
                             console.error("Erro ao puxar dados:", error);
+                            this.mostrarNotificacao('Erro ao carregar dados da nuvem.', 'error');
                         }
                     } else {
                         this.mostrarLogin();
