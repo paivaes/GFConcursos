@@ -738,16 +738,16 @@
                             const doc = await db.collection('usuarios').doc(user.uid).get();
                             
                             if (doc.exists) {
-                                // Utilizador normal com dados
-                                const userData = doc.data();
-                                this.usuarioLogado = { 
-                                    id: user.uid, 
-                                    nome: userData.nome, 
-                                    email: userData.email, 
-                                    dados: userData.dados 
-                                };
-                                this.entrarNaAplicacao(this.usuarioLogado);
-                            } else {
+    			    const userData = doc.data();
+    			    this.usuarioLogado = { 
+        		    id: user.uid, 
+        		    nome: userData.nome, 
+        		    email: userData.email, 
+        		    cargo: userData.cargo || 'aluno',
+        		    dados: userData.dados 
+    			};
+    			this.entrarNaAplicacao(this.usuarioLogado);
+			    }else {
                                 // CASO ESPECIAL: O utilizador existe mas não tem pasta no banco
                                 // Vamos criar os dados iniciais agora para ele poder entrar
                                 const defaultData = this.criarDadosUsuarioPadrao();
@@ -808,24 +808,32 @@
                     // 2. Busca os seus dados na Nuvem EXPLICITAMENTE
                     const doc = await db.collection('usuarios').doc(user.uid).get();
                     
-                    if (doc.exists) {
-                        const userData = doc.data();
-                        this.usuarioLogado = { 
-                            id: user.uid, 
-                            nome: userData.nome, 
-                            email: userData.email, 
-                            dados: userData.dados 
-                        };
-                    } else {
-                        // Prevenção de erro: se a pasta de dados não existir, cria na hora
-                        const defaultData = this.criarDadosUsuarioPadrao();
-                        await db.collection('usuarios').doc(user.uid).set({
-                            nome: 'Estudante',
-                            email: user.email,
-                            dados: defaultData
-                        });
-                        this.usuarioLogado = { id: user.uid, nome: 'Estudante', email: user.email, dados: defaultData };
-                    }
+                    
+		if (doc.exists) {
+    		    const userData = doc.data();
+   		    this.usuarioLogado = { 
+        	    id: user.uid, 
+        	    nome: userData.nome, 
+        	    email: userData.email, 
+       		    cargo: userData.cargo || 'aluno', // 👈 ADICIONE ESTA LINHA
+        	    dados: userData.dados 
+    		    };
+		} else {
+                const defaultData = this.criarDadosUsuarioPadrao();
+    	 	    await db.collection('usuarios').doc(user.uid).set({
+        	    nome: 'Estudante',
+        	    email: user.email,
+         	    cargo: 'aluno', // 👈 ADICIONE ESTA LINHA
+        	    dados: defaultData
+    		});
+    		this.usuarioLogado = { 
+        	    id: user.uid, 
+        	    nome: 'Estudante', 
+        	    email: user.email, 
+        	    cargo: 'aluno', // 👈 ADICIONE ESTA LINHA
+        	    dados: defaultData 
+    		};
+	        }
                     
                     // 3. Força a transição imediata para o Dashboard!
                     this.mostrarNotificacao('Bem-vindo de volta!', 'success');
@@ -845,7 +853,7 @@
                 const senha = document.getElementById('cadastro-password').value;
                 const confirmSenha = document.getElementById('cadastro-confirm-password').value;
                 const aceitarTermos = document.getElementById('aceitar-termos').checked;
-
+                
                 if (!nome || !email || !senha || !confirmSenha) {
                     this.mostrarNotificacao('Por favor, preencha todos os campos', 'error');
                     return;
@@ -865,20 +873,17 @@
                 
                 try {
                     document.getElementById('btn-cadastrar').innerHTML = '<i class="fas fa-spinner fa-spin"></i> Criando conta...';
-                    
-                    // Cria o usuário na Autenticação Segura
                     const userCredential = await auth.createUserWithEmailAndPassword(email, senha);
                     const user = userCredential.user;
                     
-                    // Cria a ficha do usuário na Base de Dados
                     const defaultData = this.criarDadosUsuarioPadrao();
                     await db.collection('usuarios').doc(user.uid).set({
                         nome: nome,
                         email: email,
+                        cargo: 'aluno', // 👇 NOVO: Todo mundo começa como aluno
                         dataCadastro: new Date().toISOString(),
                         dados: defaultData
                     });
-
                     this.mostrarNotificacao('Conta criada com sucesso!', 'success');
                     document.getElementById('btn-cadastrar').innerHTML = '📝 Criar Conta';
                 } catch (error) {
@@ -1390,6 +1395,11 @@
                                         <button class="tab-button ${this.currentTab === 'redacoes' ? 'active' : ''}" data-tab="redacoes">
                                             <i class="fas fa-pen-fancy mr-2"></i>Redações
                                         </button>
+					<button class="tab-button ${this.currentTab === 'teoria' ? 'active' : ''}" data-tab="teoria">
+                                            <i class="fas fa-book-open mr-2"></i>Teoria
+                                        </button>
+                                    </nav>
+                                </div>
                                     </nav>
                                 </div>
                                 
@@ -1403,11 +1413,15 @@
                                             ${this.usuario.nome.charAt(0).toUpperCase()}
                                         </button>
                                         <div id="menu-usuario" class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-2 hidden z-50">
+                                            
+                                            ${this.usuario.cargo === 'admin' ? `
+                                                <button onclick="AplicacaoPrincipal.abrirPainelAdmin()" class="w-full text-left px-4 py-2 hover:bg-purple-50 text-purple-700 font-semibold border-b">
+                                                    <i class="fas fa-users-cog mr-2"></i>Painel Admin
+                                                </button>
+                                            ` : ''}
+
                                             <button onclick="AplicacaoPrincipal.abrirConfiguracoes()" class="w-full text-left px-4 py-2 hover:bg-gray-100">
                                                 <i class="fas fa-cog mr-2"></i>Configurações
-                                            </button>
-                                            <button onclick="AplicacaoPrincipal.abrirBackup()" class="w-full text-left px-4 py-2 hover:bg-gray-100">
-                                                <i class="fas fa-database mr-2"></i>Backup
                                             </button>
                                             <hr class="my-2">
                                             <button onclick="AuthSystem.fazerLogout()" class="w-full text-left px-4 py-2 text-red-600 hover:bg-red-50">
@@ -1482,6 +1496,9 @@
                         break;
                     case 'redacoes':
                         this.carregarRedacoes();
+                        break;
+		    case 'teoria':
+                        this.carregarTeoria();
                         break;
                 }
             },
@@ -2991,6 +3008,208 @@ salvarTarefaRapida(dataString) {
             },
 
             // =========================
+            // MÓDULO DE TEORIA COLABORATIVA
+            // =========================
+            carregarTeoria() {
+                const conteudo = document.getElementById('conteudo-principal');
+                const ehEditor = ['admin', 'monitor'].includes(this.usuario.cargo);
+
+                conteudo.innerHTML = `
+                    <div class="fade-in">
+                        <div class="flex justify-between items-center mb-8">
+                            <h2 class="text-3xl font-bold gradient-text">Material Teórico</h2>
+                            ${ehEditor ? `
+                                <button onclick="AplicacaoPrincipal.mostrarModalNovaTeoria()" class="btn-success">
+                                    <i class="fas fa-plus mr-2"></i>Novo Material
+                                </button>
+                            ` : ''}
+                        </div>
+                        
+                        <div id="lista-materiais" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            <div class="text-center py-12 col-span-full">
+                                <i class="fas fa-spinner fa-spin text-4xl text-blue-500 mb-4"></i>
+                                <p class="text-gray-600">Sincronizando biblioteca com a nuvem...</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                // Buscar materiais na coleção global
+                db.collection('materiais_teoricos').get().then((querySnapshot) => {
+                    const listaMateriais = document.getElementById('lista-materiais');
+                    
+                    if (querySnapshot.empty) {
+                        listaMateriais.innerHTML = `
+                            <div class="text-center py-12 col-span-full glass-card rounded-xl">
+                                <i class="fas fa-books text-6xl text-gray-300 mb-4"></i>
+                                <h3 class="text-xl font-semibold text-gray-600 mb-2">Biblioteca Vazia</h3>
+                                <p class="text-gray-500">Nenhum conteúdo teórico foi publicado ainda.</p>
+                            </div>`;
+                        return;
+                    }
+
+                    let html = '';
+                    querySnapshot.forEach((doc) => {
+                        const material = doc.data();
+                        html += `
+                            <div class="glass-card rounded-xl p-6 border-t-4 border-blue-500 hover:shadow-lg transition-all flex flex-col">
+                                <div class="flex-1">
+                                    <div class="flex justify-between items-start mb-2">
+                                        <span class="badge badge-primary text-xs">${material.disciplina}</span>
+                                        ${ehEditor ? `
+                                            <div class="flex gap-2">
+                                                <button onclick="AplicacaoPrincipal.mostrarModalNovaTeoria('${doc.id}')" class="text-blue-500 hover:text-blue-700" title="Editar"><i class="fas fa-edit"></i></button>
+                                                <button onclick="AplicacaoPrincipal.excluirTeoria('${doc.id}')" class="text-red-500 hover:text-red-700" title="Excluir"><i class="fas fa-trash"></i></button>
+                                            </div>
+                                        ` : ''}
+                                    </div>
+                                    <h3 class="text-xl font-bold text-gray-800 mb-3">${material.titulo}</h3>
+                                    <div class="resumo-preview mb-4 text-gray-600 text-sm">
+                                        ${material.conteudo.substring(0, 150)}...
+                                    </div>
+                                </div>
+                                <div class="mt-4 pt-4 border-t border-gray-100 flex justify-between items-center">
+                                    <div class="text-xs text-gray-500">
+                                        <p><i class="fas fa-pen-nib mr-1"></i>${material.autor}</p>
+                                    </div>
+                                    <button onclick="AplicacaoPrincipal.lerTeoria('${doc.id}')" class="btn-primary py-2 px-4 text-sm">
+                                        <i class="fas fa-book-reader mr-1"></i>Ler
+                                    </button>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    listaMateriais.innerHTML = html;
+                }).catch((error) => {
+                    console.error("Erro ao buscar teoria:", error);
+                    this.mostrarNotificacao('Erro ao carregar a biblioteca.', 'error');
+                });
+            },
+
+            mostrarModalNovaTeoria(materialId = null) {
+                if (materialId) {
+                    db.collection('materiais_teoricos').doc(materialId).get().then(doc => {
+                        this.renderizarModalTeoria(doc.id, doc.data());
+                    });
+                } else {
+                    this.renderizarModalTeoria(null, null);
+                }
+            },
+
+            renderizarModalTeoria(id, material) {
+                this.mostrarModal(`
+                    <div class="p-6 max-w-3xl max-h-[90vh] overflow-y-auto">
+                        <h3 class="text-2xl font-bold mb-4 gradient-text">
+                            <i class="fas ${material ? 'fa-edit' : 'fa-plus-circle'} mr-2"></i>
+                            ${material ? 'Editar Material' : 'Publicar Novo Material Teórico'}
+                        </h3>
+                        <div class="space-y-4">
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-semibold mb-2">Disciplina:</label>
+                                    <select id="teoria-disciplina" class="w-full p-3 border rounded-xl">
+                                        <option value="Português">Português</option>
+                                        <option value="RLM">RLM</option>
+                                        <option value="História e Geografia de RO">História e Geografia de RO</option>
+                                        <option value="Direito Constitucional">Direito Constitucional</option>
+                                        <option value="Direito Administrativo">Direito Administrativo</option>
+                                        <option value="Noções de Informática">Noções de Informática</option>
+                                        <option value="Administração Geral">Administração Geral</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-semibold mb-2">Título do Tópico:</label>
+                                    <input type="text" id="teoria-titulo" class="w-full p-3 border rounded-xl" value="${material ? material.titulo : ''}" placeholder="Ex: Princípios Fundamentais">
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold mb-2">Conteúdo Completo:</label>
+                                <textarea id="teoria-conteudo" class="w-full p-4 border rounded-xl font-serif text-gray-800 leading-relaxed" rows="12" placeholder="Cole o conteúdo teórico aqui...">${material ? material.conteudo : ''}</textarea>
+                            </div>
+                        </div>
+                        <div class="flex gap-4 mt-6">
+                            <button onclick="AplicacaoPrincipal.fecharModal()" class="flex-1 btn-secondary"><i class="fas fa-times mr-1"></i>Cancelar</button>
+                            <button onclick="AplicacaoPrincipal.salvarTeoria('${id}')" class="flex-1 btn-success"><i class="fas fa-cloud-upload-alt mr-1"></i>${material ? 'Atualizar Nuvem' : 'Publicar'}</button>
+                        </div>
+                    </div>
+                `);
+
+                if (material) {
+                    document.getElementById('teoria-disciplina').value = material.disciplina;
+                }
+            },
+
+            salvarTeoria(materialId) {
+                const disciplina = document.getElementById('teoria-disciplina').value;
+                const titulo = document.getElementById('teoria-titulo').value.trim();
+                const conteudo = document.getElementById('teoria-conteudo').value.trim();
+
+                if (!titulo || !conteudo) {
+                    this.mostrarNotificacao('Preencha título e conteúdo.', 'error');
+                    return;
+                }
+
+                const materialData = {
+                    disciplina,
+                    titulo,
+                    conteudo,
+                    autor: this.usuario.nome,
+                    dataAtualizacao: new Date().toISOString()
+                };
+
+                const colecao = db.collection('materiais_teoricos');
+                const operacao = (materialId && materialId !== 'null') 
+                    ? colecao.doc(materialId).update(materialData)
+                    : colecao.add(materialData);
+
+                operacao.then(() => {
+                    this.fecharModal();
+                    this.carregarTeoria();
+                    this.mostrarNotificacao('Material salvo na nuvem com sucesso!', 'success');
+                }).catch(err => {
+                    console.error(err);
+                    this.mostrarNotificacao('Erro ao salvar material.', 'error');
+                });
+            },
+
+            lerTeoria(materialId) {
+                db.collection('materiais_teoricos').doc(materialId).get().then(doc => {
+                    if (doc.exists) {
+                        const m = doc.data();
+                        // Formatar quebras de linha para HTML
+                        const conteudoFormatado = m.conteudo.replace(/\\n/g, '<br>').replace(/\n/g, '<br>');
+                        
+                        this.mostrarModal(`
+                            <div class="p-8 max-w-4xl max-h-[90vh] overflow-y-auto bg-white">
+                                <div class="mb-6 border-b pb-4">
+                                    <span class="badge badge-primary mb-2">${m.disciplina}</span>
+                                    <h2 class="text-3xl font-bold text-gray-800">${m.titulo}</h2>
+                                    <p class="text-sm text-gray-500 mt-2">Atualizado por ${m.autor} em ${new Date(m.dataAtualizacao).toLocaleDateString('pt-BR')}</p>
+                                </div>
+                                <div class="font-serif text-lg text-gray-800 leading-loose">
+                                    ${conteudoFormatado}
+                                </div>
+                                <div class="mt-8 flex justify-end pt-4 border-t">
+                                    <button onclick="AplicacaoPrincipal.fecharModal()" class="btn-primary px-8">
+                                        <i class="fas fa-check mr-2"></i>Concluir Leitura
+                                    </button>
+                                </div>
+                            </div>
+                        `);
+                    }
+                });
+            },
+
+            excluirTeoria(materialId) {
+                if (confirm('Tem certeza que deseja apagar este material de todos os usuários?')) {
+                    db.collection('materiais_teoricos').doc(materialId).delete().then(() => {
+                        this.carregarTeoria();
+                        this.mostrarNotificacao('Material apagado.', 'success');
+                    });
+                }
+            },
+ 
+	    // =========================
             // FUNÇÕES EXISTENTES DAS OUTRAS ABAS
             // =========================
 
@@ -3967,7 +4186,65 @@ salvarTarefaRapida(dataString) {
                 }
             }
 
-        };
+        },
+
+	    // =========================
+            // PAINEL DE ADMINISTRAÇÃO
+            // =========================
+            abrirPainelAdmin() {
+                this.mostrarModal(`
+                    <div class="p-6 max-w-3xl max-h-[90vh] overflow-y-auto">
+                        <h3 class="text-2xl font-bold mb-4 gradient-text">
+                            <i class="fas fa-users-cog mr-2"></i>Gerenciamento de Usuários
+                        </h3>
+                        <p class="text-sm text-gray-600 mb-6">Promova usuários a Monitores para que possam editar a Teoria.</p>
+                        
+                        <div id="lista-usuarios-admin" class="space-y-3">
+                            <div class="text-center py-8"><i class="fas fa-spinner fa-spin text-3xl text-purple-500"></i></div>
+                        </div>
+                        
+                        <div class="mt-6 text-right">
+                            <button onclick="AplicacaoPrincipal.fecharModal()" class="btn-primary px-6">Fechar</button>
+                        </div>
+                    </div>
+                `);
+
+                db.collection('usuarios').get().then(snapshot => {
+                    let html = '';
+                    snapshot.forEach(doc => {
+                        const u = doc.data();
+                        const cargoAtual = u.cargo || 'aluno';
+                        html += `
+                            <div class="flex justify-between items-center p-4 border rounded-lg bg-gray-50 hover:bg-white transition-colors shadow-sm">
+                                <div>
+                                    <p class="font-bold text-gray-800">${u.nome}</p>
+                                    <p class="text-sm text-gray-500">${u.email}</p>
+                                </div>
+                                <div class="flex gap-2 items-center">
+                                    <span class="text-xs font-semibold text-gray-400 uppercase tracking-wider mr-2">Cargo:</span>
+                                    <select onchange="AplicacaoPrincipal.mudarCargo('${doc.id}', this.value)" class="p-2 border rounded-lg border-gray-300 bg-white font-medium ${cargoAtual === 'admin' ? 'text-purple-600' : cargoAtual === 'monitor' ? 'text-green-600' : 'text-gray-700'}">
+                                        <option value="aluno" ${cargoAtual === 'aluno' ? 'selected' : ''}>Aluno</option>
+                                        <option value="monitor" ${cargoAtual === 'monitor' ? 'selected' : ''}>Monitor (Edita Teoria)</option>
+                                        <option value="admin" ${cargoAtual === 'admin' ? 'selected' : ''}>Administrador</option>
+                                    </select>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    document.getElementById('lista-usuarios-admin').innerHTML = html;
+                }).catch(err => {
+                    this.mostrarNotificacao('Erro ao carregar usuários.', 'error');
+                });
+            },
+
+            mudarCargo(uid, novoCargo) {
+                db.collection('usuarios').doc(uid).update({ cargo: novoCargo })
+                .then(() => {
+                    this.mostrarNotificacao('Cargo atualizado com sucesso!', 'success');
+                })
+                .catch(() => this.mostrarNotificacao('Erro ao atualizar cargo.', 'error'));
+            }
+	};
 
         // =========================
         // FUNÇÕES GLOBAIS
