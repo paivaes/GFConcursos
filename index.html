@@ -1803,11 +1803,61 @@ carregarDashboard() {
             },
 
             iniciarSessaoEstudo() {
-                const selectAssunto = document.getElementById('select-assunto-cronometro');
-                if (selectAssunto) {
-                    selectAssunto.focus();
-                    this.mostrarNotificacao('Selecione um assunto para começar a estudar', 'info');
+                this.mostrarModal(`
+                    <div class="p-6 max-w-md text-center">
+                        <h3 class="text-3xl font-bold gradient-text mb-2">
+                            <i class="fas fa-stopwatch mr-2"></i>Cronômetro
+                        </h3>
+                        <p class="text-sm text-gray-500 mb-6">Controle o seu tempo de estudo real</p>
+                        
+                        <div class="mb-6 text-left">
+                            <label class="block text-sm font-semibold mb-2 text-gray-700">O que você vai estudar agora?</label>
+                            <select id="select-assunto-cronometro" class="w-full p-3 border rounded-xl bg-gray-50 focus:ring-2 focus:ring-blue-500">
+                                <option value="">Selecione a disciplina e assunto...</option>
+                                ${this.gerarOpcoesAssuntos()}
+                            </select>
+                        </div>
+
+                        <div class="bg-gray-50 rounded-2xl p-6 mb-8 border-2 transition-all ${this.cronometro.rodando ? 'border-green-400 shadow-lg' : 'border-gray-200'}">
+                            <div id="display-cronometro" class="text-5xl font-mono font-bold ${this.cronometro.rodando ? 'text-green-500' : 'text-blue-600'} mb-2 tracking-wider">
+                                ${this.formatarTempo(this.cronometro.tempo)}
+                            </div>
+                            <div id="tempo-hoje" class="text-sm text-gray-500 font-medium">
+                                </div>
+                        </div>
+
+                        <div class="flex gap-3 justify-center mb-6">
+                            <button id="btn-iniciar-cronometro" class="btn-success flex-1 py-3 shadow-md" ${this.cronometro.rodando ? 'disabled' : ''}>
+                                <i class="fas fa-play mr-1"></i>Iniciar
+                            </button>
+                            <button id="btn-pausar-cronometro" class="btn-warning flex-1 py-3 shadow-md" ${!this.cronometro.rodando ? 'disabled' : ''}>
+                                <i class="fas fa-pause mr-1"></i>Pausar
+                            </button>
+                            <button id="btn-parar-cronometro" class="btn-danger flex-1 py-3 shadow-md" ${!this.cronometro.rodando && this.cronometro.tempo === 0 ? 'disabled' : ''}>
+                                <i class="fas fa-stop mr-1"></i>Parar
+                            </button>
+                        </div>
+                        
+                        <div class="pt-4 border-t border-gray-100 flex justify-between items-center">
+                            <button id="btn-reiniciar-cronometro" class="text-gray-500 hover:text-gray-700 text-sm font-semibold p-2">
+                                <i class="fas fa-undo mr-1"></i>Zerar
+                            </button>
+                            <button onclick="AplicacaoPrincipal.fecharModal()" class="text-blue-600 hover:text-blue-800 text-sm font-semibold p-2 bg-blue-50 rounded-lg px-4">
+                                Fechar (Continua rodando)
+                            </button>
+                        </div>
+                    </div>
+                `);
+
+                // Se o relógio já estiver rodando em segundo plano, ele mantém o assunto selecionado na tela
+                if (this.cronometro.assuntoAtivo) {
+                    const select = document.getElementById('select-assunto-cronometro');
+                    if (select) select.value = this.cronometro.assuntoAtivo;
                 }
+
+                // Religa os botões ao "cérebro" do cronômetro
+                this.configurarCronometro();
+                this.atualizarTempoDisplay();
             },
 
             mostrarDetalhesProgresso() {
