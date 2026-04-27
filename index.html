@@ -2767,7 +2767,7 @@ salvarTarefaRapida(dataString) {
                 }
             },
 
-            if (cicloId && cicloId !== 'null') {
+            salvarCiclo(cicloId = null) {
                 const nome = document.getElementById('ciclo-nome').value.trim();
                 const cor = document.getElementById('ciclo-cor').value;
                 const descricao = document.getElementById('ciclo-descricao').value.trim();
@@ -2790,7 +2790,7 @@ salvarTarefaRapida(dataString) {
                     return;
                 }
 
-                if (cicloId) {
+                if (cicloId && cicloId !== 'null') {
                     // Editar ciclo existente
                     const cicloIndex = this.dados.ciclos.findIndex(c => c.id === cicloId);
                     if (cicloIndex !== -1) {
@@ -2825,7 +2825,7 @@ salvarTarefaRapida(dataString) {
                 this.carregarCronograma();
                 
                 this.mostrarNotificacao(
-                    cicloId ? 'Ciclo atualizado com sucesso!' : 'Ciclo criado com sucesso!', 
+                    (cicloId && cicloId !== 'null') ? 'Ciclo atualizado com sucesso!' : 'Ciclo criado com sucesso!', 
                     'success'
                 );
             },
@@ -3418,7 +3418,7 @@ salvarTarefaRapida(dataString) {
                 this.carregarDisciplinas();
                 
                 this.mostrarNotificacao(
-                    disciplinaId ? 'Disciplina atualizada com sucesso!' : 'Disciplina criada com sucesso!', 
+                    (disciplinaId && disciplinaId !== 'null') ? 'Disciplina atualizada com sucesso!' : 'Disciplina criada com sucesso!', 
                     'success'
                 );
             },
@@ -3662,7 +3662,7 @@ salvarTarefaRapida(dataString) {
                 `);
             },
 
-            if (tarefaId && tarefaId !== 'null') {
+            salvarTarefa(tarefaId = null) {
                 const titulo = document.getElementById('tarefa-titulo').value.trim();
                 const disciplina = document.getElementById('tarefa-disciplina').value;
                 const data = document.getElementById('tarefa-data').value;
@@ -3675,7 +3675,8 @@ salvarTarefaRapida(dataString) {
                     return;
                 }
 
-                if (tarefaId) {
+                // A Vacina do Falso Null está aqui!
+                if (tarefaId && tarefaId !== 'null') {
                     // Editar tarefa existente
                     const tarefaIndex = this.dados.cronograma.findIndex(t => t.id === tarefaId);
                     if (tarefaIndex !== -1) {
@@ -3709,8 +3710,9 @@ salvarTarefaRapida(dataString) {
                 this.fecharModal();
                 this.carregarCronograma();
                 
+                // Vacina na notificação também
                 this.mostrarNotificacao(
-                    tarefaId ? 'Tarefa atualizada com sucesso!' : 'Tarefa criada com sucesso!', 
+                    (tarefaId && tarefaId !== 'null') ? 'Tarefa atualizada com sucesso!' : 'Tarefa criada com sucesso!', 
                     'success'
                 );
             },
