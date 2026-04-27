@@ -1859,7 +1859,32 @@ carregarDashboard() {
                 this.configurarCronometro();
                 this.atualizarTempoDisplay();
             },
+	    
+	    gerarOpcoesAssuntos() {
+                // Verifica se existem disciplinas cadastradas
+                if (!this.dados || !this.dados.disciplinas || this.dados.disciplinas.length === 0) {
+                    return '<option value="" disabled>Nenhuma disciplina cadastrada ainda</option>';
+                }
 
+                let html = '';
+                // Percorre todas as disciplinas
+                this.dados.disciplinas.forEach(disc => {
+                    // Se a disciplina tiver assuntos (tópicos) específicos cadastrados
+                    if (disc.assuntos && disc.assuntos.length > 0) {
+                        html += `<optgroup label="📚 ${disc.nome}">`;
+                        disc.assuntos.forEach(assunto => {
+                            // Salva no formato "Disciplina - Assunto" para o histórico ficar perfeito
+                            html += `<option value="${disc.nome} - ${assunto.nome}">${assunto.nome}</option>`;
+                        });
+                        html += `</optgroup>`;
+                    } else {
+                        // Se for uma disciplina nova ainda sem assuntos específicos
+                        html += `<option value="${disc.nome}">${disc.nome} (Estudo Geral)</option>`;
+                    }
+                });
+                
+                return html;
+            },
             mostrarDetalhesProgresso() {
                 this.mostrarModal(`
                     <div class="p-6 max-w-4xl">
@@ -2114,16 +2139,64 @@ carregarDashboard() {
             },
 
             atualizarTempoDisplay() {
-                const hoje = new Date().toDateString();
-                const tempoHoje = this.dados.cronometro.historico[hoje] || 0;
-                const tempoTotal = this.dados.cronometro.tempoTotal || 0;
+                const display = document.getElementById('display-cronometro');
+                const tempoFormatado = this.formatarTempo(this.cronometro.tempo);
                 
-                const horasHoje = Math.floor(tempoHoje);
-                const minutosHoje = Math.floor((tempoHoje - horasHoje) * 60);
+                // 1. Atualiza o relógio gigante do Modal (se ele estiver aberto)
+                if (display) {
+                    display.textContent = tempoFormatado;
+                }
                 
-                const tempoHojeElement = document.getElementById('tempo-hoje');
-                if (tempoHojeElement) {
-                    tempoHojeElement.textContent = `Hoje: ${horasHoje}h ${minutosHoje}min`;
+                // 2. Atualiza o relógio do nosso novo Mini-Player Flutuante
+                const floatingDisplay = document.getElementById('floating-time');
+                if (floatingDisplay) {
+                    floatingDisplay.textContent = tempoFormatado;
+                }
+
+                // 3. Garante que o flutuante apareça ou suma na hora certa
+                this.verificarTimerFlutuante();
+            },
+
+            verificarTimerFlutuante() {
+                let floatingTimer = document.getElementById('floating-timer');
+                
+                // Cria a caixinha do Mini-Player se ela ainda não existir no site
+                if (!floatingTimer) {
+                    floatingTimer = document.createElement('div');
+                    floatingTimer.id = 'floating-timer';
+                    // Se clicar na caixinha, ela abre o Painel Grande de volta
+                    floatingTimer.onclick = () => this.iniciarSessaoEstudo();
+                    floatingTimer.innerHTML = `
+                        <div class="relative">
+                            <i class="fas fa-stopwatch text-3xl text-gray-700"></i>
+                            <span id="floating-pulse" class="absolute top-0 right-0 h-3 w-3">
+                                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                                <span class="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
+                            </span>
+                        </div>
+                        <div>
+                            <p class="text-xs text-gray-500 font-bold uppercase tracking-wider truncate max-w-[150px]" id="floating-assunto">Estudando</p>
+                            <p class="text-2xl font-mono font-bold text-gray-800" id="floating-time">00:00:00</p>
+                        </div>
+                    `;
+                    document.body.appendChild(floatingTimer);
+                }
+
+                // Verifica as regras para mostrar a caixinha
+                const modalAberto = !!document.getElementById('modal-overlay'); // Tem alguma tela grande aberta?
+                const temTempoOuRodando = this.cronometro.rodando || this.cronometro.tempo > 0;
+
+                // A MÁGICA: Só mostra se tiver um cronômetro ativo E a tela grande estiver fechada
+		if (temTempoOuRodando && !modalAberto) {
+                    floatingTimer.style.display = 'flex';
+                    document.getElementById('floating-assunto').textContent = this.cronometro.assuntoAtivo || 'Estudando...';
+                    
+                    // Design dinâmico: Verde piscando (Rodando) ou Amarelo estático (Pausado)
+                    const isRodando = this.cronometro.rodando;
+                    document.getElementById('floating-pulse').style.display = isRodando ? 'flex' : 'none';
+                    floatingTimer.className = `fixed bottom-8 right-8 bg-white rounded-2xl shadow-2xl border-l-4 p-4 z-[9999] cursor-pointer transform transition hover:scale-105 flex items-center gap-4 ${isRodando ? 'border-green-500' : 'border-yellow-500'}`;
+                } else {
+                    floatingTimer.style.display = 'none';
                 }
             },
 
@@ -4090,10 +4163,16 @@ salvarTarefaRapida(dataString) {
                 document.body.appendChild(modal);
             },
 
-            fecharModal() {
-                const modal = document.querySelector('.fixed.inset-0.bg-black');
+            fecharModal(modalId = null) {
+                const modal = document.getElementById(modalId || 'modal-overlay');
                 if (modal) {
-                    document.body.removeChild(modal);
+                    modal.remove();
+                }
+                
+                // 👇 A MÁGICA ACONTECE AQUI 👇
+                // Quando qualquer janela fecha, o sistema avalia se precisa colocar o Timer no canto da tela!
+                if (typeof this.verificarTimerFlutuante === 'function') {
+                    setTimeout(() => this.verificarTimerFlutuante(), 50);
                 }
             },
 
