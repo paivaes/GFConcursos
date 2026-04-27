@@ -2767,7 +2767,7 @@ salvarTarefaRapida(dataString) {
                 }
             },
 
-            salvarCiclo(cicloId = null) {
+            if (cicloId && cicloId !== 'null') {
                 const nome = document.getElementById('ciclo-nome').value.trim();
                 const cor = document.getElementById('ciclo-cor').value;
                 const descricao = document.getElementById('ciclo-descricao').value.trim();
@@ -3389,7 +3389,7 @@ salvarTarefaRapida(dataString) {
                     return;
                 }
 
-                if (disciplinaId) {
+                if (disciplinaId && disciplinaId !== 'null') {
                     // Editar disciplina existente
                     const disciplinaIndex = this.dados.disciplinas.findIndex(d => d.id === disciplinaId);
                     if (disciplinaIndex !== -1) {
@@ -3662,7 +3662,7 @@ salvarTarefaRapida(dataString) {
                 `);
             },
 
-            salvarTarefa(tarefaId = null) {
+            if (tarefaId && tarefaId !== 'null') {
                 const titulo = document.getElementById('tarefa-titulo').value.trim();
                 const disciplina = document.getElementById('tarefa-disciplina').value;
                 const data = document.getElementById('tarefa-data').value;
